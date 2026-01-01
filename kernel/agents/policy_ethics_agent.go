@@ -2,40 +2,38 @@ package agents
 
 import (
 	"fmt"
-	"time"
-
 	"NeuroEdge/kernel/core"
 )
 
 type PolicyEthicsAgent struct {
-	name string
+	Name string
 }
 
 func NewPolicyEthicsAgent() *PolicyEthicsAgent {
-	return &PolicyEthicsAgent{name: "PolicyEthicsAgent"}
+	return &PolicyEthicsAgent{
+		Name: "PolicyEthicsAgent",
+	}
 }
 
-func (a *PolicyEthicsAgent) Name() string {
-	return a.name
+func (p *PolicyEthicsAgent) Start() {
+	fmt.Printf("[%s] monitoring tasks for policy and ethics...\n", p.Name)
+	core.EventBus.Subscribe("task:new", p.HandleEvent)
 }
 
-func (a *PolicyEthicsAgent) Start() {
-	core.Info(a.Name() + " starting...")
-	ch := make(chan core.Event)
-	core.GetKernel().EventBus.Subscribe("DecisionEvent", ch)
-
-	go func() {
-		for evt := range ch {
-			core.Info(fmt.Sprintf("%s reviewing decision: %v", a.Name(), evt.Data))
-			time.Sleep(300 * time.Millisecond)
-			core.GetKernel().EventBus.Publish(core.Event{
-				Name: "DecisionApproved",
-				Data: fmt.Sprintf("%s approved decision", a.Name()),
-			})
-		}
-	}()
+func (p *PolicyEthicsAgent) HandleEvent(event string, payload interface{}) {
+	task := fmt.Sprintf("%v", payload)
+	fmt.Printf("[%s] checking task for compliance: %s\n", p.Name, task)
+	allowed := p.CheckPolicy(task)
+	if !allowed {
+		fmt.Printf("[%s] task violates policy: %s\n", p.Name, task)
+	}
 }
 
-func (a *PolicyEthicsAgent) Stop() {
-	core.Info(a.Name() + " stopped.")
+func (p *PolicyEthicsAgent) CheckPolicy(task string) bool {
+	// TODO: integrate real policy engine
+	return true
+}
+
+func (p *PolicyEthicsAgent) GetName() string {
+	return p.Name
 }
