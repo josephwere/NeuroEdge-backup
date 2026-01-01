@@ -1,52 +1,71 @@
 package main
 
 import (
-    "fmt"
-    "log"
-    "neuroedge/kernel/core/engine"
-    "neuroedge/kernel/core/scheduler"
-    "neuroedge/kernel/core/memory"
-    "neuroedge/kernel/core/cognition"
-    "neuroedge/kernel/core/ethics"
-    "neuroedge/kernel/events"
-    "neuroedge/kernel/agents"
+	"fmt"
+	"neuroedge/kernel/core/engine"
+	"neuroedge/kernel/core/memory"
+	"neuroedge/kernel/core/cognition"
+	"neuroedge/kernel/core/ethics"
+	"neuroedge/kernel/core/scheduler"
+	"neuroedge/kernel/events"
+	"neuroedge/kernel/agents"
+	"neuroedge/kernel/engines"
 )
 
 func main() {
-    fmt.Println("🚀 Starting NeuroEdge Kernel v1.0...")
+	fmt.Println("🚀 Starting NeuroEdge Kernel v1.0...")
 
-    // Initialize Event Bus
-    eventBus := events.NewEventBus()
-    fmt.Println("✅ Event bus initialized")
+	// =========================
+	// Initialize Core Systems
+	// =========================
+	eventBus := events.NewEventBus()
+	fmt.Println("✅ Event bus initialized")
 
-    // Initialize Memory
-    mem := memory.NewMemory()
-    fmt.Println("✅ Memory system initialized")
+	mem := memory.NewMemory()
+	fmt.Println("✅ Memory system initialized")
 
-    // Initialize Ethics
-    ethicsEngine := ethics.NewEthics()
-    fmt.Println("✅ Ethics engine initialized")
+	ethicsEngine := ethics.NewEthics()
+	fmt.Println("✅ Ethics engine initialized")
 
-    // Initialize Cognition
-    cognitionEngine := cognition.NewCognition()
-    fmt.Println("✅ Cognition engine initialized")
+	cognitionEngine := cognition.NewCognition()
+	fmt.Println("✅ Cognition engine initialized")
 
-    // Initialize Scheduler
-    schedulerEngine := scheduler.NewScheduler(eventBus)
-    fmt.Println("✅ Scheduler initialized")
+	schedulerEngine := scheduler.NewScheduler(eventBus)
+	fmt.Println("✅ Scheduler initialized")
 
-    // Initialize Core Engine
-    coreEngine := engine.NewEngine(eventBus, mem, ethicsEngine, cognitionEngine, schedulerEngine)
-    fmt.Println("✅ Core engine initialized")
+	coreEngine := engine.NewEngine(eventBus, mem, ethicsEngine, cognitionEngine, schedulerEngine)
+	fmt.Println("✅ Core engine initialized")
 
-    // Initialize Agent Manager
-    agentManager := agents.NewManager(eventBus)
-    fmt.Println("✅ Agent manager initialized")
+	// =========================
+	// Initialize Agents
+	// =========================
+	agentManager := agents.NewManager(eventBus)
+	fmt.Println("✅ Agent manager initialized")
 
-    // Start main loop
-    coreEngine.Start()
-    fmt.Println("🎯 NeuroEdge Kernel is running...")
+	// Example: register first agent
+	globalMeshAgent := agents.NewGlobalMeshAgent(eventBus)
+	agentManager.Register(globalMeshAgent.Name(), globalMeshAgent)
 
-    // Keep running
-    select {}
+	// TODO: Register all 71 agents here
+
+	// =========================
+	// Initialize Engines
+	// =========================
+	engineManager := engines.NewEngineManager()
+
+	neuroLogicEngine := engines.NewNeuroLogicEngine()
+	engineManager.AddEngine(neuroLogicEngine.Name(), neuroLogicEngine)
+
+	// TODO: Register all 42 engines here
+
+	// =========================
+	// Start Everything
+	// =========================
+	engineManager.StartAll()
+	agentManager.StartAll()
+	coreEngine.Start()
+	fmt.Println("🎯 NeuroEdge Kernel is running...")
+
+	// Keep the program running
+	select {}
 }
