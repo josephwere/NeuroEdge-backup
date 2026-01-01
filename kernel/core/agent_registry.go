@@ -71,6 +71,10 @@ func StopAllAgents() {
 // InitializeAllAgents registers all 71+ NeuroEdge agents
 func InitializeAllAgents() {
 	RegisterAgent(agents.NewGlobalMeshAgent())
+	RegisterAgent(agents.NewReasoningAgent())
+	RegisterAgent(agents.NewTaskAgent())
+	RegisterAgent(agents.NewSecurityAgent())
+	RegisterAgent(agents.NewPolicyEthicsAgent())
 	RegisterAgent(agents.NewAntiTheftSentinelAgent())
 	RegisterAgent(agents.NewGovernmentAdvisorAgent())
 	RegisterAgent(agents.NewMedicalDoctorAgent())
