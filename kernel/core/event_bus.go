@@ -1,30 +1,49 @@
 package core
 
-import "sync"
+import (
+	"fmt"
+	"sync"
+)
 
-type EventBus struct {
-	subscribers map[string][]chan map[string]interface{}
-	lock        sync.RWMutex
+// Event represents a single message or event in the system
+type Event struct {
+	Name string
+	Data interface{}
+	Source string
 }
 
+// Subscriber function type
+type Subscriber func(Event)
+
+// EventBus handles message passing between engines & agents
+type EventBus struct {
+	subscribers map[string][]Subscriber
+	mu          sync.RWMutex
+}
+
+// NewEventBus creates a new event bus
 func NewEventBus() *EventBus {
 	return &EventBus{
-		subscribers: make(map[string][]chan map[string]interface{}),
+		subscribers: make(map[string][]Subscriber),
 	}
 }
 
-func (bus *EventBus) Subscribe(event string, ch chan map[string]interface{}) {
-	bus.lock.Lock()
-	defer bus.lock.Unlock()
-	bus.subscribers[event] = append(bus.subscribers[event], ch)
+// Subscribe adds a new subscriber to an event
+func (eb *EventBus) Subscribe(eventName string, subscriber Subscriber) {
+	eb.mu.Lock()
+	defer eb.mu.Unlock()
+	eb.subscribers[eventName] = append(eb.subscribers[eventName], subscriber)
+	fmt.Println("[EventBus] Subscriber added to:", eventName)
 }
 
-func (bus *EventBus) Publish(event string, data map[string]interface{}) {
-	bus.lock.RLock()
-	defer bus.lock.RUnlock()
-	for _, ch := range bus.subscribers[event] {
-		go func(c chan map[string]interface{}) {
-			c <- data
-		}(ch)
+// Publish sends an event to all subscribers
+func (eb *EventBus) Publish(event Event) {
+	eb.mu.RLock()
+	defer eb.mu.RUnlock()
+	if subs, ok := eb.subscribers[event.Name]; ok {
+		for _, sub := range subs {
+			go sub(event) // async delivery
+		}
 	}
+	fmt.Printf("[EventBus] Event published: %s from %s\n", event.Name, event.Source)
 }
