@@ -1,0 +1,40 @@
+package agents
+
+import (
+	"fmt"
+	"neuroedge/kernel/core"
+)
+
+type BorderControlAgent struct {
+	EventBus *core.EventBus
+}
+
+func NewBorderControlAgent(bus *core.EventBus) *BorderControlAgent {
+	return &BorderControlAgent{
+		EventBus: bus,
+	}
+}
+
+func (b *BorderControlAgent) Start() {
+	fmt.Println("🚀 BorderControlAgent started")
+	ch := make(chan map[string]interface{})
+	b.EventBus.Subscribe("border:check", ch)
+	go func() {
+		for event := range ch {
+			fmt.Println("[BorderControlAgent] Border Check Event:", event)
+			b.VerifyTraveler(event)
+		}
+	}()
+}
+
+func (b *BorderControlAgent) Stop() {
+	fmt.Println("🛑 BorderControlAgent stopped")
+}
+
+func (b *BorderControlAgent) Name() string {
+	return "BorderControlAgent"
+}
+
+func (b *BorderControlAgent) VerifyTraveler(data map[string]interface{}) {
+	fmt.Println("[BorderControlAgent] Verifying traveler:", data)
+}
