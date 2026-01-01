@@ -2,41 +2,40 @@ package agents
 
 import (
 	"fmt"
-	"time"
-
 	"NeuroEdge/kernel/core"
 )
 
 type SecurityAgent struct {
-	name string
+	Name string
 }
 
 func NewSecurityAgent() *SecurityAgent {
-	return &SecurityAgent{name: "SecurityAgent"}
+	return &SecurityAgent{
+		Name: "SecurityAgent",
+	}
 }
 
-func (a *SecurityAgent) Name() string {
-	return a.name
+func (s *SecurityAgent) Start() {
+	fmt.Printf("[%s] monitoring system for security threats...\n", s.Name)
+	core.EventBus.Subscribe("task:new", s.HandleEvent)
 }
 
-func (a *SecurityAgent) Start() {
-	core.Info(a.Name() + " starting...")
-	ch := make(chan core.Event)
-	core.GetKernel().EventBus.Subscribe("SecurityAlert", ch)
-
-	go func() {
-		for evt := range ch {
-			core.Info(fmt.Sprintf("%s analyzing alert: %v", a.Name(), evt.Data))
-			// Handle alert
-			time.Sleep(500 * time.Millisecond)
-			core.GetKernel().EventBus.Publish(core.Event{
-				Name: "SecurityResponse",
-				Data: fmt.Sprintf("%s mitigated threat", a.Name()),
-			})
-		}
-	}()
+func (s *SecurityAgent) HandleEvent(event string, payload interface{}) {
+	task := fmt.Sprintf("%v", payload)
+	fmt.Printf("[%s] analyzing task for threats: %s\n", s.Name, task)
+	// Example: Block dangerous tasks
+	allowed := s.Analyze(task)
+	if !allowed {
+		fmt.Printf("[%s] blocked task: %s\n", s.Name, task)
+	}
 }
 
-func (a *SecurityAgent) Stop() {
-	core.Info(a.Name() + " stopped.")
+func (s *SecurityAgent) Analyze(task string) bool {
+	// TODO: integrate ML threat detection
+	// For now, all tasks are allowed
+	return true
+}
+
+func (s *SecurityAgent) GetName() string {
+	return s.Name
 }
