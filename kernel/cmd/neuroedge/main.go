@@ -2,14 +2,13 @@ package main
 
 import (
 	"fmt"
-	"neuroedge/kernel/core/engine"
-	"neuroedge/kernel/core/memory"
+	"neuroedge/kernel/core"
 	"neuroedge/kernel/core/cognition"
 	"neuroedge/kernel/core/ethics"
+	"neuroedge/kernel/core/engine"
+	"neuroedge/kernel/core/memory"
 	"neuroedge/kernel/core/scheduler"
 	"neuroedge/kernel/events"
-	"neuroedge/kernel/agents"
-	"neuroedge/kernel/engines"
 )
 
 func main() {
@@ -37,32 +36,19 @@ func main() {
 	fmt.Println("✅ Core engine initialized")
 
 	// =========================
-	// Initialize Agents
+	// Initialize Registries
 	// =========================
-	agentManager := agents.NewManager(eventBus)
-	fmt.Println("✅ Agent manager initialized")
+	core.InitAgentRegistry(eventBus)   // Registers all 71+ agents automatically
+	fmt.Println("✅ All agents registered via AgentRegistry")
 
-	// Example: register first agent
-	globalMeshAgent := agents.NewGlobalMeshAgent(eventBus)
-	agentManager.Register(globalMeshAgent.Name(), globalMeshAgent)
-
-	// TODO: Register all 71 agents here
-
-	// =========================
-	// Initialize Engines
-	// =========================
-	engineManager := engines.NewEngineManager()
-
-	neuroLogicEngine := engines.NewNeuroLogicEngine()
-	engineManager.AddEngine(neuroLogicEngine.Name(), neuroLogicEngine)
-
-	// TODO: Register all 42 engines here
+	core.InitEngineRegistry()          // Registers all 42+ engines automatically
+	fmt.Println("✅ All engines registered via EngineRegistry")
 
 	// =========================
 	// Start Everything
 	// =========================
-	engineManager.StartAll()
-	agentManager.StartAll()
+	core.StartAllEngines()
+	core.StartAllAgents()
 	coreEngine.Start()
 	fmt.Println("🎯 NeuroEdge Kernel is running...")
 
