@@ -38,6 +38,7 @@ func (r *EngineRegistry) RegisterEngine(engine EngineInterface) {
 func (r *EngineRegistry) RegisterAllEngines() {
 	r.RegisterEngine(engines.NewNeuroLogicEngine(r.EventBus))
 	r.RegisterEngine(engines.NewNeuroGPTEngine(r.EventBus))
+	r.RegisterEngine(engines.NewTaskEmissionEngine(r.EventBus))
 	r.RegisterEngine(engines.NewNeuroVisionEngine(r.EventBus))
 	r.RegisterEngine(engines.NewNeuroAudioEngine(r.EventBus))
 	r.RegisterEngine(engines.NewNeuroCodeEngine(r.EventBus))
