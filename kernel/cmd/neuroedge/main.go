@@ -27,7 +27,13 @@ func main() {
 	logger := core.NewLogger(core.INFO, cfg.LogFilePath)
 	defer logger.Close()
 	logger.Info("Kernel", "Logger initialized")
-
+	
+    // =========================
+// Start Self-Learning Loop
+// =========================
+selfLearning := core.NewSelfLearningLoop(agentManager, engineManager, 30*time.Second)
+selfLearning.Start()
+logger.Info("Kernel", "Self-Learning Loop started")
 	// =========================
 	// Initialize Core Systems
 	// =========================
