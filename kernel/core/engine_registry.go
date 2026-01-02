@@ -10,18 +10,20 @@ type EngineInterface interface {
 	Start()
 	Stop()
 	Name() string
+	EvaluatePerformance() bool // For Self-Learning Loop
+	Optimize()                // Adapt / improve
 }
 
 // EngineRegistry keeps track of all engines
 type EngineRegistry struct {
-	Engines map[string]EngineInterface
+	Engines  map[string]EngineInterface
 	EventBus *EventBus
 }
 
 // NewEngineRegistry creates a new registry
 func NewEngineRegistry(bus *EventBus) *EngineRegistry {
 	return &EngineRegistry{
-		Engines: make(map[string]EngineInterface),
+		Engines:  make(map[string]EngineInterface),
 		EventBus: bus,
 	}
 }
@@ -32,6 +34,15 @@ func (r *EngineRegistry) RegisterEngine(engine EngineInterface) {
 	r.Engines[name] = engine
 	fmt.Println("[EngineRegistry] Registered engine:", name)
 	engine.Start()
+}
+
+// GetAllEngines returns all registered engines
+func (r *EngineRegistry) GetAllEngines() []EngineInterface {
+	all := make([]EngineInterface, 0, len(r.Engines))
+	for _, e := range r.Engines {
+		all = append(all, e)
+	}
+	return all
 }
 
 // RegisterAllEngines registers all 42 engines
