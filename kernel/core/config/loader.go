@@ -4,37 +4,61 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"sync"
 )
 
-// Config holds the loaded configuration
-var Config *ConfigSchema
+var (
+	instance *KernelConfig
+	once     sync.Once
+)
 
-// LoadConfig loads configuration from a JSON file
-func LoadConfig(path string) error {
-	file, err := os.Open(path)
-	if err != nil {
-		return fmt.Errorf("failed to open config file: %v", err)
-	}
-	defer file.Close()
+// LoadConfig loads the configuration from a JSON file
+func LoadConfig(filePath string) *KernelConfig {
+	once.Do(func() {
+		instance = &KernelConfig{
+			Environment:    "prod",
+			LogLevel:       "info",
+			LogFilePath:    "neuroedge.log",
+			MaxAgents:      100,
+			MaxEngines:     50,
+			EnableMesh:     true,
+			EnableTelemetry: false,
+			DatabaseURL:    "sqlite://neuroedge.db",
+			WalletEnabled:  true,
+			OfflineMode:    false,
+		}
 
-	decoder := json.NewDecoder(file)
-	cfg := &ConfigSchema{}
-	if err := decoder.Decode(cfg); err != nil {
-		return fmt.Errorf("failed to parse config file: %v", err)
-	}
+		if filePath != "" {
+			data, err := os.ReadFile(filePath)
+			if err != nil {
+				fmt.Printf("⚠️ Config file not found, using defaults: %v\n", err)
+				return
+			}
 
-	// Set defaults if missing
-	if cfg.Environment == "" {
-		cfg.Environment = "dev"
-	}
-	if cfg.LogLevel == "" {
-		cfg.LogLevel = "INFO"
-	}
-	if cfg.MaxWorkers == 0 {
-		cfg.MaxWorkers = 10
-	}
+			err = json.Unmarshal(data, instance)
+			if err != nil {
+				fmt.Printf("⚠️ Failed to parse config, using defaults: %v\n", err)
+			} else {
+				fmt.Println("✅ Config loaded from file")
+			}
+		} else {
+			fmt.Println("✅ Using default configuration")
+		}
+	})
+	return instance
+}
 
-	Config = cfg
-	fmt.Printf("✅ Config loaded: environment=%s, log_level=%s\n", cfg.Environment, cfg.LogLevel)
-	return nil
+// GetConfig returns the singleton instance
+func GetConfig() *KernelConfig {
+	if instance == nil {
+		panic("Config not loaded. Call LoadConfig first.")
+	}
+	return instance
+}
+
+// UpdateConfig allows runtime updates of config (optional)
+func UpdateConfig(updateFunc func(cfg *KernelConfig)) {
+	cfg := GetConfig()
+	updateFunc(cfg)
+	fmt.Println("✅ Configuration updated at runtime")
 }
