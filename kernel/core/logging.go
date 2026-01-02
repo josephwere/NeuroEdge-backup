@@ -7,7 +7,7 @@ import (
 	"time"
 )
 
-// LogLevel type
+// LogLevel represents the severity of a log message
 type LogLevel int
 
 const (
@@ -18,37 +18,36 @@ const (
 	FATAL
 )
 
-// Logger is the unified logging system for NeuroEdge
+// Logger defines the main logging system
 type Logger struct {
-	component string
-	level     LogLevel
-	file      *os.File
+	level      LogLevel
+	fileHandle *os.File
 }
 
-// NewLogger creates a new logger instance
-func NewLogger(component string, level LogLevel, logFilePath string) *Logger {
+// NewLogger creates a new Logger instance
+func NewLogger(level LogLevel, logFilePath string) *Logger {
 	var file *os.File
+	var err error
+
 	if logFilePath != "" {
-		f, err := os.OpenFile(logFilePath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+		file, err = os.OpenFile(logFilePath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 		if err != nil {
-			log.Printf("Failed to open log file: %v\n", err)
-		} else {
-			file = f
+			log.Fatalf("❌ Failed to open log file: %v", err)
 		}
 	}
 
 	return &Logger{
-		component: component,
-		level:     level,
-		file:      file,
+		level:      level,
+		fileHandle: file,
 	}
 }
 
-// logMessage formats and outputs a log message
-func (l *Logger) logMessage(level LogLevel, message string) {
+// logMessage outputs a structured log
+func (l *Logger) logMessage(level LogLevel, component, msg string) {
 	if level < l.level {
 		return
 	}
+
 	levelStr := map[LogLevel]string{
 		DEBUG: "DEBUG",
 		INFO:  "INFO",
@@ -58,51 +57,51 @@ func (l *Logger) logMessage(level LogLevel, message string) {
 	}[level]
 
 	timestamp := time.Now().Format(time.RFC3339)
-	logLine := fmt.Sprintf("[%s] [%s] [%s] %s\n", timestamp, l.component, levelStr, message)
+	logLine := fmt.Sprintf("[%s] [%s] [%s] %s\n", timestamp, levelStr, component, msg)
 
 	// Print to console
 	fmt.Print(logLine)
 
-	// Write to file if configured
-	if l.file != nil {
-		_, err := l.file.WriteString(logLine)
+	// Print to file if enabled
+	if l.fileHandle != nil {
+		_, err := l.fileHandle.WriteString(logLine)
 		if err != nil {
-			fmt.Printf("[Logger] Failed to write to log file: %v\n", err)
+			fmt.Printf("⚠️ Failed to write log to file: %v\n", err)
 		}
 	}
 
-	// Optional: remote telemetry can be added here
+	// Optional: push to remote telemetry here (future hook)
 }
 
-// Debug logs debug-level messages
-func (l *Logger) Debug(msg string) {
-	l.logMessage(DEBUG, msg)
+// Debug logs a debug message
+func (l *Logger) Debug(component, msg string) {
+	l.logMessage(DEBUG, component, msg)
 }
 
-// Info logs info-level messages
-func (l *Logger) Info(msg string) {
-	l.logMessage(INFO, msg)
+// Info logs an info message
+func (l *Logger) Info(component, msg string) {
+	l.logMessage(INFO, component, msg)
 }
 
-// Warn logs warning-level messages
-func (l *Logger) Warn(msg string) {
-	l.logMessage(WARN, msg)
+// Warn logs a warning
+func (l *Logger) Warn(component, msg string) {
+	l.logMessage(WARN, component, msg)
 }
 
-// Error logs error-level messages
-func (l *Logger) Error(msg string) {
-	l.logMessage(ERROR, msg)
+// Error logs an error
+func (l *Logger) Error(component, msg string) {
+	l.logMessage(ERROR, component, msg)
 }
 
-// Fatal logs fatal-level messages and exits
-func (l *Logger) Fatal(msg string) {
-	l.logMessage(FATAL, msg)
+// Fatal logs a fatal error and exits
+func (l *Logger) Fatal(component, msg string) {
+	l.logMessage(FATAL, component, msg)
 	os.Exit(1)
 }
 
-// Close closes any open file handles
+// Close closes any resources used by the logger
 func (l *Logger) Close() {
-	if l.file != nil {
-		l.file.Close()
+	if l.fileHandle != nil {
+		l.fileHandle.Close()
 	}
 }
