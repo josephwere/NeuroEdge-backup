@@ -3,121 +3,140 @@ package main
 import (
 	"fmt"
 	"os"
+	"os/signal"
+	"syscall"
+	"time"
 
-	"neuroedge/kernel/agents"
-	"neuroedge/kernel/config"
 	"neuroedge/kernel/core"
+	"neuroedge/kernel/agents"
 	"neuroedge/kernel/engines"
+	"neuroedge/kernel/core/config"
+	"neuroedge/kernel/core/logging"
+	"neuroedge/kernel/core/memory"
+	"neuroedge/kernel/core/cognition"
+	"neuroedge/kernel/core/ethics"
+	"neuroedge/kernel/core/scheduler"
 	"neuroedge/kernel/events"
-	"neuroedge/kernel/mesh"
 )
 
 func main() {
-	fmt.Println("🚀 Starting NeuroEdge Kernel v1.0...")
+	fmt.Println("🚀 Starting NeuroEdge Kernel v1.0")
 
 	// =========================
 	// Load Configuration
 	// =========================
 	cfg := config.LoadConfig("config.json")
-	fmt.Printf("✅ Configuration loaded (Environment: %s)\n", cfg.Environment)
 
 	// =========================
-	// Initialize Logger
+	// Initialize Logging
 	// =========================
-	logger := core.NewLogger(core.INFO, cfg.LogFilePath)
+	logger := logging.NewLogger(logging.INFO, cfg.LogFilePath)
 	defer logger.Close()
 	logger.Info("Kernel", "Logger initialized")
-	
-    // =========================
-// Start Self-Learning Loop
-// =========================
-selfLearning := core.NewSelfLearningLoop(agentManager, engineManager, 30*time.Second)
-selfLearning.Start()
-logger.Info("Kernel", "Self-Learning Loop started")
+
 	// =========================
 	// Initialize Core Systems
 	// =========================
 	eventBus := events.NewEventBus()
-	logger.Info("Kernel", "Event bus initialized")
+	logger.Info("Kernel", "EventBus initialized")
 
-	mem := core.NewMemory()
+	mem := memory.NewMemory()
 	logger.Info("Kernel", "Memory system initialized")
 
-	ethicsEngine := core.NewEthics()
+	ethicsEngine := ethics.NewEthics()
 	logger.Info("Kernel", "Ethics engine initialized")
 
-	cognitionEngine := core.NewCognition()
+	cognitionEngine := cognition.NewCognition()
 	logger.Info("Kernel", "Cognition engine initialized")
 
-	schedulerEngine := core.NewScheduler(eventBus)
+	schedulerEngine := scheduler.NewScheduler(eventBus)
 	logger.Info("Kernel", "Scheduler initialized")
 
 	coreEngine := core.NewEngine(eventBus, mem, ethicsEngine, cognitionEngine, schedulerEngine)
 	logger.Info("Kernel", "Core engine initialized")
 
 	// =========================
-	// Initialize Mesh
+	// Initialize Lifecycle Controller
 	// =========================
-	encryptionKey := []byte("supersecretkey123") // Replace with secure key
-	meshManager := mesh.NewMeshManager(encryptionKey)
-	logger.Info("Mesh", "Mesh manager initialized")
-
-	// Example: Add a local node (could be dynamic in production)
-	localNode := mesh.NewNode("local-node", "127.0.0.1")
-	meshManager.AddNode(localNode)
+	lifecycle := core.NewLifecycleController()
+	lifecycle.RegisterComponent(coreEngine)
+	lifecycle.RegisterComponent(mem)
+	lifecycle.RegisterComponent(ethicsEngine)
+	lifecycle.RegisterComponent(cognitionEngine)
+	lifecycle.RegisterComponent(schedulerEngine)
+	logger.Info("Kernel", "Lifecycle controller initialized")
 
 	// =========================
-	// Initialize Agents
+	// Initialize Health Manager
 	// =========================
-	agentManager := agents.NewManager(eventBus)
-	logger.Info("Agents", "Agent manager initialized")
+	healthMgr := core.NewHealthManager()
+	healthMgr.RegisterComponent(coreEngine)
+	healthMgr.RegisterComponent(mem)
+	healthMgr.RegisterComponent(ethicsEngine)
+	healthMgr.RegisterComponent(cognitionEngine)
+	healthMgr.RegisterComponent(schedulerEngine)
+	healthMgr.StartMonitoring()
+	defer healthMgr.StopMonitoring()
 
-	// Register agents from registry
-	for _, ag := range agents.GetAllAgents() {
-		agentManager.Register(ag.Name(), ag)
-		logger.Info("Agents", fmt.Sprintf("Registered agent: %s", ag.Name()))
+	// =========================
+	// Initialize Agent & Engine Registries
+	// =========================
+	core.InitializeAllAgents() // 71+ agents
+	engineRegistry := core.NewEngineRegistry(eventBus)
+	engineRegistry.RegisterAllEngines() // 42 engines
+
+	// =========================
+	// Boot Kernel
+	// =========================
+	if err := lifecycle.Boot(); err != nil {
+		logger.Fatal("Kernel", fmt.Sprintf("Boot failed: %v", err))
 	}
 
 	// =========================
-	// Initialize Engines
+	// Self-Learning Loop
 	// =========================
-	engineManager := engines.NewEngineManager()
-	for _, eng := range engines.GetAllEngines() {
-		engineManager.AddEngine(eng.Name(), eng)
-		logger.Info("Engines", fmt.Sprintf("Registered engine: %s", eng.Name()))
-	}
+	go func() {
+		logger.Info("SelfLearning", "Starting Self-Learning Loop")
+		for {
+			time.Sleep(30 * time.Second) // periodic evaluation
+			for _, agent := range core.GetAllAgents() {
+				if !agent.EvaluatePerformance() {
+					logger.Warn("SelfLearning", fmt.Sprintf("Agent %s underperforming, retraining...", agent.Name()))
+					agent.Learn()
+				}
+			}
+			for _, engine := range engineRegistry.GetAllEngines() {
+				if !engine.EvaluatePerformance() {
+					logger.Warn("SelfLearning", fmt.Sprintf("Engine %s underperforming, optimizing...", engine.Name()))
+					engine.Optimize()
+				}
+			}
+		}
+	}()
 
 	// =========================
-	// Initialize Health Monitoring
+	// Graceful Shutdown Handling
 	// =========================
-	healthManager := core.NewHealthManager()
-	for _, comp := range coreEngine.GetComponents() {
-		healthManager.RegisterComponent(comp)
-	}
-	healthManager.StartMonitoring()
-	logger.Info("Kernel", "Health monitoring started")
+	sigs := make(chan os.Signal, 1)
+	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
+
+	go func() {
+		<-sigs
+		logger.Info("Kernel", "Shutdown signal received")
+		engineRegistry.StopAllEngines()
+		core.StopAllAgents()
+		if err := lifecycle.Shutdown(); err != nil {
+			logger.Error("Kernel", fmt.Sprintf("Shutdown error: %v", err))
+		}
+		logger.Info("Kernel", "NeuroEdge Kernel stopped gracefully")
+		os.Exit(0)
+	}()
 
 	// =========================
-	// Start Everything
+	// Kernel is Running
 	// =========================
-	logger.Info("Kernel", "Starting engines...")
-	engineManager.StartAll()
+	logger.Info("Kernel", "🎯 NeuroEdge Kernel is running")
 
-	logger.Info("Kernel", "Starting agents...")
-	agentManager.StartAll()
-
-	coreEngine.Start()
-	logger.Info("Kernel", "Core engine running")
-
-	// =========================
-	// Demonstrate Mesh Communication
-	// =========================
-	meshManager.BroadcastMessage("Hello NeuroEdge Nodes!")
-	logger.Info("Mesh", "Broadcast message sent")
-
-	// =========================
-	// Keep the kernel running
-	// =========================
-	fmt.Println("🎯 NeuroEdge Kernel is fully operational")
-	select {} // block forever
+	// Keep main thread alive
+	select {}
 }
