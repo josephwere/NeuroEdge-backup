@@ -2,82 +2,53 @@ package mesh
 
 import (
 	"fmt"
-	"sync"
-	"time"
 )
 
-// MeshManager coordinates discovery, routing, messaging & security
+// MeshManager coordinates all mesh subsystems
 type MeshManager struct {
-	NodeID        string
-	Registry      *NodeRegistry
-	Routing       *RoutingTable
+	Discovery  *Discovery
+	Routing    *Routing
+	Messaging  *Messaging
+	Nodes      map[string]*Node
 	EncryptionKey []byte
-	mu            sync.Mutex
 }
 
-// NewMeshManager initializes the mesh controller
-func NewMeshManager(nodeID string, encryptionKey []byte) *MeshManager {
+// NewMeshManager creates a mesh manager instance
+func NewMeshManager(encryptionKey []byte) *MeshManager {
 	return &MeshManager{
-		NodeID:        nodeID,
-		Registry:      NewNodeRegistry(),
-		Routing:       NewRoutingTable(),
+		Discovery: NewDiscovery(),
+		Routing:   NewRouting(),
+		Messaging: NewMessaging(),
+		Nodes:     make(map[string]*Node),
 		EncryptionKey: encryptionKey,
 	}
 }
 
-// Start launches background services
-func (m *MeshManager) Start() {
-	fmt.Println("🌐 Mesh Manager started")
-
-	// Start heartbeat watcher
-	go m.Registry.HeartbeatChecker(15 * time.Second)
-
-	// Periodic self-advertisement
-	go func() {
-		for {
-			time.Sleep(10 * time.Second)
-			m.AdvertiseSelf()
-		}
-	}()
+// AddNode registers a node
+func (m *MeshManager) AddNode(node *Node) {
+	m.Discovery.RegisterNode(node)
+	m.Nodes[node.ID] = node
+	fmt.Printf("🌐 Node added: %s\n", node.ID)
 }
 
-// Advertise this node to the network
-func (m *MeshManager) AdvertiseSelf() {
-	node := &Node{
-		ID:         m.NodeID,
-		IP:         "127.0.0.1",
-		Port:       9000,
-		LastSeen:   time.Now(),
-		TrustScore: 100,
+// SendMessage sends encrypted message to a node
+func (m *MeshManager) SendMessage(nodeID string, message string) {
+	node, ok := m.Nodes[nodeID]
+	if !ok {
+		fmt.Printf("⚠️ Node not found: %s\n", nodeID)
+		return
 	}
-	m.Registry.RegisterNode(node)
-	fmt.Printf("[Mesh] Node %s advertised\n", m.NodeID)
-}
-
-// SendSecureMessage encrypts and sends a message
-func (m *MeshManager) SendSecureMessage(to string, payload string) error {
-	encrypted, err := Encrypt(m.EncryptionKey, payload)
+	cipherText, err := Encrypt([]byte(message), m.EncryptionKey)
 	if err != nil {
-		return err
+		fmt.Printf("❌ Encryption failed: %v\n", err)
+		return
 	}
-
-	msg := Message{
-		From:    m.NodeID,
-		To:      to,
-		Payload: string(encrypted),
-	}
-
-	SendMessage(msg)
-	return nil
+	m.Messaging.SendMessage(node, string(cipherText))
 }
 
-// ReceiveSecureMessage decrypts incoming message
-func (m *MeshManager) ReceiveSecureMessage(from string, encryptedPayload []byte) (string, error) {
-	msg, err := Decrypt(m.EncryptionKey, encryptedPayload)
-	if err != nil {
-		return "", err
+// BroadcastMessage sends a message to all active nodes
+func (m *MeshManager) BroadcastMessage(message string) {
+	for _, node := range m.Discovery.GetActiveNodes() {
+		m.SendMessage(node.ID, message)
 	}
-
-	fmt.Printf("[Mesh] Message received from %s: %s\n", from, msg)
-	return msg, nil
 }
