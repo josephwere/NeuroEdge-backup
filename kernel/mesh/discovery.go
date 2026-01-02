@@ -3,46 +3,61 @@ package mesh
 import (
 	"fmt"
 	"sync"
+	"time"
 )
 
-// Discovery handles finding new nodes and maintaining a registry
-type Discovery struct {
+type DiscoveryService struct {
 	nodes map[string]*Node
 	mu    sync.Mutex
 }
 
-// NewDiscovery creates a discovery instance
-func NewDiscovery() *Discovery {
-	return &Discovery{
+// NewDiscoveryService creates the discovery service
+func NewDiscoveryService() *DiscoveryService {
+	return &DiscoveryService{
 		nodes: make(map[string]*Node),
 	}
 }
 
-// RegisterNode adds a node to the mesh
-func (d *Discovery) RegisterNode(node *Node) {
+// RegisterNode adds a node to the discovery table
+func (d *DiscoveryService) RegisterNode(node *Node) {
 	d.mu.Lock()
 	defer d.mu.Unlock()
 	d.nodes[node.ID] = node
-	fmt.Printf("✅ Node registered: %s\n", node.ID)
+	fmt.Printf("[Discovery] Node %s registered\n", node.ID)
 }
 
-// RemoveNode removes a node from the mesh
-func (d *Discovery) RemoveNode(nodeID string) {
+// GetNode retrieves a node by ID
+func (d *DiscoveryService) GetNode(id string) (*Node, bool) {
 	d.mu.Lock()
 	defer d.mu.Unlock()
-	delete(d.nodes, nodeID)
-	fmt.Printf("🗑 Node removed: %s\n", nodeID)
+	node, ok := d.nodes[id]
+	return node, ok
 }
 
-// GetActiveNodes returns all currently active nodes
-func (d *Discovery) GetActiveNodes() []*Node {
+// ListNodes returns all registered nodes
+func (d *DiscoveryService) ListNodes() []*Node {
 	d.mu.Lock()
 	defer d.mu.Unlock()
-	var active []*Node
-	for _, n := range d.nodes {
-		if n.IsActive {
-			active = append(active, n)
-		}
+	list := []*Node{}
+	for _, node := range d.nodes {
+		list = append(list, node)
 	}
-	return active
+	return list
+}
+
+// HeartbeatChecker checks node health periodically
+func (d *DiscoveryService) HeartbeatChecker(interval time.Duration) {
+	go func() {
+		for {
+			time.Sleep(interval)
+			d.mu.Lock()
+			for id, node := range d.nodes {
+				if time.Since(node.LastSeen) > 30*time.Second {
+					node.SetOffline()
+					fmt.Printf("[Discovery] Node %s marked offline\n", id)
+				}
+			}
+			d.mu.Unlock()
+		}
+	}()
 }
