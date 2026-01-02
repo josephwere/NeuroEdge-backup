@@ -1,13 +1,15 @@
 package config
 
-// ConfigSchema defines all configurable parameters for NeuroEdge Kernel
-type ConfigSchema struct {
-	Environment   string `json:"environment"`   // "dev", "staging", "prod"
-	LogLevel      string `json:"log_level"`     // "DEBUG", "INFO", "WARN", "ERROR", "FATAL"
-	LogFile       string `json:"log_file"`      // path to log file
-	EventBusType  string `json:"event_bus"`     // "kafka", "redis", "nats"
-	EnableMesh    bool   `json:"enable_mesh"`   // Enable edge mesh
-	MaxWorkers    int    `json:"max_workers"`   // Number of concurrent tasks
-	EnableTelemetry bool `json:"enable_telemetry"` // Remote telemetry
-	FeatureFlags  map[string]bool `json:"feature_flags"` // Optional features
+// KernelConfig holds all core configuration for NeuroEdge
+type KernelConfig struct {
+	Environment   string `json:"environment"`   // dev / staging / prod
+	LogLevel      string `json:"log_level"`     // debug, info, warn, error
+	LogFilePath   string `json:"log_file_path"` // path to store logs
+	MaxAgents     int    `json:"max_agents"`    // maximum registered agents
+	MaxEngines    int    `json:"max_engines"`   // maximum registered engines
+	EnableMesh    bool   `json:"enable_mesh"`   // enable mesh networking
+	EnableTelemetry bool `json:"enable_telemetry"` // send logs to remote
+	DatabaseURL   string `json:"database_url"`  // for any storage
+	WalletEnabled bool   `json:"wallet_enabled"`// WDC wallet
+	OfflineMode   bool   `json:"offline_mode"`  // fallback offline
 }
