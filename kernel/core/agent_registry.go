@@ -10,10 +10,12 @@ import (
 // AgentInterface defines required methods for all agents
 type AgentInterface interface {
 	Name() string
-	Initialize() error          // Initialize agent resources
-	Start()                     // Start agent processes or listeners
-	Stop()                      // Stop agent processes
-	HandleEvent(event string, payload map[string]interface{}) error // Event handling
+	Initialize() error
+	Start()
+	Stop()
+	HandleEvent(event string, payload map[string]interface{}) error
+	EvaluatePerformance() bool  // For Self-Learning Loop
+	Learn()                     // Retrain / adapt
 }
 
 // Global agent registry (thread-safe)
@@ -66,6 +68,17 @@ func StopAllAgents() {
 		agent.Stop()
 		fmt.Printf("[AgentRegistry] Stopped agent: %s\n", name)
 	}
+}
+
+// GetAllAgents returns all registered agents
+func GetAllAgents() []AgentInterface {
+	AgentRegistry.RLock()
+	defer AgentRegistry.RUnlock()
+	all := make([]AgentInterface, 0, len(AgentRegistry.agents))
+	for _, a := range AgentRegistry.agents {
+		all = append(all, a)
+	}
+	return all
 }
 
 // InitializeAllAgents registers all 71+ NeuroEdge agents
