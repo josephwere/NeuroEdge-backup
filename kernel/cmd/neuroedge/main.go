@@ -2,13 +2,9 @@ package main
 
 import (
 	"fmt"
+	"neuroedge/kernel/agents"
 	"neuroedge/kernel/core"
-	"neuroedge/kernel/core/cognition"
-	"neuroedge/kernel/core/ethics"
-	"neuroedge/kernel/core/engine"
-	"neuroedge/kernel/core/memory"
-	"neuroedge/kernel/core/scheduler"
-	"neuroedge/kernel/events"
+	"neuroedge/kernel/engines"
 )
 
 func main() {
@@ -17,40 +13,74 @@ func main() {
 	// =========================
 	// Initialize Core Systems
 	// =========================
-	eventBus := events.NewEventBus()
+	eventBus := core.NewEventBus()
 	fmt.Println("✅ Event bus initialized")
 
-	mem := memory.NewMemory()
+	mem := core.NewMemory()
 	fmt.Println("✅ Memory system initialized")
 
-	ethicsEngine := ethics.NewEthics()
-	fmt.Println("✅ Ethics engine initialized")
+	lc := core.NewLifecycleController()
+	fmt.Println("✅ Lifecycle controller initialized")
 
-	cognitionEngine := cognition.NewCognition()
-	fmt.Println("✅ Cognition engine initialized")
+	health := core.NewHealthManager()
+	fmt.Println("✅ Health manager initialized")
 
-	schedulerEngine := scheduler.NewScheduler(eventBus)
-	fmt.Println("✅ Scheduler initialized")
-
-	coreEngine := engine.NewEngine(eventBus, mem, ethicsEngine, cognitionEngine, schedulerEngine)
-	fmt.Println("✅ Core engine initialized")
+	logger := core.NewLogger(core.INFO, "neuroedge.log")
+	fmt.Println("✅ Logger initialized")
 
 	// =========================
-	// Initialize Registries
+	// Initialize Python Client (ML Orchestrator)
 	// =========================
-	core.InitAgentRegistry(eventBus)   // Registers all 71+ agents automatically
-	fmt.Println("✅ All agents registered via AgentRegistry")
+	pythonClient, err := core.NewPythonClient("localhost:50051")
+	if err != nil {
+		fmt.Printf("❌ Failed to connect to Python orchestrator: %v\n", err)
+		return
+	}
+	defer pythonClient.Close()
+	fmt.Println("✅ Python ML Orchestrator client connected")
 
-	core.InitEngineRegistry()          // Registers all 42+ engines automatically
-	fmt.Println("✅ All engines registered via EngineRegistry")
+	// =========================
+	// Initialize Agents
+	// =========================
+	agentManager := agents.NewManager(eventBus)
+	fmt.Println("✅ Agent manager initialized")
+
+	globalMeshAgent := agents.NewGlobalMeshAgent(eventBus)
+	agentManager.Register(globalMeshAgent.Name(), globalMeshAgent)
+
+	// Register other agents...
+	// agentManager.Register(...)
+
+	// =========================
+	// Initialize Engines
+	// =========================
+	engineManager := engines.NewEngineManager()
+	neuroLogicEngine := engines.NewNeuroLogicEngine()
+	engineManager.AddEngine(neuroLogicEngine.Name(), neuroLogicEngine)
+
+	// Register other engines...
+	// engineManager.AddEngine(...)
 
 	// =========================
 	// Start Everything
 	// =========================
-	core.StartAllEngines()
-	core.StartAllAgents()
-	coreEngine.Start()
+	engineManager.StartAll()
+	agentManager.StartAll()
+	lc.Boot()
+
 	fmt.Println("🎯 NeuroEdge Kernel is running...")
+
+	// =========================
+	// Example: Dispatch task to Python ML
+	// =========================
+	eventBus.Subscribe("ml:run", func(event string, payload interface{}) {
+		task := payload.(map[string]interface{})
+		engineName := task["engine"].(string)
+		taskID := task["id"].(string)
+		input := task["input"]
+
+		go pythonClient.SubmitTask(engineName, taskID, input)
+	})
 
 	// Keep the program running
 	select {}
