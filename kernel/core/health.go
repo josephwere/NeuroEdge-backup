@@ -2,100 +2,120 @@ package core
 
 import (
 	"fmt"
+	"log"
+	"runtime"
 	"sync"
 	"time"
+
+	"neuroedge/kernel/core/contracts"
 )
 
-// HealthStatus represents a component's health state
+// HealthStatus represents the health state of a component
 type HealthStatus struct {
-	Component string
-	Healthy   bool
-	Message   string
-	LastCheck time.Time
+	Name       string
+	Healthy    bool
+	LastCheck  time.Time
+	LastError  error
+	Additional string
 }
 
-// HealthMonitor manages health checks for all components
-type HealthMonitor struct {
+// HealthManager monitors and checks the health of components
+type HealthManager struct {
+	components []contracts.HealthCheck
+	statuses   map[string]*HealthStatus
 	mu         sync.Mutex
-	components map[string]*HealthStatus
-	tickers    map[string]*time.Ticker
+	ticker     *time.Ticker
+	stopChan   chan bool
 }
 
-// NewHealthMonitor initializes the monitor
-func NewHealthMonitor() *HealthMonitor {
-	return &HealthMonitor{
-		components: make(map[string]*HealthStatus),
-		tickers:    make(map[string]*time.Ticker),
+// NewHealthManager creates a new health manager
+func NewHealthManager() *HealthManager {
+	return &HealthManager{
+		components: make([]contracts.HealthCheck, 0),
+		statuses:   make(map[string]*HealthStatus),
+		ticker:     time.NewTicker(10 * time.Second), // default check interval
+		stopChan:   make(chan bool),
 	}
 }
 
-// RegisterComponent adds a component to monitor
-func (hm *HealthMonitor) RegisterComponent(name string) {
+// RegisterComponent adds a component for health monitoring
+func (hm *HealthManager) RegisterComponent(c contracts.HealthCheck) {
 	hm.mu.Lock()
 	defer hm.mu.Unlock()
-	hm.components[name] = &HealthStatus{
-		Component: name,
-		Healthy:   true,
-		Message:   "Registered",
-		LastCheck: time.Now(),
-	}
-	fmt.Println("[HealthMonitor] Component registered:", name)
+	hm.components = append(hm.components, c)
+	hm.statuses[c.Name()] = &HealthStatus{Name: c.Name(), Healthy: false, LastCheck: time.Now()}
 }
 
-// UpdateStatus updates the health of a component
-func (hm *HealthMonitor) UpdateStatus(name string, healthy bool, message string) {
-	hm.mu.Lock()
-	defer hm.mu.Unlock()
-	if comp, exists := hm.components[name]; exists {
-		comp.Healthy = healthy
-		comp.Message = message
-		comp.LastCheck = time.Now()
-		fmt.Printf("[HealthMonitor] %s status updated: %v (%s)\n", name, healthy, message)
-	}
-}
-
-// StartHeartbeat starts periodic health checks for a component
-func (hm *HealthMonitor) StartHeartbeat(name string, interval time.Duration, checkFunc func() bool) {
-	hm.mu.Lock()
-	if _, exists := hm.tickers[name]; exists {
-		hm.mu.Unlock()
-		return
-	}
-	ticker := time.NewTicker(interval)
-	hm.tickers[name] = ticker
-	hm.mu.Unlock()
-
+// StartMonitoring begins periodic health checks
+func (hm *HealthManager) StartMonitoring() {
+	fmt.Println("🩺 Health Monitoring Started")
 	go func() {
-		for range ticker.C {
-			status := checkFunc()
-			message := "OK"
-			if !status {
-				message = "Issue detected"
+		for {
+			select {
+			case <-hm.ticker.C:
+				hm.runChecks()
+			case <-hm.stopChan:
+				fmt.Println("🛑 Health Monitoring Stopped")
+				return
 			}
-			hm.UpdateStatus(name, status, message)
 		}
 	}()
 }
 
-// GetStatus retrieves current health status of all components
-func (hm *HealthMonitor) GetStatus() []HealthStatus {
-	hm.mu.Lock()
-	defer hm.mu.Unlock()
-	statuses := []HealthStatus{}
-	for _, comp := range hm.components {
-		statuses = append(statuses, *comp)
-	}
-	return statuses
+// StopMonitoring stops the periodic health checks
+func (hm *HealthManager) StopMonitoring() {
+	hm.stopChan <- true
+	hm.ticker.Stop()
 }
 
-// PrintStatus prints a snapshot of all component health
-func (hm *HealthMonitor) PrintStatus() {
+// runChecks performs health checks on all registered components
+func (hm *HealthManager) runChecks() {
 	hm.mu.Lock()
 	defer hm.mu.Unlock()
-	fmt.Println("=== Health Monitor Snapshot ===")
+
 	for _, comp := range hm.components {
-		fmt.Printf("[%s] Healthy: %v | LastCheck: %s | Message: %s\n",
-			comp.Component, comp.Healthy, comp.LastCheck.Format(time.RFC3339), comp.Message)
+		func(c contracts.HealthCheck) {
+			defer func() {
+				if r := recover(); r != nil {
+					log.Printf("⚠️ Panic recovered from component %s: %v", c.Name(), r)
+					hm.statuses[c.Name()].Healthy = false
+					hm.statuses[c.Name()].LastError = fmt.Errorf("panic: %v", r)
+				}
+			}()
+
+			err := c.CheckHealth()
+			status := hm.statuses[c.Name()]
+			status.LastCheck = time.Now()
+			if err != nil {
+				status.Healthy = false
+				status.LastError = err
+				log.Printf("⚠️ Component %s unhealthy: %v", c.Name(), err)
+			} else {
+				status.Healthy = true
+				status.LastError = nil
+			}
+		}(comp)
 	}
-	fmt.Println("===============================")
+
+	hm.printSummary()
+}
+
+// printSummary outputs a structured health report
+func (hm *HealthManager) printSummary() {
+	fmt.Println("📊 Kernel Health Summary:")
+	for _, status := range hm.statuses {
+		healthStr := "✅ Healthy"
+		if !status.Healthy {
+			healthStr = fmt.Sprintf("⚠️ Unhealthy (last error: %v)", status.LastError)
+		}
+		fmt.Printf("[%s] %s (Last checked: %s)\n", status.Name, healthStr, status.LastCheck.Format(time.RFC3339))
+	}
+}
+
+// CheckKernelResources performs lightweight system-level diagnostics
+func CheckKernelResources() {
+	var m runtime.MemStats
+	runtime.ReadMemStats(&m)
+	fmt.Printf("💾 Memory Usage: Alloc=%vKB TotalAlloc=%vKB Sys=%vKB NumGC=%v\n",
+		m.Alloc/1024, m.TotalAlloc/1024, m.Sys/1024, m.NumGC)
 }
