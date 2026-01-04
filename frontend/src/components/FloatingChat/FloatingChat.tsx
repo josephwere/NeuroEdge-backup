@@ -50,6 +50,17 @@ const FloatingChat: React.FC = () => {
   const sendCommand = async () => {
     if (!input) return;
     setMessages([...messages, `💻 You: ${input}`]);
+    
+    useEffect(() => {
+  // Approval requests from ML
+  eventBus.subscribe("floating_chat:approval_request", (msg: string) => {
+    setMessages((msgs) => [...msgs, `[Approval Needed] ${msg}`]);
+  });
+}, []);
+
+const approveProposal = (id: string, approved: boolean) => {
+  eventBus.emit("floating_chat:user_approval", { id, approved });
+};
 
     // Emit execution request to orchestrator/backend
     const req = { id: Date.now().toString(), command: input };
