@@ -21,24 +21,21 @@ export class FloatingChat {
         this.addLog(`> ${command}`);
         this.input.value = "";
 
-        // Send to orchestrator for ML + kernel reasoning
-        const response = await this.orchestrator.sendCommand(command);
-        // Inside event handler for input
-const response = await this.orchestrator.sendCommand(command);
+        try {
+          const response = await this.orchestrator.sendCommand(command);
 
-// Live stream logs
-if (response.execution) {
-  response.execution.split("\n").forEach((line) => this.addLog(line));
-}
+          // Show ML reasoning
+          if (response.reasoning) {
+            this.addLog("🧠 ML: " + response.reasoning);
+          }
 
-// Show ML reasoning
-if (response.reasoning) {
-  this.addLog("🧠 ML: " + response.reasoning);
-}
-
-        // Display ML reasoning + execution logs
-        this.addLog(response.reasoning);
-        this.addLog(response.execution);
+          // Live stream execution logs
+          if (response.execution) {
+            response.execution.split("\n").forEach((line) => this.addLog(line));
+          }
+        } catch (err: any) {
+          this.addLog(`❌ Error: ${err.message || err}`);
+        }
       }
     });
   }
@@ -49,4 +46,4 @@ if (response.reasoning) {
     this.logArea.appendChild(p);
     this.logArea.scrollTop = this.logArea.scrollHeight;
   }
-}
+          }
