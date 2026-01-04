@@ -1,58 +1,66 @@
+// orchestrator/agents/floating_chat_agent.ts
 import { EventBus } from "../core/event_bus";
 import { Logger } from "../utils/logger";
-import { ExecutionIntent } from "../core/intent";
+import { DevExecutionAgent } from "./dev_execution_agent";
+import { NodeManager, MeshNode } from "../mesh/node_manager";
+import { MeshExecutor } from "../mesh/mesh_executor";
+import { PermissionManager } from "../utils/permissions";
 
 export class FloatingChatAgent {
+  private eventBus: EventBus;
+  private logger: Logger;
+  private devAgent: DevExecutionAgent;
+  private meshExecutor: MeshExecutor;
+  private nodeManager: NodeManager;
+  private permissions: PermissionManager;
+
   constructor(
-    private bus: EventBus,
-    private logger: Logger
-  ) {}
+    eventBus: EventBus,
+    logger: Logger,
+    devAgent: DevExecutionAgent,
+    nodeManager: NodeManager,
+    meshExecutor: MeshExecutor,
+    permissions: PermissionManager
+  ) {
+    this.eventBus = eventBus;
+    this.logger = logger;
+    this.devAgent = devAgent;
+    this.nodeManager = nodeManager;
+    this.meshExecutor = meshExecutor;
+    this.permissions = permissions;
+  }
 
   name(): string {
     return "FloatingChatAgent";
   }
 
   start(): void {
-    this.logger.info(this.name(), "Floating Chat Agent started");
+    this.logger.info(this.name(), "Started");
 
-    // Listen for ML intents
-    this.bus.subscribe("ml:intent_proposed", (intent: ExecutionIntent) => {
-      this.presentIntent(intent);
-    });
-
-    // Listen for execution results
-    this.bus.subscribe("dev:result", (result: any) => {
-      this.displayExecutionResult(result);
+    // Listen for commands from user / ML
+    this.eventBus.subscribe("chat:command", async (payload: any) => {
+      await this.handleCommand(payload.command, payload.context);
     });
   }
 
-  private presentIntent(intent: ExecutionIntent) {
-    this.logger.info(
-      this.name(),
-      `Intent proposed: ${intent.command} (${intent.riskLevel})`
-    );
+  private async handleCommand(command: string, context?: string) {
+    this.logger.info(this.name(), `Received command: ${command}`);
 
-    // Send to UI layer (floating window)
-    this.bus.emit("ui:floating:show_intent", {
-      id: intent.id,
-      command: intent.command,
-      args: intent.args,
-      reason: intent.reason,
-      risk: intent.riskLevel
-    });
-  }
-
-  approveIntent(intentId: string) {
-    this.logger.info(this.name(), `Intent approved: ${intentId}`);
-    this.bus.emit("intent:approved", intentId);
-  }
-
-  rejectIntent(intentId: string) {
-    this.logger.warn(this.name(), `Intent rejected: ${intentId}`);
-    this.bus.emit("intent:rejected", intentId);
-  }
-
-  private displayExecutionResult(result: any) {
-    this.bus.emit("ui:floating:execution_result", result);
-  }
+    // Run locally first if allowed
+    if (this.permissions.requestApproval({ command })) {
+      this.logger.info(this.name(), `Executing locally: ${command}`);
+      this.eventBus.emit("dev:execute", { id: Date.now(), command });
+    } else {
+      this.logger.warn(this.name(), `Local execution blocked: ${command}`);
     }
+
+    // Broadcast to remote nodes
+    const onlineNodes: MeshNode[] = this.nodeManager.getOnlineNodes();
+    if (onlineNodes.length > 0) {
+      this.logger.info(this.name(), `Broadcasting command to ${onlineNodes.length} nodes`);
+      await this.meshExecutor.broadcastCommand(command, context);
+    } else {
+      this.logger.info(this.name(), "No online mesh nodes available");
+    }
+  }
+                            }
