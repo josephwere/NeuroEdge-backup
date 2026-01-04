@@ -1,19 +1,33 @@
-import { RemoteExecutionRequest } from "./remote_capability";
 import { EventBus } from "../core/event_bus";
+import { Logger } from "../utils/logger";
+import { DevExecutionAgent } from "../agents/dev_execution_agent";
+import { NodeRegistry } from "./node_registry";
 
 export class RemoteExecutor {
-  constructor(private bus: EventBus) {}
+  private eventBus: EventBus;
+  private logger: Logger;
+  private executor: DevExecutionAgent;
+  private nodes: NodeRegistry;
 
-  execute(request: RemoteExecutionRequest) {
-    console.log(`[RemoteExecutor] Sending to node: ${request.targetNode}`);
-    // For simulation, we just emit locally
-    this.bus.emit("remote:execution:received", request);
+  constructor(eventBus: EventBus, logger: Logger, executor: DevExecutionAgent, nodes: NodeRegistry) {
+    this.eventBus = eventBus;
+    this.logger = logger;
+    this.executor = executor;
+    this.nodes = nodes;
+
+    this.start();
   }
 
-  receive() {
-    this.bus.subscribe("remote:execution:received", (req: RemoteExecutionRequest) => {
-      console.log(`[RemoteExecutor] Received at node: ${req.targetNode}`);
-      // Actual execution logic would validate capability and run payload safely
+  start() {
+    this.eventBus.subscribe("mesh:remote_execute", async ({ nodeId, command, args }) => {
+      if (this.nodes.isLocal(nodeId)) {
+        this.logger.info("RemoteExecutor", `Executing locally: ${command}`);
+        await this.executor.handleExecution({ id: Date.now().toString(), command, args });
+      } else {
+        const remoteNode = this.nodes.getNode(nodeId);
+        this.logger.info("RemoteExecutor", `Forwarding command to node ${nodeId}`);
+        await remoteNode.sendCommand({ command, args, origin: "floating_chat" });
+      }
     });
   }
 }
