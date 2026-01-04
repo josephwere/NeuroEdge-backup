@@ -1,23 +1,28 @@
 import { ExecutionRequest } from "../types/execution";
 
 export class PermissionManager {
-  private approvedSessions: Set<string> = new Set();
+  private approvedIds = new Set<string>();
 
+  // Validate if execution is allowed
+  validate(req: ExecutionRequest): boolean {
+    return this.approvedIds.has(req.id);
+  }
+
+  // Approve intent (called by floating chat UI)
+  approve(id: string) {
+    this.approvedIds.add(id);
+    console.log(`✅ Permission granted for execution ID: ${id}`);
+  }
+
+  // Optionally revoke
+  revoke(id: string) {
+    this.approvedIds.delete(id);
+    console.log(`⚠️ Permission revoked for execution ID: ${id}`);
+  }
+
+  // Request approval hook (could notify UI)
   requestApproval(req: ExecutionRequest): boolean {
-    if (!req.requiresApproval) return true;
-
-    // In future: UI popup / floating chat approval
-    console.warn("⚠️ EXECUTION APPROVAL REQUIRED");
-    console.warn(`Command: ${req.command} ${req.args?.join(" ") || ""}`);
-
-    return false; // default deny
-  }
-
-  approve(sessionId: string) {
-    this.approvedSessions.add(sessionId);
-  }
-
-  isApproved(sessionId: string): boolean {
-    return this.approvedSessions.has(sessionId);
+    console.log(`📝 Requesting approval for: ${req.command}`);
+    return this.validate(req);
   }
 }
