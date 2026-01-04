@@ -1,3 +1,5 @@
+// orchestrator/agents/floating_chat_agent.ts
+
 import { OrchestratorAgent } from "../core/agent_manager";
 import { EventBus } from "../core/event_bus";
 import { Logger } from "../utils/logger";
@@ -11,7 +13,12 @@ export class FloatingChatAgent implements OrchestratorAgent {
   private mesh: MeshManager;
   private ml: MLOrchestrator;
 
-  constructor(eventBus: EventBus, logger: Logger, mesh: MeshManager, ml: MLOrchestrator) {
+  constructor(
+    eventBus: EventBus,
+    logger: Logger,
+    mesh: MeshManager,
+    ml: MLOrchestrator
+  ) {
     this.eventBus = eventBus;
     this.logger = logger;
     this.mesh = mesh;
@@ -26,14 +33,20 @@ export class FloatingChatAgent implements OrchestratorAgent {
     this.logger.info(this.name(), "Floating Chat started");
 
     // Local execution request
-    this.eventBus.subscribe("dev:execute", async (req: ExecutionRequest) => {
-      await this.handleExecution(req, false);
-    });
+    this.eventBus.subscribe(
+      "dev:execute",
+      async (req: ExecutionRequest) => {
+        await this.handleExecution(req, false);
+      }
+    );
 
     // Remote execution request
-    this.eventBus.subscribe("dev:execute_remote", async (req: ExecutionRequest & { nodeId: string }) => {
-      await this.handleExecution(req, true);
-    });
+    this.eventBus.subscribe(
+      "dev:execute_remote",
+      async (req: ExecutionRequest & { nodeId: string }) => {
+        await this.handleExecution(req, true);
+      }
+    );
   }
 
   private async handleExecution(req: ExecutionRequest, remote: boolean) {
@@ -53,7 +66,6 @@ export class FloatingChatAgent implements OrchestratorAgent {
     if (remote) {
       result = await this.mesh.dispatchCommand(req.nodeId, req.command, req.args);
     } else {
-      const execAgent = this.eventBus; // local executor
       this.logger.info(this.name(), `Executing locally: ${req.command}`);
       // Local execution logic (reuse DevExecutionAgent)
       this.eventBus.emit("dev:execute", req);
@@ -73,9 +85,9 @@ export class FloatingChatAgent implements OrchestratorAgent {
   }
 
   private async approveExecution(req: ExecutionRequest, mlPlan: string): Promise<boolean> {
-    // Simple approval logic: here we can integrate user UI or automated policy
+    // Simple approval logic: integrate UI or automated policy here
     this.logger.info(this.name(), `Approval requested for: ${req.command}`);
-    // For demo, auto-approve
+    // Auto-approve for now
     return true;
   }
-}
+      }
