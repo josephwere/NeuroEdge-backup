@@ -1,53 +1,61 @@
-import { EventBus } from "../core/event_bus";
+import WebSocket from "ws";
 import { Logger } from "../utils/logger";
-import { MeshNode } from "./mesh_node";
+import { EventBus } from "../core/event_bus";
+
+export interface Node {
+  id: string;
+  address: string; // ws://node-address:port
+}
 
 export class MeshManager {
-  private nodes: Map<string, MeshNode>;
-  private eventBus: EventBus;
+  private nodes: Node[];
   private logger: Logger;
+  private eventBus: EventBus;
 
-  constructor(eventBus: EventBus, logger: Logger) {
-    this.nodes = new Map();
-    this.eventBus = eventBus;
+  constructor(nodes: Node[], logger: Logger, eventBus: EventBus) {
+    this.nodes = nodes;
     this.logger = logger;
+    this.eventBus = eventBus;
+
+    this.eventBus.subscribe("mesh:execute", async (payload) => {
+      await this.executeOnNode(payload.command, payload.nodeId);
+    });
   }
 
-  // Register a remote node
-  registerNode(node: MeshNode) {
-    this.nodes.set(node.id, node);
-    this.logger.info("MeshManager", `Node registered: ${node.id} @ ${node.address}`);
-  }
+  private async executeOnNode(command: string, nodeId?: string) {
+    const target = nodeId
+      ? this.nodes.find((n) => n.id === nodeId)
+      : this.nodes[Math.floor(Math.random() * this.nodes.length)];
 
-  // Discover active nodes
-  discoverNodes(): MeshNode[] {
-    const activeNodes = Array.from(this.nodes.values()).filter(n => n.isActive());
-    this.logger.info("MeshManager", `Discovered ${activeNodes.length} active nodes`);
-    return activeNodes;
-  }
-
-  // Dispatch command to a node
-  async dispatchCommand(nodeId: string, command: string, args: string[] = []) {
-    const node = this.nodes.get(nodeId);
-    if (!node) {
-      this.logger.warn("MeshManager", `Node ${nodeId} not found`);
-      return { success: false, error: "Node not found" };
+    if (!target) {
+      this.logger.error("MeshManager", "No node available for execution");
+      return;
     }
-    this.logger.info("MeshManager", `Dispatching command to node ${nodeId}: ${command}`);
-    try {
-      const result = await node.execute(command, args);
-      return result;
-    } catch (err: any) {
-      return { success: false, error: err.message };
-    }
-  }
 
-  // Broadcast command to all nodes
-  async broadcastCommand(command: string, args: string[] = []) {
-    const results: Record<string, any> = {};
-    for (const [id, node] of this.nodes.entries()) {
-      results[id] = await this.dispatchCommand(id, command, args);
-    }
-    return results;
+    this.logger.info(
+      "MeshManager",
+      `Sending command to node ${target.id}: ${command}`
+    );
+
+    const ws = new WebSocket(target.address);
+
+    ws.on("open", () => {
+      ws.send(JSON.stringify({ type: "mesh:execute", command }));
+    });
+
+    ws.on("message", (data) => {
+      const msg = JSON.parse(data.toString());
+      if (msg.type === "mesh:result") {
+        this.logger.info(
+          "MeshManager",
+          `Node ${target.id} result: ${msg.stdout}`
+        );
+        this.eventBus.emit("floating:log", msg); // streaming logs to Floating Chat
+      }
+    });
+
+    ws.on("error", (err) => {
+      this.logger.error("MeshManager", `Node ${target.id} error: ${err}`);
+    });
   }
-}
+          }
