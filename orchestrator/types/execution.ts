@@ -3,7 +3,6 @@ export interface ExecutionRequest {
   command: string;
   args?: string[];
   cwd?: string;
-  requiresApproval?: boolean; // optional, default true if missing
 }
 
 export interface ExecutionResult {
