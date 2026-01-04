@@ -1,15 +1,21 @@
-type Callback = (payload: any) => void;
+type EventCallback = (payload: any) => void;
 
 export class EventBus {
-  private subscribers: Record<string, Callback[]> = {};
+  private listeners: Map<string, EventCallback[]> = new Map();
 
-  subscribe(event: string, cb: Callback) {
-    if (!this.subscribers[event]) this.subscribers[event] = [];
-    this.subscribers[event].push(cb);
+  subscribe(event: string, callback: EventCallback) {
+    if (!this.listeners.has(event)) this.listeners.set(event, []);
+    this.listeners.get(event)!.push(callback);
   }
 
-  emit(event: string, payload: any) {
-    if (!this.subscribers[event]) return;
-    for (const cb of this.subscribers[event]) cb(payload);
+  emit(event: string, payload?: any) {
+    const callbacks = this.listeners.get(event) || [];
+    callbacks.forEach((cb) => cb(payload));
+  }
+
+  unsubscribe(event: string, callback: EventCallback) {
+    if (!this.listeners.has(event)) return;
+    const filtered = this.listeners.get(event)!.filter((cb) => cb !== callback);
+    this.listeners.set(event, filtered);
   }
 }
