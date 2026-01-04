@@ -42,6 +42,13 @@ export class FloatingChatAgent {
       await this.handleCommand(payload.command, payload.context);
     });
   }
+  // (add method)
+async requestApproval(proposal: any): Promise<boolean> {
+  // In final UI, you would show the command + reason + context to user
+  this.logger.info(this.name(), `Requesting approval for ML command: ${proposal.command}`);
+  // For now auto-approve (can later integrate with UI prompt)
+  return true;
+}
 
   private async handleCommand(command: string, context?: string) {
     this.logger.info(this.name(), `Received command: ${command}`);
