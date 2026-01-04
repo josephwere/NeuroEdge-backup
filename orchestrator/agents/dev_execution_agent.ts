@@ -1,23 +1,23 @@
 import { OrchestratorAgent } from "../core/agent_manager";
 import { EventBus } from "../core/event_bus";
 import { Logger } from "../utils/logger";
-import { PermissionManager } from "../utils/permissions";
 import { runCommand } from "../utils/shell";
-import { ExecutionRequest, ExecutionResult } from "../types/execution";
+
+import { SecureExecutionRequest, ExecutionResult } from "../types/execution";
+import { KernelVerifier } from "../security/verifier";
+import { ApprovalController } from "../floating/approval_controller";
 
 export class DevExecutionAgent implements OrchestratorAgent {
-  private eventBus: EventBus;
-  private logger: Logger;
-  private permissions: PermissionManager;
+  private verifier: KernelVerifier;
+  private approval: ApprovalController;
 
   constructor(
-    eventBus: EventBus,
-    logger: Logger,
-    permissions: PermissionManager
+    private eventBus: EventBus,
+    private logger: Logger,
+    kernelPublicKey: string
   ) {
-    this.eventBus = eventBus;
-    this.logger = logger;
-    this.permissions = permissions;
+    this.verifier = new KernelVerifier(kernelPublicKey);
+    this.approval = new ApprovalController(eventBus, logger);
   }
 
   name(): string {
@@ -26,32 +26,42 @@ export class DevExecutionAgent implements OrchestratorAgent {
 
   start(): void {
     this.logger.info(this.name(), "Started");
+    this.approval.start();
 
     this.eventBus.subscribe(
       "dev:execute",
-      async (req: ExecutionRequest) => {
+      async (req: SecureExecutionRequest) => {
         await this.handleExecution(req);
       }
     );
   }
 
-  private async handleExecution(req: ExecutionRequest) {
-    if (!this.permissions.requestApproval(req)) {
-      this.logger.warn(this.name(), "Execution blocked pending approval");
+  private async handleExecution(req: SecureExecutionRequest) {
+    // 1️⃣ Verify kernel authority
+    if (!this.verifier.verify(req.capability)) {
+      this.logger.error(this.name(), "Invalid or expired kernel capability");
       return;
     }
 
+    // 2️⃣ Request human approval (Floating Chat)
+    const approved = await this.approval.requestApproval(
+      req.id,
+      `${req.command} ${req.args?.join(" ") || ""}`
+    );
+
+    if (!approved) {
+      this.logger.warn(this.name(), "Execution denied by user");
+      return;
+    }
+
+    // 3️⃣ Execute
     this.logger.info(
       this.name(),
       `Executing: ${req.command} ${req.args?.join(" ") || ""}`
     );
 
     try {
-      const result = await runCommand(
-        req.command,
-        req.args,
-        req.cwd
-      );
+      const result = await runCommand(req.command, req.args, req.cwd);
 
       const response: ExecutionResult = {
         id: req.id,
@@ -72,4 +82,4 @@ export class DevExecutionAgent implements OrchestratorAgent {
       this.eventBus.emit("dev:result", response);
     }
   }
-        }
+  }
