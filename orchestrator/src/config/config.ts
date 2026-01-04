@@ -1,0 +1,15 @@
+export interface OrchestratorConfig {
+  port: number;
+  kernelUrl: string;
+  mlUrl: string;
+  logLevel: "debug" | "info" | "warn" | "error";
+}
+
+export function loadConfig(): OrchestratorConfig {
+  return {
+    port: Number(process.env.PORT) || 7070,
+    kernelUrl: process.env.KERNEL_URL || "http://localhost:6060",
+    mlUrl: process.env.ML_URL || "http://localhost:8080",
+    logLevel: (process.env.LOG_LEVEL as any) || "info"
+  };
+}
