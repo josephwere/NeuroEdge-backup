@@ -42,6 +42,13 @@ export class FloatingChatAgent {
       await this.handleCommand(payload.command, payload.context);
     });
   }
+  //  (partial)
+async handleAnalysisOutput(output: string, autoFix: boolean = true) {
+  this.logger.info(this.name(), `Analysis output: ${output}`);
+  if (autoFix) {
+    await this.executor.handleExecution({ id: Date.now().toString(), command: output });
+  }
+}
   // (add method)
 async requestApproval(proposal: any): Promise<boolean> {
   // In final UI, you would show the command + reason + context to user
