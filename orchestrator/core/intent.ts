@@ -1,11 +1,8 @@
 export interface ExecutionIntent {
   id: string;
-  proposedBy: "ml" | "human";
   command: string;
   args?: string[];
-  cwd?: string;
-
-  reason: string;        // WHY this is needed
+  reason: string;
   riskLevel: "low" | "medium" | "high";
   affectsSystem: boolean;
 }
