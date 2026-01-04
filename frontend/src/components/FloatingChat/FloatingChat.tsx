@@ -14,9 +14,15 @@ interface FixSuggestion {
   fixPlan: string;
 }
 
+interface ApprovalRequest {
+  id: string;
+  message: string;
+}
+
 const FloatingChat: React.FC = () => {
   const [messages, setMessages] = useState<string[]>([]);
   const [input, setInput] = useState("");
+  const [pendingApprovals, setPendingApprovals] = useState<ApprovalRequest[]>([]);
   const messageEndRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {
@@ -25,42 +31,39 @@ const FloatingChat: React.FC = () => {
 
   useEffect(() => {
     scrollToBottom();
-  }, [messages]);
+  }, [messages, pendingApprovals]);
 
+  // --- Subscriptions ---
   useEffect(() => {
-    // Listen for execution results
-    eventBus.subscribe("floating_chat:execution_result", (res: ExecutionResult) => {
-      const output = res.success
-        ? res.stdout
-        : `❌ Error: ${res.stderr}`;
+    const execSub = eventBus.subscribe("floating_chat:execution_result", (res: ExecutionResult) => {
+      const output = res.success ? res.stdout : `❌ Error: ${res.stderr}`;
       setMessages((msgs) => [...msgs, `[Execution] ${output}`]);
     });
 
-    // Listen for ML fix suggestions
-    eventBus.subscribe("floating_chat:fix_suggestion", (res: FixSuggestion) => {
+    const fixSub = eventBus.subscribe("floating_chat:fix_suggestion", (res: FixSuggestion) => {
       setMessages((msgs) => [...msgs, `[ML Fix] ${res.fixPlan}`]);
     });
 
-    // Listen for live logs
-    eventBus.subscribe("floating_chat:log_stream", (log: string) => {
+    const logSub = eventBus.subscribe("floating_chat:log_stream", (log: string) => {
       setMessages((msgs) => [...msgs, `[Log] ${log}`]);
     });
+
+    const approvalSub = eventBus.subscribe("floating_chat:approval_request", (req: ApprovalRequest) => {
+      setPendingApprovals((prev) => [...prev, req]);
+      setMessages((msgs) => [...msgs, `[Approval Needed] ${req.message}`]);
+    });
+
+    return () => {
+      execSub.unsubscribe();
+      fixSub.unsubscribe();
+      logSub.unsubscribe();
+      approvalSub.unsubscribe();
+    };
   }, []);
 
   const sendCommand = async () => {
     if (!input) return;
-    setMessages([...messages, `💻 You: ${input}`]);
-    
-    useEffect(() => {
-  // Approval requests from ML
-  eventBus.subscribe("floating_chat:approval_request", (msg: string) => {
-    setMessages((msgs) => [...msgs, `[Approval Needed] ${msg}`]);
-  });
-}, []);
-
-const approveProposal = (id: string, approved: boolean) => {
-  eventBus.emit("floating_chat:user_approval", { id, approved });
-};
+    setMessages((msgs) => [...msgs, `💻 You: ${input}`]);
 
     // Emit execution request to orchestrator/backend
     const req = { id: Date.now().toString(), command: input };
@@ -69,11 +72,24 @@ const approveProposal = (id: string, approved: boolean) => {
     setInput("");
   };
 
+  const handleApproval = (id: string, approved: boolean) => {
+    eventBus.emit("floating_chat:user_approval", { id, approved });
+    setPendingApprovals((prev) => prev.filter((p) => p.id !== id));
+    setMessages((msgs) => [...msgs, `📝 Proposal ${id} ${approved ? "approved ✅" : "rejected ❌"}`]);
+  };
+
   return (
     <div style={{ padding: "1rem", height: "100%", display: "flex", flexDirection: "column", backgroundColor: "#f4f4f8" }}>
       <div style={{ flex: 1, overflowY: "auto", marginBottom: "1rem", fontFamily: "monospace" }}>
         {messages.map((msg, idx) => (
           <div key={idx} style={{ margin: "2px 0" }}>{msg}</div>
+        ))}
+        {pendingApprovals.map((p) => (
+          <div key={p.id} style={{ margin: "2px 0" }}>
+            <strong>{p.message}</strong>
+            <button onClick={() => handleApproval(p.id, true)} style={{ marginLeft: "0.5rem" }}>✅ Approve</button>
+            <button onClick={() => handleApproval(p.id, false)} style={{ marginLeft: "0.5rem" }}>❌ Reject</button>
+          </div>
         ))}
         <div ref={messageEndRef} />
       </div>
