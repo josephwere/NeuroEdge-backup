@@ -4,11 +4,9 @@ export type ExecutionRequest = {
   args?: string[];
   cwd?: string;
   requiresApproval: boolean;
-};
-
-export type ExecutionResult = {
-  id: string;
   success: boolean;
   stdout: string;
   stderr: string;
 };
+
+types/execution.ts
