@@ -23,6 +23,18 @@ export class FloatingChat {
 
         // Send to orchestrator for ML + kernel reasoning
         const response = await this.orchestrator.sendCommand(command);
+        // Inside event handler for input
+const response = await this.orchestrator.sendCommand(command);
+
+// Live stream logs
+if (response.execution) {
+  response.execution.split("\n").forEach((line) => this.addLog(line));
+}
+
+// Show ML reasoning
+if (response.reasoning) {
+  this.addLog("🧠 ML: " + response.reasoning);
+}
 
         // Display ML reasoning + execution logs
         this.addLog(response.reasoning);
