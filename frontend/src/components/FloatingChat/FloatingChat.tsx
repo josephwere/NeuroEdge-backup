@@ -1,27 +1,57 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { eventBus } from "../../services/eventBus";
 import { executeCommand } from "../../services/api";
+
+interface ExecutionResult {
+  id: string;
+  success: boolean;
+  stdout: string;
+  stderr: string;
+}
+
+interface FixSuggestion {
+  id: string;
+  fixPlan: string;
+}
 
 const FloatingChat: React.FC = () => {
   const [messages, setMessages] = useState<string[]>([]);
   const [input, setInput] = useState("");
+  const messageEndRef = useRef<HTMLDivElement>(null);
+
+  const scrollToBottom = () => {
+    messageEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages]);
 
   useEffect(() => {
     // Listen for execution results
-    eventBus.subscribe("floating_chat:execution_result", (res: any) => {
-      setMessages((msgs) => [...msgs, `Result: ${JSON.stringify(res)}`]);
+    eventBus.subscribe("floating_chat:execution_result", (res: ExecutionResult) => {
+      const output = res.success
+        ? res.stdout
+        : `❌ Error: ${res.stderr}`;
+      setMessages((msgs) => [...msgs, `[Execution] ${output}`]);
     });
 
-    eventBus.subscribe("floating_chat:fix_suggestion", (res: any) => {
-      setMessages((msgs) => [...msgs, `ML Fix Suggestion: ${res.fixPlan}`]);
+    // Listen for ML fix suggestions
+    eventBus.subscribe("floating_chat:fix_suggestion", (res: FixSuggestion) => {
+      setMessages((msgs) => [...msgs, `[ML Fix] ${res.fixPlan}`]);
+    });
+
+    // Listen for live logs
+    eventBus.subscribe("floating_chat:log_stream", (log: string) => {
+      setMessages((msgs) => [...msgs, `[Log] ${log}`]);
     });
   }, []);
 
   const sendCommand = async () => {
     if (!input) return;
-    setMessages([...messages, `You: ${input}`]);
+    setMessages([...messages, `💻 You: ${input}`]);
 
-    // Emit dev execution request
+    // Emit execution request to orchestrator/backend
     const req = { id: Date.now().toString(), command: input };
     await executeCommand(req);
 
@@ -29,22 +59,23 @@ const FloatingChat: React.FC = () => {
   };
 
   return (
-    <div style={{ padding: "1rem", height: "100%", display: "flex", flexDirection: "column", backgroundColor: "#f9f9f9" }}>
-      <div style={{ flex: 1, overflowY: "auto", marginBottom: "1rem" }}>
+    <div style={{ padding: "1rem", height: "100%", display: "flex", flexDirection: "column", backgroundColor: "#f4f4f8" }}>
+      <div style={{ flex: 1, overflowY: "auto", marginBottom: "1rem", fontFamily: "monospace" }}>
         {messages.map((msg, idx) => (
-          <div key={idx}>{msg}</div>
+          <div key={idx} style={{ margin: "2px 0" }}>{msg}</div>
         ))}
+        <div ref={messageEndRef} />
       </div>
-      <div>
+      <div style={{ display: "flex" }}>
         <input
           type="text"
           value={input}
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && sendCommand()}
-          placeholder="Run commands, fix issues, analyze..."
-          style={{ width: "80%" }}
+          placeholder="Run commands, analyze code, fix issues..."
+          style={{ flex: 1, padding: "0.5rem", fontFamily: "monospace" }}
         />
-        <button onClick={sendCommand} style={{ width: "18%", marginLeft: "2%" }}>
+        <button onClick={sendCommand} style={{ marginLeft: "0.5rem", padding: "0.5rem 1rem" }}>
           Send
         </button>
       </div>
