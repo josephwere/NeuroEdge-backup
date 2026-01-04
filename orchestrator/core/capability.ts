@@ -1,12 +1,22 @@
-export interface KernelCapability {
-  id: string;
-  issuedBy: "kernel";
-  subject: string;          // agent or node
-  permissions: string[];    // e.g. ["exec:local", "exec:remote"]
-  expiresAt: number;
-  signature: string;
+export interface CapabilityToken {
+  token: string;       // random or signed string
+  issuedBy: string;    // kernel
+  validUntil: Date;    // expiry
+  permissions: string[]; // allowed commands
 }
 
-export function isCapabilityExpired(cap: KernelCapability): boolean {
-  return Date.now() > cap.expiresAt;
+// Simple capability validator
+export class CapabilityManager {
+  private tokens = new Map<string, CapabilityToken>();
+
+  issue(token: CapabilityToken) {
+    this.tokens.set(token.token, token);
+  }
+
+  validate(token: string, command: string): boolean {
+    const cap = this.tokens.get(token);
+    if (!cap) return false;
+    if (cap.validUntil < new Date()) return false;
+    return cap.permissions.includes(command);
+  }
 }
