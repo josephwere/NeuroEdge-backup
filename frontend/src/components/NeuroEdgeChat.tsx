@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import FloatingChat from "./FloatingChat";
 import MainChat from "./MainChat";
-import { OrchestratorClient } from "../../services/orchestrator_client";
+import { OrchestratorClient } from "../services/orchestrator_client";
 
 interface NeuroEdgeChatProps {
   orchestrator: OrchestratorClient;
