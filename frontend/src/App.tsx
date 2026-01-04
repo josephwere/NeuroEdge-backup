@@ -1,10 +1,11 @@
 import React from "react";
-import ReactDOM from "react-dom";
-import NeuroEdgeChat from "./components/NeuroEdgeChat";
+import UnifiedChat from "./components/UnifiedChat";
 import { OrchestratorClient } from "./services/orchestrator_client";
 
 const orchestrator = new OrchestratorClient();
 
-const App = () => <NeuroEdgeChat orchestrator={orchestrator} />;
+const App: React.FC = () => {
+  return <UnifiedChat orchestrator={orchestrator} />;
+};
 
-ReactDOM.render(<App />, document.getElementById("root"));
+export default App;
