@@ -1,27 +1,17 @@
-type Callback = (payload: any) => void;
+type Callback = (data: any) => void;
 
-class EventBusClass {
-  private events: { [key: string]: Callback[] } = {};
+class EventBus {
+  private listeners: Map<string, Set<Callback>> = new Map();
 
   subscribe(event: string, cb: Callback) {
-    if (!this.events[event]) this.events[event] = [];
-    this.events[event].push(cb);
+    if (!this.listeners.has(event)) this.listeners.set(event, new Set());
+    this.listeners.get(event)?.add(cb);
+    return { unsubscribe: () => this.listeners.get(event)?.delete(cb) };
   }
 
-  emit(event: string, payload: any) {
-    if (this.events[event]) {
-      this.events[event].forEach((cb) => cb(payload));
-    }
-  }
-
-  // Stream logs line by line with optional delay
-  streamLogs(event: string, logs: string[], delay = 200) {
-    logs.forEach((line, idx) => {
-      setTimeout(() => {
-        this.emit(event, line);
-      }, idx * delay);
-    });
+  emit(event: string, data: any) {
+    this.listeners.get(event)?.forEach((cb) => cb(data));
   }
 }
 
-export const eventBus = new EventBusClass();
+export const eventBus = new EventBus();
