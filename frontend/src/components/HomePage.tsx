@@ -7,6 +7,7 @@ import ChatSearchBar from "./ChatSearchBar";
 import AISuggestionsOverlay from "./AISuggestionsOverlay";
 import Dashboard from "./Dashboard";
 import CommandPalette from "./CommandPalette";
+import ChatHistoryPanel from "./ChatHistoryPanel";
 import { ChatHistoryProvider, useChatHistory } from "../services/chatHistoryStore";
 import { OrchestratorClient } from "../services/orchestrator_client";
 
@@ -68,7 +69,7 @@ const HomeContent: React.FC<{ orchestrator: OrchestratorClient }> = ({ orchestra
 // Main HomePage component with sidebar, topbar, and views
 const HomePage: React.FC<Props> = ({ orchestrator }) => {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
-  const [activeView, setActiveView] = useState<"chat" | "dashboard" | "settings">("chat");
+  const [activeView, setActiveView] = useState<"chat" | "dashboard" | "settings" | "history">("chat");
 
   return (
     <ChatHistoryProvider>
@@ -131,6 +132,13 @@ const HomePage: React.FC<Props> = ({ orchestrator }) => {
               >
                 <h2>⚙️ Settings</h2>
                 <p>User preferences, privacy, themes, AI controls, profile, memory.</p>
+              </div>
+            )}
+
+            {/* Chat History View */}
+            {activeView === "history" && (
+              <div style={{ flex: 1, overflowY: "auto" }}>
+                <ChatHistoryPanel />
               </div>
             )}
           </div>
