@@ -15,12 +15,16 @@ import { ChatHistoryProvider } from "../services/chatHistoryStore";
 import { OrchestratorClient } from "../services/orchestrator_client";
 import { NotificationProvider } from "../services/notificationStore";
 
+import { loadExtension } from "../extensions/extensionLoader";
+import codeLinter from "../extensions/examples/codeLinter";
+
 /* ----------------------------- */
 /* Home Content for Chat View    */
 /* ----------------------------- */
 const HomeContent: React.FC<{ orchestrator: OrchestratorClient }> = ({ orchestrator }) => {
   const [paletteVisible, setPaletteVisible] = useState(false);
 
+  /* Command Palette Keyboard Shortcut */
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "k") {
@@ -65,6 +69,26 @@ interface Props {
 const HomePage: React.FC<Props> = ({ orchestrator }) => {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [activeView, setActiveView] = useState<"chat" | "dashboard" | "settings" | "history" | "extensions">("chat");
+
+  /* ---------------- Extensions Context & Loader ---------------- */
+  useEffect(() => {
+    const extCtx = {
+      orchestrator,
+      notify: (msg: string, type: any = "info") =>
+        console.log(`[Notification ${type}] ${msg}`),
+      getUserProfile: () => ({ name: "Guest User", mode: "local" }),
+      requestPermission: async (perm: string) => {
+        console.log(`Requesting permission: ${perm}`);
+        // TODO: replace with a UI prompt for user approval
+        return true;
+      },
+      registerCommand: (cmd: any) =>
+        console.log("Registered extension command:", cmd),
+    };
+
+    // Load default example extension
+    loadExtension(codeLinter, extCtx);
+  }, [orchestrator]);
 
   return (
     <NotificationProvider>
