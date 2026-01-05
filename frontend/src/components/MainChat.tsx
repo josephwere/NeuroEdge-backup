@@ -6,6 +6,7 @@ import { sendMessage } from "../../services/orchestrator_client";
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 import { okaidia } from "react-syntax-highlighter/dist/esm/styles/prism";
 import { useChatHistory } from "../../services/chatHistoryStore";
+import { saveToCache, getCache } from "../services/offlineCache";
 
 interface Message {
   id: string;
@@ -29,22 +30,41 @@ const MainChat: React.FC = () => {
   const messageEndRef = useRef<HTMLDivElement>(null);
   const { searchQuery } = useChatHistory();
 
-  // Load full chat history
+  // --- Load cached messages on init ---
   useEffect(() => {
-    const history = chatContext.getAll().map((m, i) => ({
-      id: String(i),
-      role: m.role,
-      text: m.content,
-      type: m.role === "assistant" ? "info" : "info",
-      isCode: false,
-      timestamp: Date.now() - (chatContext.getAll().length - i) * 1000
-    }));
-    setMessages(history);
-    setDisplayed(history.slice(-PAGE_SIZE));
-    setPage(1);
+    const cached = getCache();
+    if (cached.length) {
+      const logs: Message[] = cached.map(c => ({
+        id: c.id,
+        role: c.payload.role || "assistant",
+        text: c.payload.text,
+        type: c.payload.type,
+        timestamp: c.timestamp,
+        isCode: c.payload.isCode,
+        collapsible: c.payload.isCode,
+        collapsibleOpen: true,
+        codeLanguage: c.payload.codeLanguage
+      }));
+      setMessages(logs);
+      setDisplayed(logs.slice(-PAGE_SIZE));
+      setPage(1);
+    } else {
+      // Fallback: load chatContext if no cache
+      const history = chatContext.getAll().map((m, i) => ({
+        id: String(i),
+        role: m.role,
+        text: m.content,
+        type: "info",
+        isCode: false,
+        timestamp: Date.now() - (chatContext.getAll().length - i) * 1000
+      }));
+      setMessages(history);
+      setDisplayed(history.slice(-PAGE_SIZE));
+      setPage(1);
+    }
   }, []);
 
-  // Infinite scroll
+  // --- Infinite scroll ---
   const fetchMore = () => {
     const start = messages.length - (page + 1) * PAGE_SIZE;
     const nextBatch = messages.slice(Math.max(0, start), messages.length - page * PAGE_SIZE);
@@ -57,7 +77,7 @@ const MainChat: React.FC = () => {
 
   useEffect(scrollToBottom, [displayed]);
 
-  // Send message
+  // --- Send message ---
   const handleSend = async () => {
     if (!input.trim()) return;
 
@@ -66,10 +86,20 @@ const MainChat: React.FC = () => {
     setMessages(m => [...m, userMsg]);
     setDisplayed(d => [...d, userMsg]);
     chatContext.add({ role: "user", content: input });
+
+    // Save user message to offline cache
+    saveToCache({
+      id,
+      timestamp: Date.now(),
+      type: "chat",
+      payload: { role: "user", text: input, type: "info" }
+    });
+
+    const userInput = input;
     setInput("");
 
     try {
-      const res = await sendMessage({ id, text: input, context: chatContext.getAll() });
+      const res = await sendMessage({ id, text: userInput, context: chatContext.getAll() });
 
       if (res.reasoning) addMessage(`🧠 Reasoning: ${res.reasoning}`, "ml");
       if (res.intent) addMessage(`🎯 Intent: ${res.intent}`, "ml");
@@ -90,11 +120,19 @@ const MainChat: React.FC = () => {
     }
   };
 
+  // --- Add message helper (auto caches) ---
   const addMessage = (text: string, type?: Message["type"], codeLanguage?: string, isCode?: boolean) => {
     const id = Date.now().toString() + Math.random();
-    const msg: Message = { id, text, type, isCode, codeLanguage, collapsible: isCode, collapsibleOpen: true, role: "assistant" };
+    const msg: Message = { id, text, type, isCode, codeLanguage, collapsible: isCode, collapsibleOpen: true, role: "assistant", timestamp: Date.now() };
     setMessages(m => [...m, msg]);
     setDisplayed(d => [...d, msg]);
+
+    saveToCache({
+      id,
+      timestamp: Date.now(),
+      type: "chat",
+      payload: { role: "assistant", text, type, codeLanguage, isCode }
+    });
   };
 
   const extractLanguage = (codeBlock: string) => {
@@ -105,16 +143,8 @@ const MainChat: React.FC = () => {
   const toggleCollapse = (id: string) => {
     setDisplayed(d => d.map(msg => msg.id === id ? { ...msg, collapsibleOpen: !msg.collapsibleOpen } : msg));
   };
-  
-// After sending a message
-saveToCache({
-  id: Date.now().toString(),
-  timestamp: Date.now(),
-  type: "chat",
-  payload: { role: "user", text: input },
-});
 
-  // --- Render with search highlights ---
+  // --- Render messages with search highlights ---
   const renderMessage = (msg: Message) => {
     const searchTerm = searchQuery?.toLowerCase();
     const highlightText = (text: string) => {
