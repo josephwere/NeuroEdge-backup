@@ -1,5 +1,6 @@
 // frontend/src/components/MainChat.tsx
 import React, { useState, useEffect, useRef } from "react";
+import InfiniteScroll from "react-infinite-scroll-component";
 import { chatContext } from "../../services/chatContext";
 import { sendMessage } from "../../services/orchestrator_client";
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
@@ -14,29 +15,44 @@ interface Message {
   codeLanguage?: string;
   collapsible?: boolean;
   collapsibleOpen?: boolean;
+  timestamp?: number;
 }
+
+const PAGE_SIZE = 30;
 
 const MainChat: React.FC = () => {
   const [messages, setMessages] = useState<Message[]>([]);
+  const [displayed, setDisplayed] = useState<Message[]>([]);
+  const [page, setPage] = useState(0);
   const [input, setInput] = useState("");
   const messageEndRef = useRef<HTMLDivElement>(null);
 
-  // Load chat history
+  // Load full chat history from chatContext
   useEffect(() => {
     const history = chatContext.getAll().map((m, i) => ({
       id: String(i),
       role: m.role,
       text: m.content,
       type: m.role === "assistant" ? "info" : "info",
-      isCode: false
+      isCode: false,
+      timestamp: Date.now() - (chatContext.getAll().length - i) * 1000
     }));
     setMessages(history);
+    setDisplayed(history.slice(-PAGE_SIZE));
+    setPage(1);
   }, []);
+
+  const fetchMore = () => {
+    const start = messages.length - (page + 1) * PAGE_SIZE;
+    const nextBatch = messages.slice(Math.max(0, start), messages.length - page * PAGE_SIZE);
+    setDisplayed(prev => [...nextBatch, ...prev]);
+    setPage(prev => prev + 1);
+  };
 
   const scrollToBottom = () =>
     messageEndRef.current?.scrollIntoView({ behavior: "smooth" });
 
-  useEffect(scrollToBottom, [messages]);
+  useEffect(scrollToBottom, [displayed]);
 
   const handleSend = async () => {
     if (!input.trim()) return;
@@ -44,21 +60,19 @@ const MainChat: React.FC = () => {
     const id = Date.now().toString();
     const userMsg: Message = { id, role: "user", text: input, type: "info" };
     setMessages(m => [...m, userMsg]);
+    setDisplayed(d => [...d, userMsg]);
     chatContext.add({ role: "user", content: input });
     setInput("");
 
     try {
       const res = await sendMessage({ id, text: input, context: chatContext.getAll() });
 
-      // ML reasoning, intent, risk
       if (res.reasoning) addMessage(`🧠 Reasoning: ${res.reasoning}`, "ml");
       if (res.intent) addMessage(`🎯 Intent: ${res.intent}`, "ml");
       if (res.risk) addMessage(`⚠️ Risk Level: ${res.risk}`, "warn");
 
-      // Logs
       if (res.logs) res.logs.forEach((l: string) => addMessage(`[Log] ${l}`, "info"));
 
-      // Execution results
       if (res.results) res.results.forEach((r: any) => {
         if (r.stdout.includes("```")) {
           addMessage(r.stdout, r.success ? "info" : "error", extractLanguage(r.stdout), true);
@@ -72,10 +86,11 @@ const MainChat: React.FC = () => {
     }
   };
 
-  // --- Helpers ---
   const addMessage = (text: string, type?: Message["type"], codeLanguage?: string, isCode?: boolean) => {
     const id = Date.now().toString() + Math.random();
-    setMessages(m => [...m, { id, text, type, isCode, codeLanguage, collapsible: isCode, collapsibleOpen: true }]);
+    const msg: Message = { id, text, type, isCode, codeLanguage, collapsible: isCode, collapsibleOpen: true, role: "assistant" };
+    setMessages(m => [...m, msg]);
+    setDisplayed(d => [...d, msg]);
   };
 
   const extractLanguage = (codeBlock: string) => {
@@ -84,7 +99,7 @@ const MainChat: React.FC = () => {
   };
 
   const toggleCollapse = (id: string) => {
-    setMessages(m => m.map(msg => msg.id === id ? { ...msg, collapsibleOpen: !msg.collapsibleOpen } : msg));
+    setDisplayed(d => d.map(msg => msg.id === id ? { ...msg, collapsibleOpen: !msg.collapsibleOpen } : msg));
   };
 
   const renderMessage = (msg: Message) => {
@@ -140,8 +155,17 @@ const MainChat: React.FC = () => {
 
   return (
     <div style={{ flex: 1, display: "flex", flexDirection: "column", height: "100%" }}>
-      <div style={{ flex: 1, overflowY: "auto", padding: "1rem", background: "#f5f5f5" }}>
-        {messages.map(renderMessage)}
+      <div id="chatScroll" style={{ flex: 1, overflowY: "auto", padding: "1rem", background: "#f5f5f5" }}>
+        <InfiniteScroll
+          dataLength={displayed.length}
+          next={fetchMore}
+          hasMore={displayed.length < messages.length}
+          inverse={true}
+          loader={<div style={{ textAlign: "center", padding: "0.5rem" }}>Loading…</div>}
+          scrollableTarget="chatScroll"
+        >
+          {displayed.map(renderMessage)}
+        </InfiniteScroll>
         <div ref={messageEndRef} />
       </div>
       <div style={{ display: "flex", padding: "0.5rem", background: "#e0e0e0" }}>
