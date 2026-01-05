@@ -82,6 +82,13 @@ export const ChatHistoryProvider: React.FC<{ children: React.ReactNode }> = ({ c
       // Example: orchestrator.execute({ command: msg.text })
     }
   };
+  // sending a message
+syncManager.sendCommand({
+  id: generateUUID(),
+  type: "chat-message",
+  payload: { text: userInput },
+  timestamp: Date.now(),
+});
 
   /** Reset entire chat history */
   const resetHistory = () => {
