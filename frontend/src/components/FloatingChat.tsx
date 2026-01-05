@@ -6,6 +6,8 @@ import { OrchestratorClient } from "../../services/orchestrator_client";
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 import { okaidia } from "react-syntax-highlighter/dist/esm/styles/prism";
 import { useChatHistory } from "../../services/chatHistoryStore";
+import { saveToCache } from "./offlineCache";
+
 
 interface ExecutionResult {
   id: string;
@@ -135,6 +137,14 @@ const FloatingChat: React.FC<FloatingChatProps> = ({ orchestrator, initialPositi
       addMessage(`❌ Error: ${err.message || err}`, "error");
     }
   };
+  
+// After sending a message
+saveToCache({
+  id: Date.now().toString(),
+  timestamp: Date.now(),
+  type: "chat",
+  payload: { role: "user", text: input },
+});
 
   // --- Helpers ---
   const addMessage = (text: string, type?: LogLine["type"], codeLanguage?: string, isCode?: boolean) => {
