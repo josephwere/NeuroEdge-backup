@@ -1,3 +1,10 @@
+// orchestrator_client.ts
+export class OrchestratorClient {
+  sendCommand(cmd: any) {
+    // actual sending logic, e.g., via WebSocket or HTTP
+    console.log("Orchestrator executing command:", cmd);
+  }
+}
 export interface OrchestratorResponse {
   reasoning: string;
   execution: string;
