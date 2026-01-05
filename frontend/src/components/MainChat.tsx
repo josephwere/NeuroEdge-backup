@@ -7,6 +7,13 @@ import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 import { okaidia } from "react-syntax-highlighter/dist/esm/styles/prism";
 import { useChatHistory } from "../../services/chatHistoryStore";
 import { saveToCache, getCache } from "../services/offlineCache";
+import { useNotifications } from "../services/notificationStore";
+
+const { addNotification } = useNotifications();
+
+addNotification({ message: "New AI suggestion available", type: "ai" });
+addNotification({ message: "Error executing command", type: "error" });
+addNotification({ message: "Chat synced successfully", type: "success" });
 
 /* 🔹 AI Suggestions Overlay */
 import AISuggestionOverlay from "./AISuggestionOverlay";
