@@ -28,6 +28,7 @@ const MainChat: React.FC = () => {
       role: m.role,
       text: m.content,
       type: m.role === "assistant" ? "info" : "info",
+      isCode: false
     }));
     setMessages(history);
   }, []);
