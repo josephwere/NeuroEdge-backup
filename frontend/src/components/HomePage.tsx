@@ -5,6 +5,7 @@ import Topbar from "./Topbar";
 import UnifiedChat from "./UnifiedChat";
 import ChatSearchBar from "./ChatSearchBar";
 import AISuggestionsOverlay from "./AISuggestionsOverlay";
+import Dashboard from "./Dashboard";
 import { ChatHistoryProvider, useChatHistory } from "../services/chatHistoryStore";
 import { OrchestratorClient } from "../services/orchestrator_client";
 
@@ -86,21 +87,17 @@ const HomePage: React.FC<Props> = ({ orchestrator }) => {
               overflow: "hidden",
             }}
           >
+            {/* Chat View */}
             {activeView === "chat" && <HomeContent orchestrator={orchestrator} />}
 
+            {/* Dashboard View */}
             {activeView === "dashboard" && (
-              <div
-                style={{
-                  padding: "1.5rem",
-                  overflowY: "auto",
-                  height: "100%",
-                }}
-              >
-                <h2>📊 NeuroEdge Dashboard</h2>
-                <p>Analytics, AI insights, execution stats, and widgets.</p>
+              <div style={{ flex: 1, overflowY: "auto" }}>
+                <Dashboard orchestrator={orchestrator} />
               </div>
             )}
 
+            {/* Settings View */}
             {activeView === "settings" && (
               <div
                 style={{
