@@ -11,8 +11,21 @@ interface Props {
 const UnifiedChat: React.FC<Props> = ({ orchestrator }) => {
   return (
     <EventBusProvider>
-      <div style={{ height: "100vh", width: "100vw", position: "relative", backgroundColor: "#f5f6fa", overflow: "hidden" }}>
-        <MainChat orchestrator={orchestrator} />
+      <div style={{
+        height: "100vh",
+        width: "100vw",
+        position: "relative",
+        backgroundColor: "#f5f6fa",
+        overflow: "hidden",
+        display: "flex",
+        flexDirection: "column"
+      }}>
+        {/* Main Chat fills the background */}
+        <div style={{ flex: 1, position: "relative" }}>
+          <MainChat />
+        </div>
+
+        {/* Floating Chat */}
         <FloatingChat orchestrator={orchestrator} />
       </div>
     </EventBusProvider>
