@@ -1,19 +1,14 @@
 import React, { useState, useEffect, useRef } from "react";
-import { OrchestratorClient } from "../../services/orchestrator_client";
 import { chatContext } from "../../services/chatContext";
+import { OrchestratorClient } from "../../services/orchestrator_client";
+import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
+import { okaidia } from "react-syntax-highlighter/dist/esm/styles/prism";
 
 interface ExecutionResult {
   id: string;
   success: boolean;
   stdout: string;
   stderr: string;
-}
-
-interface Proposal {
-  id: string;
-  reasoning: string;
-  intent?: string;
-  risk?: string;
 }
 
 interface LogLine {
@@ -27,88 +22,71 @@ const FloatingChat: React.FC<{ orchestrator: OrchestratorClient }> = ({ orchestr
   const [input, setInput] = useState("");
   const [minimized, setMinimized] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
-  const messageEndRef = useRef<HTMLDivElement>(null);
 
-  const scrollToBottom = () => messageEndRef.current?.scrollIntoView({ behavior: "smooth" });
-
-  // Draggable chat
+  // Dragging
   useEffect(() => {
     const el = containerRef.current;
     if (!el) return;
 
     let x = 0, y = 0, mx = 0, my = 0;
-    const down = (e: MouseEvent) => {
-      mx = e.clientX;
-      my = e.clientY;
-      document.onmousemove = move;
-      document.onmouseup = up;
-    };
-    const move = (e: MouseEvent) => {
-      x += e.clientX - mx;
-      y += e.clientY - my;
-      mx = e.clientX;
-      my = e.clientY;
-      el.style.transform = `translate(${x}px, ${y}px)`;
-    };
+    const down = (e: MouseEvent) => { mx = e.clientX; my = e.clientY; document.onmousemove = move; document.onmouseup = up; };
+    const move = (e: MouseEvent) => { x += e.clientX - mx; y += e.clientY - my; mx = e.clientX; my = e.clientY; el.style.transform = `translate(${x}px, ${y}px)`; };
     const up = () => { document.onmousemove = null; document.onmouseup = null; };
     el.querySelector(".header")?.addEventListener("mousedown", down);
-
-    return () => el.querySelector(".header")?.removeEventListener("mousedown", down);
   }, []);
 
-  // Load logs from localStorage
-  useEffect(() => {
-    const saved = localStorage.getItem("floating_chat_logs");
-    if (saved) setMessages(JSON.parse(saved));
-  }, []);
-
-  // Persist logs
+  // Load & save chat history
+  useEffect(() => { const saved = localStorage.getItem("floating_chat_logs"); if (saved) setMessages(JSON.parse(saved)); }, []);
   useEffect(() => { localStorage.setItem("floating_chat_logs", JSON.stringify(messages)); }, [messages]);
 
-  useEffect(scrollToBottom, [messages]);
-
-  // Format message with colors
-  const formatMessage = (msg: LogLine) => {
-    const style: React.CSSProperties = {};
-    if (msg.type === "error") style.color = "#ff4d4f";
-    else if (msg.type === "warn") style.color = "#faad14";
-    else if (msg.type === "ml") style.color = "#40a9ff";
-    return <div key={msg.id} style={{ margin: "2px 0", ...style }}>{msg.text}</div>;
-  };
-
-  // Send command to orchestrator
   const send = async () => {
     if (!input.trim()) return;
-
-    const id = Date.now().toString();
     const context = chatContext.getAll();
-    setMessages(m => [...m, { id, text: `💻 ${input}` }]);
-    setInput("");
+    setMessages(m => [...m, { id: Date.now().toString(), text: `💻 ${input}`, type: "info" }]);
 
     try {
       const res = await orchestrator.execute({ command: input, context });
 
-      // ML reasoning & proposal
-      if (res.proposal) {
-        const p: Proposal = res.proposal;
-        setMessages(m => [...m, { id: p.id, text: `🧠 Proposal: ${p.reasoning}`, type: "ml" }]);
-        if (p.intent) setMessages(m => [...m, { id: p.id + "_intent", text: `🎯 Intent: ${p.intent}`, type: "ml" }]);
-        if (p.risk) setMessages(m => [...m, { id: p.id + "_risk", text: `⚠️ Risk: ${p.risk}`, type: "warn" }]);
-      }
+      // ML reasoning
+      if (res.reasoning) setMessages(m => [...m, { id: Date.now().toString(), text: `🧠 Reasoning: ${res.reasoning}`, type: "ml" }]);
+      if (res.intent) setMessages(m => [...m, { id: Date.now().toString(), text: `🎯 Intent: ${res.intent}`, type: "ml" }]);
+      if (res.risk) setMessages(m => [...m, { id: Date.now().toString(), text: `⚠️ Risk Level: ${res.risk}`, type: "warn" }]);
 
       // Logs
-      if (res.logs) res.logs.forEach((l: string, i: number) =>
-        setMessages(m => [...m, { id: id + "_log_" + i, text: `[Log] ${l}`, type: "info" }])
-      );
+      if (res.logs) res.logs.forEach((l: string) => setMessages(m => [...m, { id: Date.now().toString(), text: `[Log] ${l}`, type: "info" }]));
 
       // Execution results
-      if (res.results) res.results.forEach((r: ExecutionResult) =>
-        setMessages(m => [...m, { id: r.id, text: r.success ? r.stdout : `❌ ${r.stderr}`, type: r.success ? "info" : "error" }])
-      );
+      if (res.results) res.results.forEach((r: ExecutionResult) => {
+        const text = r.success ? r.stdout : `❌ ${r.stderr}`;
+        setMessages(m => [...m, { id: Date.now().toString(), text, type: r.success ? "info" : "error" }]);
+      });
 
     } catch (err: any) {
-      setMessages(m => [...m, { id: id + "_err", text: `❌ Error: ${err.message || err}`, type: "error" }]);
+      setMessages(m => [...m, { id: Date.now().toString(), text: `❌ Error: ${err.message || err}`, type: "error" }]);
     }
+
+    setInput("");
+  };
+
+  // Render with syntax highlighting
+  const renderMessage = (msg: LogLine) => {
+    const codeBlockMatch = msg.text.match(/```(\w+)?\n([\s\S]*?)```/);
+    if (codeBlockMatch) {
+      const language = codeBlockMatch[1] || "text";
+      const code = codeBlockMatch[2];
+      return (
+        <SyntaxHighlighter key={msg.id} language={language} style={okaidia} showLineNumbers>
+          {code}
+        </SyntaxHighlighter>
+      );
+    }
+
+    let color = "#fff";
+    if (msg.type === "error") color = "#ff4d4f";
+    else if (msg.type === "warn") color = "#faad14";
+    else if (msg.type === "ml") color = "#40a9ff";
+
+    return <div key={msg.id} style={{ color, whiteSpace: "pre-wrap" }}>{msg.text}</div>;
   };
 
   return (
@@ -116,8 +94,8 @@ const FloatingChat: React.FC<{ orchestrator: OrchestratorClient }> = ({ orchestr
       position: "fixed",
       bottom: "20px",
       right: "20px",
-      width: "380px",
-      height: minimized ? "48px" : "520px",
+      width: "400px",
+      height: minimized ? "48px" : "540px",
       background: "#1e1e2f",
       color: "#fff",
       borderRadius: "12px",
@@ -131,19 +109,18 @@ const FloatingChat: React.FC<{ orchestrator: OrchestratorClient }> = ({ orchestr
         cursor: "move",
         background: "#2b2b3c",
         display: "flex",
-        justifyContent: "space-between",
-        fontWeight: "bold"
+        justifyContent: "space-between"
       }}>
-        NeuroEdge Control
+        <strong>NeuroEdge Control</strong>
         <button onClick={() => setMinimized(!minimized)}>{minimized ? "⬆️" : "⬇️"}</button>
       </div>
 
       {!minimized && (
         <>
           <div style={{ flex: 1, overflowY: "auto", padding: "10px", fontFamily: "monospace" }}>
-            {messages.map(formatMessage)}
-            <div ref={messageEndRef} />
+            {messages.map(renderMessage)}
           </div>
+
           <div style={{ display: "flex" }}>
             <input
               value={input}
