@@ -1,5 +1,6 @@
 // frontend/src/components/FloatingChat.tsx
 import React, { useState, useEffect, useRef } from "react";
+import InfiniteScroll from "react-infinite-scroll-component";
 import { chatContext } from "../../services/chatContext";
 import { OrchestratorClient } from "../../services/orchestrator_client";
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
@@ -21,6 +22,7 @@ interface LogLine {
   collapsible?: boolean;
   collapsibleOpen?: boolean;
   associatedId?: string;
+  timestamp?: number;
 }
 
 interface ApprovalRequest {
@@ -35,8 +37,12 @@ interface FloatingChatProps {
   onPositionChange?: (pos: { x: number; y: number }) => void;
 }
 
+const PAGE_SIZE = 20;
+
 const FloatingChat: React.FC<FloatingChatProps> = ({ orchestrator, initialPosition, onPositionChange }) => {
   const [messages, setMessages] = useState<LogLine[]>([]);
+  const [displayed, setDisplayed] = useState<LogLine[]>([]);
+  const [page, setPage] = useState(0);
   const [input, setInput] = useState("");
   const [minimized, setMinimized] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -51,17 +57,14 @@ const FloatingChat: React.FC<FloatingChatProps> = ({ orchestrator, initialPositi
     let x = position.x, y = position.y;
 
     const down = (e: MouseEvent) => {
-      mx = e.clientX;
-      my = e.clientY;
+      mx = e.clientX; my = e.clientY;
       document.onmousemove = move;
       document.onmouseup = up;
     };
 
     const move = (e: MouseEvent) => {
-      x += e.clientX - mx;
-      y += e.clientY - my;
-      mx = e.clientX;
-      my = e.clientY;
+      x += e.clientX - mx; y += e.clientY - my;
+      mx = e.clientX; my = e.clientY;
       setPosition({ x, y });
       onPositionChange?.({ x, y });
     };
@@ -78,11 +81,24 @@ const FloatingChat: React.FC<FloatingChatProps> = ({ orchestrator, initialPositi
   // --- Load & Save History ---
   useEffect(() => {
     const saved = localStorage.getItem("floating_chat_logs");
-    if (saved) setMessages(JSON.parse(saved));
+    if (saved) {
+      const all: LogLine[] = JSON.parse(saved);
+      setMessages(all);
+      setDisplayed(all.slice(-PAGE_SIZE));
+      setPage(1);
+    }
   }, []);
   useEffect(() => {
     localStorage.setItem("floating_chat_logs", JSON.stringify(messages));
   }, [messages]);
+
+  // --- Infinite Scroll Fetch ---
+  const fetchMore = () => {
+    const start = messages.length - (page + 1) * PAGE_SIZE;
+    const nextBatch = messages.slice(Math.max(0, start), messages.length - page * PAGE_SIZE);
+    setDisplayed(prev => [...nextBatch, ...prev]);
+    setPage(prev => prev + 1);
+  };
 
   // --- Send Command ---
   const send = async () => {
@@ -120,11 +136,13 @@ const FloatingChat: React.FC<FloatingChatProps> = ({ orchestrator, initialPositi
   // --- Helpers ---
   const addMessage = (text: string, type?: LogLine["type"], codeLanguage?: string, isCode?: boolean) => {
     const id = Date.now().toString() + Math.random();
-    setMessages(m => [...m, { id, text, type, codeLanguage, isCode, collapsible: isCode, collapsibleOpen: true }]);
+    const msg: LogLine = { id, text, type, codeLanguage, isCode, collapsible: isCode, collapsibleOpen: true, timestamp: Date.now() };
+    setMessages(m => [...m, msg]);
+    setDisplayed(d => [...d, msg]);
   };
 
   const addApproval = (app: ApprovalRequest) => {
-    setMessages(m => [...m, { id: app.id, text: `[Approval] ${app.message}`, type: "ml", associatedId: app.id }]);
+    setMessages(m => [...m, { id: app.id, text: `[Approval] ${app.message}`, type: "ml", associatedId: app.id, timestamp: Date.now() }]);
   };
 
   const handleApproval = (id: string, approved: boolean) => {
@@ -140,7 +158,7 @@ const FloatingChat: React.FC<FloatingChatProps> = ({ orchestrator, initialPositi
   };
 
   const toggleCollapse = (id: string) => {
-    setMessages(m => m.map(msg => msg.id === id ? { ...msg, collapsibleOpen: !msg.collapsibleOpen } : msg));
+    setDisplayed(d => d.map(msg => msg.id === id ? { ...msg, collapsibleOpen: !msg.collapsibleOpen } : msg));
   };
 
   const renderMessage = (msg: LogLine) => {
@@ -152,18 +170,15 @@ const FloatingChat: React.FC<FloatingChatProps> = ({ orchestrator, initialPositi
       return (
         <div key={msg.id} style={{ marginBottom: "0.5rem" }}>
           {msg.collapsible && (
-            <button
-              onClick={() => toggleCollapse(msg.id)}
-              style={{
-                marginBottom: "2px",
-                background: "#444",
-                color: "#fff",
-                border: "none",
-                cursor: "pointer",
-                padding: "2px 6px",
-                borderRadius: "4px"
-              }}
-            >
+            <button onClick={() => toggleCollapse(msg.id)} style={{
+              marginBottom: "2px",
+              background: "#444",
+              color: "#fff",
+              border: "none",
+              cursor: "pointer",
+              padding: "2px 6px",
+              borderRadius: "4px"
+            }}>
               {msg.collapsibleOpen ? "▼ Collapse" : "▶ Expand"}
             </button>
           )}
@@ -172,10 +187,7 @@ const FloatingChat: React.FC<FloatingChatProps> = ({ orchestrator, initialPositi
               <SyntaxHighlighter language={language} style={okaidia} showLineNumbers>
                 {code}
               </SyntaxHighlighter>
-              <button
-                onClick={() => navigator.clipboard.writeText(code)}
-                style={{ marginTop: "2px", background: "#3a3aff", color: "#fff", border: "none", padding: "2px 5px", cursor: "pointer" }}
-              >
+              <button onClick={() => navigator.clipboard.writeText(code)} style={{ marginTop: "2px", background: "#3a3aff", color: "#fff", border: "none", padding: "2px 5px", cursor: "pointer" }}>
                 Copy
               </button>
             </>
@@ -221,14 +233,23 @@ const FloatingChat: React.FC<FloatingChatProps> = ({ orchestrator, initialPositi
 
       {!minimized && (
         <>
-          <div style={{ flex: 1, overflowY: "auto", padding: "10px", fontFamily: "monospace" }}>
-            {messages.map(renderMessage)}
-            {messages.filter(m => m.associatedId).map(app => (
-              <div key={app.associatedId} style={{ marginTop: "4px" }}>
-                <button onClick={() => handleApproval(app.associatedId!, true)} style={{ marginRight: "4px" }}>✅ Approve</button>
-                <button onClick={() => handleApproval(app.associatedId!, false)}>❌ Reject</button>
-              </div>
-            ))}
+          <div id="floatingChatScroll" style={{ flex: 1, overflowY: "auto", padding: "10px", fontFamily: "monospace" }}>
+            <InfiniteScroll
+              dataLength={displayed.length}
+              next={fetchMore}
+              hasMore={displayed.length < messages.length}
+              inverse={true}
+              loader={<div style={{ textAlign: "center", padding: "0.5rem" }}>Loading…</div>}
+              scrollableTarget="floatingChatScroll"
+            >
+              {displayed.map(renderMessage)}
+              {displayed.filter(m => m.associatedId).map(app => (
+                <div key={app.associatedId} style={{ marginTop: "4px" }}>
+                  <button onClick={() => handleApproval(app.associatedId!, true)} style={{ marginRight: "4px" }}>✅ Approve</button>
+                  <button onClick={() => handleApproval(app.associatedId!, false)}>❌ Reject</button>
+                </div>
+              ))}
+            </InfiniteScroll>
           </div>
 
           <div style={{ display: "flex" }}>
