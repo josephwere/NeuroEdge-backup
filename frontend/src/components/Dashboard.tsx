@@ -1,6 +1,13 @@
 // frontend/src/components/Dashboard.tsx
 import React, { useEffect, useState } from "react";
 import { chatContext } from "../services/chatContext";
+import { useNotifications } from "../services/notificationStore";
+
+const { addNotification } = useNotifications();
+
+addNotification({ message: "New AI suggestion available", type: "ai" });
+addNotification({ message: "Error executing command", type: "error" });
+addNotification({ message: "Chat synced successfully", type: "success" });
 
 /**
  * NeuroEdge Dashboard
