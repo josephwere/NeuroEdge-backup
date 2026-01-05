@@ -10,11 +10,12 @@ import CommandPalette from "./CommandPalette";
 import ChatHistoryPanel from "./ChatHistoryPanel";
 import { ChatHistoryProvider, useChatHistory } from "../services/chatHistoryStore";
 import { OrchestratorClient } from "../services/orchestrator_client";
+import { NotificationProvider } from "../services/notificationStore";
 
 /**
  * NeuroEdge HomePage
  * Central brain of the frontend
- * Hosts sidebar, topbar, chat, floating tools, widgets, search, AI suggestions
+ * Hosts sidebar, topbar, chat, floating tools, widgets, search, AI suggestions, notifications
  */
 
 interface Props {
@@ -52,7 +53,6 @@ const HomeContent: React.FC<{ orchestrator: OrchestratorClient }> = ({ orchestra
       <AISuggestionsOverlay
         onSelect={(suggestion) => {
           console.log("AI Suggestion selected:", suggestion);
-          // Optionally auto-fill input in FloatingChat/MainChat
         }}
       />
 
@@ -72,79 +72,81 @@ const HomePage: React.FC<Props> = ({ orchestrator }) => {
   const [activeView, setActiveView] = useState<"chat" | "dashboard" | "settings" | "history">("chat");
 
   return (
-    <ChatHistoryProvider>
-      <div
-        style={{
-          display: "flex",
-          height: "100vh",
-          width: "100vw",
-          overflow: "hidden",
-          backgroundColor: "#f5f6fa",
-        }}
-      >
-        {/* Sidebar */}
-        <Sidebar
-          collapsed={sidebarCollapsed}
-          onToggle={() => setSidebarCollapsed(!sidebarCollapsed)}
-          onNavigate={setActiveView}
-        />
-
-        {/* Main Area */}
+    <NotificationProvider>
+      <ChatHistoryProvider>
         <div
           style={{
-            flex: 1,
             display: "flex",
-            flexDirection: "column",
-            position: "relative",
+            height: "100vh",
+            width: "100vw",
+            overflow: "hidden",
+            backgroundColor: "#f5f6fa",
           }}
         >
-          {/* Topbar */}
-          <Topbar onToggleSidebar={() => setSidebarCollapsed(!sidebarCollapsed)} />
+          {/* Sidebar */}
+          <Sidebar
+            collapsed={sidebarCollapsed}
+            onToggle={() => setSidebarCollapsed(!sidebarCollapsed)}
+            onNavigate={setActiveView}
+          />
 
-          {/* Main Content */}
+          {/* Main Area */}
           <div
             style={{
               flex: 1,
               display: "flex",
               flexDirection: "column",
               position: "relative",
-              overflow: "hidden",
             }}
           >
-            {/* Chat View */}
-            {activeView === "chat" && <HomeContent orchestrator={orchestrator} />}
+            {/* Topbar */}
+            <Topbar onToggleSidebar={() => setSidebarCollapsed(!sidebarCollapsed)} />
 
-            {/* Dashboard View */}
-            {activeView === "dashboard" && (
-              <div style={{ flex: 1, overflowY: "auto" }}>
-                <Dashboard orchestrator={orchestrator} />
-              </div>
-            )}
+            {/* Main Content */}
+            <div
+              style={{
+                flex: 1,
+                display: "flex",
+                flexDirection: "column",
+                position: "relative",
+                overflow: "hidden",
+              }}
+            >
+              {/* Chat View */}
+              {activeView === "chat" && <HomeContent orchestrator={orchestrator} />}
 
-            {/* Settings View */}
-            {activeView === "settings" && (
-              <div
-                style={{
-                  padding: "1.5rem",
-                  overflowY: "auto",
-                  height: "100%",
-                }}
-              >
-                <h2>⚙️ Settings</h2>
-                <p>User preferences, privacy, themes, AI controls, profile, memory.</p>
-              </div>
-            )}
+              {/* Dashboard View */}
+              {activeView === "dashboard" && (
+                <div style={{ flex: 1, overflowY: "auto" }}>
+                  <Dashboard orchestrator={orchestrator} />
+                </div>
+              )}
 
-            {/* Chat History View */}
-            {activeView === "history" && (
-              <div style={{ flex: 1, overflowY: "auto" }}>
-                <ChatHistoryPanel />
-              </div>
-            )}
+              {/* Settings View */}
+              {activeView === "settings" && (
+                <div
+                  style={{
+                    padding: "1.5rem",
+                    overflowY: "auto",
+                    height: "100%",
+                  }}
+                >
+                  <h2>⚙️ Settings</h2>
+                  <p>User preferences, privacy, themes, AI controls, profile, memory.</p>
+                </div>
+              )}
+
+              {/* Chat History View */}
+              {activeView === "history" && (
+                <div style={{ flex: 1, overflowY: "auto" }}>
+                  <ChatHistoryPanel />
+                </div>
+              )}
+            </div>
           </div>
         </div>
-      </div>
-    </ChatHistoryProvider>
+      </ChatHistoryProvider>
+    </NotificationProvider>
   );
 };
 
