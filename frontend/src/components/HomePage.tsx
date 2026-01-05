@@ -8,73 +8,19 @@ import AISuggestionsOverlay from "./AISuggestionsOverlay";
 import Dashboard from "./Dashboard";
 import CommandPalette from "./CommandPalette";
 import ChatHistoryPanel from "./ChatHistoryPanel";
-import { ChatHistoryProvider, useChatHistory } from "../services/chatHistoryStore";
+import SettingsPanel from "./settings/SettingsPanel";
+import ExtensionsPanel from "./ExtensionsPanel";
+
+import { ChatHistoryProvider } from "../services/chatHistoryStore";
 import { OrchestratorClient } from "../services/orchestrator_client";
 import { NotificationProvider } from "../services/notificationStore";
-// In App.tsx or HomePage.tsx
-import React, { useState, useEffect } from "react";
-import CommandPalette from "./components/CommandPalette";
-import { registerCommand } from "./services/commandRegistry";
 
-const HomePageWrapper: React.FC = () => {
-  const [paletteVisible, setPaletteVisible] = useState(false);
-
-  // Global Ctrl+P listener
-  useEffect(() => {
-    const handler = (e: KeyboardEvent) => {
-      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "p") {
-        e.preventDefault();
-        setPaletteVisible(v => !v);
-      }
-    };
-    window.addEventListener("keydown", handler);
-    return () => window.removeEventListener("keydown", handler);
-  }, []);
-
-  // Example commands
-  useEffect(() => {
-    registerCommand({
-      id: "new-chat",
-      label: "New Chat",
-      action: () => console.log("New Chat triggered"),
-      shortcut: "Ctrl+N",
-    });
-    registerCommand({
-      id: "open-settings",
-      label: "Open Settings",
-      action: () => console.log("Open Settings"),
-      shortcut: "Ctrl+,",
-    });
-    registerCommand({
-      id: "export-chat",
-      label: "Export Chat",
-      action: () => console.log("Export Chat triggered"),
-    });
-  }, []);
-
-  return (
-    <>
-      <HomePage orchestrator={/* orchestrator */ null as any} />
-      <CommandPalette visible={paletteVisible} onClose={() => setPaletteVisible(false)} />
-    </>
-  );
-};
-/**
- * NeuroEdge HomePage
- * Central brain of the frontend
- * Hosts sidebar, topbar, chat, floating tools, widgets, search, AI suggestions, notifications
- */
-
-interface Props {
-  orchestrator: OrchestratorClient;
-}
-
-// Home content with chat, search bar, AI overlay, and command palette
+/* ----------------------------- */
+/* Home Content for Chat View    */
+/* ----------------------------- */
 const HomeContent: React.FC<{ orchestrator: OrchestratorClient }> = ({ orchestrator }) => {
-  const { setSearchQuery } = useChatHistory();
   const [paletteVisible, setPaletteVisible] = useState(false);
 
-  // Keyboard shortcut: Ctrl+K / Cmd+K to toggle Command Palette
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "k") {
@@ -88,22 +34,18 @@ const HomeContent: React.FC<{ orchestrator: OrchestratorClient }> = ({ orchestra
 
   return (
     <div style={{ flex: 1, display: "flex", flexDirection: "column", position: "relative" }}>
-      {/* Chat Search Bar */}
       <ChatSearchBar
-        onSearch={(query: string, filters: any) => setSearchQuery(query, filters)}
-      />
-
-      {/* Unified Chat */}
-      <UnifiedChat orchestrator={orchestrator} />
-
-      {/* AI Suggestions Overlay */}
-      <AISuggestionsOverlay
-        onSelect={(suggestion) => {
-          console.log("AI Suggestion selected:", suggestion);
+        onSearch={(query: string, filters: any) => {
+          // Chat search handled via chat history context
         }}
       />
 
-      {/* Command Palette */}
+      <UnifiedChat orchestrator={orchestrator} />
+
+      <AISuggestionsOverlay
+        onSelect={(suggestion) => console.log("AI Suggestion selected:", suggestion)}
+      />
+
       <CommandPalette
         orchestrator={orchestrator}
         visible={paletteVisible}
@@ -113,23 +55,22 @@ const HomeContent: React.FC<{ orchestrator: OrchestratorClient }> = ({ orchestra
   );
 };
 
-// Main HomePage component with sidebar, topbar, and views
+/* ----------------------------- */
+/* Main HomePage                 */
+/* ----------------------------- */
+interface Props {
+  orchestrator: OrchestratorClient;
+}
+
 const HomePage: React.FC<Props> = ({ orchestrator }) => {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
-  const [activeView, setActiveView] = useState<"chat" | "dashboard" | "settings" | "history">("chat");
+  const [activeView, setActiveView] = useState<"chat" | "dashboard" | "settings" | "history" | "extensions">("chat");
 
   return (
     <NotificationProvider>
       <ChatHistoryProvider>
-        <div
-          style={{
-            display: "flex",
-            height: "100vh",
-            width: "100vw",
-            overflow: "hidden",
-            backgroundColor: "#f5f6fa",
-          }}
-        >
+        <div style={{ display: "flex", height: "100vh", width: "100vw", overflow: "hidden", backgroundColor: "#f5f6fa" }}>
+          
           {/* Sidebar */}
           <Sidebar
             collapsed={sidebarCollapsed}
@@ -138,57 +79,28 @@ const HomePage: React.FC<Props> = ({ orchestrator }) => {
           />
 
           {/* Main Area */}
-          <div
-            style={{
-              flex: 1,
-              display: "flex",
-              flexDirection: "column",
-              position: "relative",
-            }}
-          >
+          <div style={{ flex: 1, display: "flex", flexDirection: "column", position: "relative" }}>
+            
             {/* Topbar */}
             <Topbar onToggleSidebar={() => setSidebarCollapsed(!sidebarCollapsed)} />
 
             {/* Main Content */}
-            <div
-              style={{
-                flex: 1,
-                display: "flex",
-                flexDirection: "column",
-                position: "relative",
-                overflow: "hidden",
-              }}
-            >
+            <div style={{ flex: 1, display: "flex", flexDirection: "column", position: "relative", overflow: "hidden" }}>
+              
               {/* Chat View */}
               {activeView === "chat" && <HomeContent orchestrator={orchestrator} />}
 
               {/* Dashboard View */}
-              {activeView === "dashboard" && (
-                <div style={{ flex: 1, overflowY: "auto" }}>
-                  <Dashboard orchestrator={orchestrator} />
-                </div>
-              )}
+              {activeView === "dashboard" && <Dashboard orchestrator={orchestrator} />}
 
               {/* Settings View */}
-              {activeView === "settings" && (
-                <div
-                  style={{
-                    padding: "1.5rem",
-                    overflowY: "auto",
-                    height: "100%",
-                  }}
-                >
-                  <h2>⚙️ Settings</h2>
-                  <p>User preferences, privacy, themes, AI controls, profile, memory.</p>
-                </div>
-              )}
+              {activeView === "settings" && <SettingsPanel />}
+
+              {/* Extensions View */}
+              {activeView === "extensions" && <ExtensionsPanel />}
 
               {/* Chat History View */}
-              {activeView === "history" && (
-                <div style={{ flex: 1, overflowY: "auto" }}>
-                  <ChatHistoryPanel />
-                </div>
-              )}
+              {activeView === "history" && <ChatHistoryPanel />}
             </div>
           </div>
         </div>
@@ -196,26 +108,5 @@ const HomePage: React.FC<Props> = ({ orchestrator }) => {
     </NotificationProvider>
   );
 };
-// inside HomePage.tsx — dashboard view
-{activeView === "dashboard" && (
-  <AnalyticsOverview
-    stats={{
-      executedCommands: 1245,
-      successCount: 1130,
-      failureCount: 115,
-      errorTypes: {
-        "SyntaxError": 50,
-        "RuntimeError": 30,
-        "Timeout": 20,
-        "Unknown": 15,
-      },
-      approvalLatencyAvg: 12.4,
-      aiConfidenceAvg: 87.2,
-      meshNodes: [
-        { node: "Node-1", status: "online" },
-        { node: "Node-2", status: "offline" },
-      ],
-    }}
-  />
-)}
+
 export default HomePage;
