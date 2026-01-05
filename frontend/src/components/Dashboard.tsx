@@ -1,7 +1,11 @@
 // frontend/src/components/Dashboard.tsx
-
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { chatContext } from "../services/chatContext";
+
+/**
+ * NeuroEdge Dashboard
+ * Real-time analytics, approvals, AI suggestions
+ */
 
 interface MessageStats {
   total: number;
@@ -29,23 +33,24 @@ const Dashboard: React.FC = () => {
   useEffect(() => {
     const allMessages = chatContext.getAll();
 
+    // Messages / Commands
     const total = allMessages.length;
     const errors = allMessages.filter(m => m.role === "assistant" && m.content.startsWith("❌")).length;
     const warnings = allMessages.filter(m => m.role === "assistant" && m.content.startsWith("⚠️")).length;
-
     setMessages({ total, errors, warnings });
 
+    // Approvals
     const pending = allMessages.filter(m => m.content.includes("[Approval]")).length;
     const approved = allMessages.filter(m => m.content.includes("✅ Approved")).length;
     const rejected = allMessages.filter(m => m.content.includes("❌ Rejected")).length;
-
     setApprovals({ pending, approved, rejected });
 
+    // AI Suggestions
     const suggestions = allMessages
       .filter(m => m.content.startsWith("🧠 Suggestion"))
       .map((m, idx) => ({ id: idx.toString(), suggestion: m.content }));
-
     setAISuggestions(suggestions);
+
   }, []);
 
   return (
@@ -70,17 +75,29 @@ const Dashboard: React.FC = () => {
 
       {/* AI Suggestions */}
       <div style={widgetStyle}>
-        <h3>AI Suggestions</h3>
+        <h3>🤖 AI Suggestions</h3>
         {aiSuggestions.length === 0 ? (
           <p>No suggestions yet.</p>
         ) : (
-          <ul>
+          <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
             {aiSuggestions.map(s => (
-              <li key={s.id} style={{ marginBottom: "0.5rem", background: "#fff", padding: "0.5rem", borderRadius: "6px" }}>
+              <button
+                key={s.id}
+                style={{
+                  padding: "0.5rem 1rem",
+                  borderRadius: "6px",
+                  background: "#2b2b3c",
+                  color: "#fff",
+                  border: "none",
+                  cursor: "pointer",
+                  textAlign: "left",
+                }}
+                onClick={() => console.log("AI suggestion applied:", s.suggestion)}
+              >
                 {s.suggestion}
-              </li>
+              </button>
             ))}
-          </ul>
+          </div>
         )}
       </div>
     </div>
@@ -88,7 +105,7 @@ const Dashboard: React.FC = () => {
 };
 
 /* -------------------- */
-/* Styles / Widgets */
+/* Widget Styles */
 /* -------------------- */
 const widgetStyle: React.CSSProperties = {
   marginBottom: "1rem",
