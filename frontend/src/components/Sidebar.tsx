@@ -1,6 +1,13 @@
 // frontend/src/components/Sidebar.tsx
 
 import React from "react";
+import { useNotifications } from "../services/notificationStore";
+
+const { addNotification } = useNotifications();
+
+addNotification({ message: "New AI suggestion available", type: "ai" });
+addNotification({ message: "Error executing command", type: "error" });
+addNotification({ message: "Chat synced successfully", type: "success" });
 
 /* -------------------- */
 /* Types */
