@@ -25,8 +25,8 @@ export interface Filters {
 }
 
 interface ChatHistoryContextProps {
-  messages: ChatMessage[]; // currently visible
-  allMessages: ChatMessage[]; // complete history
+  messages: ChatMessage[];       // messages currently visible (for infinite scroll)
+  allMessages: ChatMessage[];    // complete history
   addMessage: (msg: ChatMessage) => void;
   loadMore: () => void;
   setSearchQuery: (query: string, filters?: Filters) => void;
@@ -37,12 +37,13 @@ interface ChatHistoryContextProps {
 const ChatHistoryContext = createContext<ChatHistoryContextProps | null>(null);
 
 export const ChatHistoryProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  // Load from localStorage initially
   const [allMessages, setAllMessages] = useState<ChatMessage[]>(() => {
     const saved = localStorage.getItem("chat_history");
     return saved ? JSON.parse(saved) : [];
   });
 
-  const [visibleCount, setVisibleCount] = useState(50); // batch size
+  const [visibleCount, setVisibleCount] = useState(50); // batch size for lazy loading
   const [searchQuery, setSearchQueryState] = useState("");
   const [filters, setFilters] = useState<Filters>({});
 
@@ -63,7 +64,7 @@ export const ChatHistoryProvider: React.FC<{ children: React.ReactNode }> = ({ c
     setAllMessages(prev => [...prev, { ...msg, timestamp: Date.now() }]);
   };
 
-  /** Load older messages */
+  /** Load older messages (infinite scroll) */
   const loadMore = () => setVisibleCount(v => v + 50);
 
   /** Set search query and optional filters */
@@ -73,16 +74,16 @@ export const ChatHistoryProvider: React.FC<{ children: React.ReactNode }> = ({ c
     setVisibleCount(50); // reset visible count on new search
   };
 
-  /** Replay a message via orchestrator */
+  /** Replay a message via orchestrator (or any handler) */
   const replayMessage = (id: string) => {
     const msg = allMessages.find(m => m.id === id);
     if (msg) {
       console.log("Replaying message:", msg);
-      // integrate with orchestrator.execute({ command: msg.text }) if needed
+      // Example: orchestrator.execute({ command: msg.text })
     }
   };
 
-  /** Reset entire history */
+  /** Reset entire chat history */
   const resetHistory = () => {
     setAllMessages([]);
     setVisibleCount(50);
@@ -91,7 +92,7 @@ export const ChatHistoryProvider: React.FC<{ children: React.ReactNode }> = ({ c
     localStorage.removeItem("chat_history");
   };
 
-  /** Persist allMessages to localStorage */
+  /** Persist allMessages to localStorage whenever updated */
   useEffect(() => {
     localStorage.setItem("chat_history", JSON.stringify(allMessages));
   }, [allMessages]);
