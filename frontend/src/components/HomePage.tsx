@@ -4,13 +4,14 @@ import Sidebar from "./Sidebar";
 import Topbar from "./Topbar";
 import UnifiedChat from "./UnifiedChat";
 import ChatSearchBar from "./ChatSearchBar";
+import AISuggestionsOverlay from "./AISuggestionsOverlay";
 import { ChatHistoryProvider, useChatHistory } from "../services/chatHistoryStore";
 import { OrchestratorClient } from "../services/orchestrator_client";
 
 /**
  * NeuroEdge HomePage
  * Central brain of the frontend
- * Hosts navigation, chat, floating tools, widgets, search
+ * Hosts sidebar, topbar, chat, floating tools, widgets, search, AI suggestions
  */
 
 interface Props {
@@ -21,16 +22,22 @@ const HomeContent: React.FC<{ orchestrator: OrchestratorClient }> = ({ orchestra
   const { setSearchQuery } = useChatHistory();
 
   return (
-    <div style={{ flex: 1, display: "flex", flexDirection: "column" }}>
+    <div style={{ flex: 1, display: "flex", flexDirection: "column", position: "relative" }}>
       {/* Chat Search Bar */}
       <ChatSearchBar
-        onSearch={(query: string, appliedFilters: any) => {
-          setSearchQuery(query, appliedFilters);
-        }}
+        onSearch={(query: string, filters: any) => setSearchQuery(query, filters)}
       />
 
       {/* Unified Chat */}
       <UnifiedChat orchestrator={orchestrator} />
+
+      {/* AI Suggestions Overlay */}
+      <AISuggestionsOverlay
+        onSelect={(suggestion) => {
+          console.log("AI Suggestion selected:", suggestion);
+          // Optionally auto-fill input in FloatingChat/MainChat
+        }}
+      />
     </div>
   );
 };
@@ -67,11 +74,9 @@ const HomePage: React.FC<Props> = ({ orchestrator }) => {
           }}
         >
           {/* Topbar */}
-          <Topbar
-            onToggleSidebar={() => setSidebarCollapsed(!sidebarCollapsed)}
-          />
+          <Topbar onToggleSidebar={() => setSidebarCollapsed(!sidebarCollapsed)} />
 
-          {/* Content */}
+          {/* Main Content */}
           <div
             style={{
               flex: 1,
@@ -81,21 +86,31 @@ const HomePage: React.FC<Props> = ({ orchestrator }) => {
               overflow: "hidden",
             }}
           >
-            {activeView === "chat" && (
-              <HomeContent orchestrator={orchestrator} />
-            )}
+            {activeView === "chat" && <HomeContent orchestrator={orchestrator} />}
 
             {activeView === "dashboard" && (
-              <div style={{ padding: "1.5rem", overflowY: "auto" }}>
+              <div
+                style={{
+                  padding: "1.5rem",
+                  overflowY: "auto",
+                  height: "100%",
+                }}
+              >
                 <h2>📊 NeuroEdge Dashboard</h2>
                 <p>Analytics, AI insights, execution stats, and widgets.</p>
               </div>
             )}
 
             {activeView === "settings" && (
-              <div style={{ padding: "1.5rem", overflowY: "auto" }}>
+              <div
+                style={{
+                  padding: "1.5rem",
+                  overflowY: "auto",
+                  height: "100%",
+                }}
+              >
                 <h2>⚙️ Settings</h2>
-                <p>User preferences, privacy, themes, AI controls, profile.</p>
+                <p>User preferences, privacy, themes, AI controls, profile, memory.</p>
               </div>
             )}
           </div>
