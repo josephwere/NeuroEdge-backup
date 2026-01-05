@@ -12,7 +12,7 @@ const UnifiedChat: React.FC<Props> = ({ orchestrator }) => {
   return (
     <EventBusProvider>
       <div style={{ height: "100vh", width: "100vw", position: "relative", backgroundColor: "#f5f6fa", overflow: "hidden" }}>
-        <MainChat />
+        <MainChat orchestrator={orchestrator} />
         <FloatingChat orchestrator={orchestrator} />
       </div>
     </EventBusProvider>
