@@ -1,11 +1,12 @@
 // frontend/src/pages/Home.tsx
 
 import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import Sidebar from "../components/Sidebar";
 import UnifiedChat from "../components/UnifiedChat";
 import ProfileSettings from "../components/ProfileSettings";
+import Dashboard from "../components/Dashboard";
 import { OrchestratorClient } from "../services/orchestrator_client";
-import { useNavigate } from "react-router-dom";
 
 /* -------------------- */
 /* Types / Session */
@@ -59,11 +60,10 @@ const Home: React.FC = () => {
 
       {/* Main Content */}
       <div style={{ flex: 1, display: "flex", flexDirection: "column", position: "relative" }}>
-        {/* Optional Dashboard */}
+        {/* Dashboard View */}
         {activeView === "dashboard" && (
           <div style={{ padding: "1rem", flex: 1, background: "#f5f6fa", overflowY: "auto" }}>
-            <h2>Dashboard / Analytics</h2>
-            <p>🚀 Chat stats, AI suggestions, and execution metrics appear here.</p>
+            <Dashboard />
           </div>
         )}
 
