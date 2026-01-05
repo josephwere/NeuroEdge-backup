@@ -6,8 +6,7 @@ import { OrchestratorClient } from "../../services/orchestrator_client";
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 import { okaidia } from "react-syntax-highlighter/dist/esm/styles/prism";
 import { useChatHistory } from "../../services/chatHistoryStore";
-import { saveToCache } from "./offlineCache";
-
+import { saveToCache, getCache } from "../services/offlineCache";
 
 interface ExecutionResult {
   id: string;
@@ -82,17 +81,27 @@ const FloatingChat: React.FC<FloatingChatProps> = ({ orchestrator, initialPositi
     return () => el.querySelector(".header")?.removeEventListener("mousedown", down);
   }, [onPositionChange, position.x, position.y]);
 
-  // --- Load / Save ---
+  // --- Load cached logs ---
   useEffect(() => {
-    const saved = localStorage.getItem("floating_chat_logs");
-    if (saved) {
-      const all: LogLine[] = JSON.parse(saved);
-      setMessages(all);
-      setDisplayed(all.slice(-PAGE_SIZE));
+    const cached = getCache();
+    if (cached.length) {
+      const logs: LogLine[] = cached.map(c => ({
+        id: c.id,
+        text: c.payload.text,
+        type: c.payload.type,
+        timestamp: c.timestamp,
+        collapsible: c.payload.isCode,
+        collapsibleOpen: true,
+        isCode: c.payload.isCode,
+        codeLanguage: c.payload.codeLanguage
+      }));
+      setMessages(logs);
+      setDisplayed(logs.slice(-PAGE_SIZE));
       setPage(1);
     }
   }, []);
 
+  // --- Save to localStorage + offline cache whenever messages update ---
   useEffect(() => {
     localStorage.setItem("floating_chat_logs", JSON.stringify(messages));
   }, [messages]);
@@ -109,14 +118,25 @@ const FloatingChat: React.FC<FloatingChatProps> = ({ orchestrator, initialPositi
   const send = async () => {
     if (!input.trim()) return;
     const context = chatContext.getAll();
-
     const commandId = Date.now().toString();
+
     addMessage(`💻 ${input}`, "info");
+
+    // Save user command to offline cache
+    saveToCache({
+      id: commandId,
+      timestamp: Date.now(),
+      type: "chat",
+      payload: { role: "user", text: input, type: "info" }
+    });
+
+    const userInput = input;
     setInput("");
 
     try {
-      const res = await orchestrator.execute({ command: input, context });
+      const res = await orchestrator.execute({ command: userInput, context });
 
+      // Process AI reasoning, logs, mesh results
       if (res.reasoning) addMessage(`🧠 Reasoning: ${res.reasoning}`, "ml");
       if (res.intent) addMessage(`🎯 Intent: ${res.intent}`, "ml");
       if (res.risk) addMessage(`⚠️ Risk Level: ${res.risk}`, "warn");
@@ -133,18 +153,11 @@ const FloatingChat: React.FC<FloatingChatProps> = ({ orchestrator, initialPositi
       });
 
       if (res.approvals) res.approvals.forEach((app: ApprovalRequest) => addApproval(app));
+
     } catch (err: any) {
       addMessage(`❌ Error: ${err.message || err}`, "error");
     }
   };
-  
-// After sending a message
-saveToCache({
-  id: Date.now().toString(),
-  timestamp: Date.now(),
-  type: "chat",
-  payload: { role: "user", text: input },
-});
 
   // --- Helpers ---
   const addMessage = (text: string, type?: LogLine["type"], codeLanguage?: string, isCode?: boolean) => {
@@ -152,10 +165,27 @@ saveToCache({
     const msg: LogLine = { id, text, type, codeLanguage, isCode, collapsible: isCode, collapsibleOpen: true, timestamp: Date.now() };
     setMessages(m => [...m, msg]);
     setDisplayed(d => [...d, msg]);
+
+    // Save to offline cache automatically
+    saveToCache({
+      id,
+      timestamp: Date.now(),
+      type: "chat",
+      payload: { text, type, codeLanguage, isCode }
+    });
   };
 
   const addApproval = (app: ApprovalRequest) => {
-    setMessages(m => [...m, { id: app.id, text: `[Approval] ${app.message}`, type: "ml", associatedId: app.id, timestamp: Date.now() }]);
+    const approvalMsg: LogLine = { id: app.id, text: `[Approval] ${app.message}`, type: "ml", associatedId: app.id, timestamp: Date.now() };
+    setMessages(m => [...m, approvalMsg]);
+    setDisplayed(d => [...d, approvalMsg]);
+
+    saveToCache({
+      id: app.id,
+      timestamp: Date.now(),
+      type: "chat",
+      payload: { text: `[Approval] ${app.message}`, type: "ml", associatedId: app.id }
+    });
   };
 
   const handleApproval = (id: string, approved: boolean) => {
