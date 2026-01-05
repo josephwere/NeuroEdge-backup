@@ -105,6 +105,14 @@ const MainChat: React.FC = () => {
   const toggleCollapse = (id: string) => {
     setDisplayed(d => d.map(msg => msg.id === id ? { ...msg, collapsibleOpen: !msg.collapsibleOpen } : msg));
   };
+  
+// After sending a message
+saveToCache({
+  id: Date.now().toString(),
+  timestamp: Date.now(),
+  type: "chat",
+  payload: { role: "user", text: input },
+});
 
   // --- Render with search highlights ---
   const renderMessage = (msg: Message) => {
