@@ -5,6 +5,7 @@ import { chatContext } from "../../services/chatContext";
 import { sendMessage } from "../../services/orchestrator_client";
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 import { okaidia } from "react-syntax-highlighter/dist/esm/styles/prism";
+import { useChatHistory } from "../../services/chatHistoryStore";
 
 interface Message {
   id: string;
@@ -26,8 +27,9 @@ const MainChat: React.FC = () => {
   const [page, setPage] = useState(0);
   const [input, setInput] = useState("");
   const messageEndRef = useRef<HTMLDivElement>(null);
+  const { searchQuery } = useChatHistory();
 
-  // Load full chat history from chatContext
+  // Load full chat history
   useEffect(() => {
     const history = chatContext.getAll().map((m, i) => ({
       id: String(i),
@@ -42,6 +44,7 @@ const MainChat: React.FC = () => {
     setPage(1);
   }, []);
 
+  // Infinite scroll
   const fetchMore = () => {
     const start = messages.length - (page + 1) * PAGE_SIZE;
     const nextBatch = messages.slice(Math.max(0, start), messages.length - page * PAGE_SIZE);
@@ -54,6 +57,7 @@ const MainChat: React.FC = () => {
 
   useEffect(scrollToBottom, [displayed]);
 
+  // Send message
   const handleSend = async () => {
     if (!input.trim()) return;
 
@@ -102,7 +106,18 @@ const MainChat: React.FC = () => {
     setDisplayed(d => d.map(msg => msg.id === id ? { ...msg, collapsibleOpen: !msg.collapsibleOpen } : msg));
   };
 
+  // --- Render with search highlights ---
   const renderMessage = (msg: Message) => {
+    const searchTerm = searchQuery?.toLowerCase();
+    const highlightText = (text: string) => {
+      if (!searchTerm) return text;
+      return text.split(new RegExp(`(${searchTerm})`, "gi")).map((part, i) =>
+        part.toLowerCase() === searchTerm
+          ? <mark key={i} style={{ background: "#fffa65", color: "#000" }}>{part}</mark>
+          : part
+      );
+    };
+
     if (msg.isCode) {
       const codeMatch = msg.text.match(/```(\w+)?\n([\s\S]*?)```/);
       const language = msg.codeLanguage || (codeMatch ? codeMatch[1] : "text");
@@ -126,7 +141,7 @@ const MainChat: React.FC = () => {
           {msg.collapsibleOpen && (
             <>
               <SyntaxHighlighter language={language} style={okaidia} showLineNumbers>
-                {code}
+                {highlightText(code)}
               </SyntaxHighlighter>
               <button onClick={() => navigator.clipboard.writeText(code)} style={{
                 marginTop: "2px",
@@ -150,7 +165,7 @@ const MainChat: React.FC = () => {
     else if (msg.type === "ml") color = "#40a9ff";
     else if (msg.role === "assistant") color = "#3a3aff";
 
-    return <div key={msg.id} style={{ color, whiteSpace: "pre-wrap", marginBottom: "4px" }}>{msg.text}</div>;
+    return <div key={msg.id} style={{ color, whiteSpace: "pre-wrap", marginBottom: "4px" }}>{highlightText(msg.text)}</div>;
   };
 
   return (
