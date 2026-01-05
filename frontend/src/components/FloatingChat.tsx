@@ -35,7 +35,7 @@ const FloatingChat: React.FC<{ orchestrator: OrchestratorClient }> = ({ orchestr
   const [minimized, setMinimized] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  // Dragging floating chat
+  // --- Dragging Floating Chat ---
   useEffect(() => {
     const el = containerRef.current;
     if (!el) return;
@@ -58,7 +58,7 @@ const FloatingChat: React.FC<{ orchestrator: OrchestratorClient }> = ({ orchestr
     el.querySelector(".header")?.addEventListener("mousedown", down);
   }, []);
 
-  // Load & save chat history
+  // --- Load & Save History ---
   useEffect(() => {
     const saved = localStorage.getItem("floating_chat_logs");
     if (saved) setMessages(JSON.parse(saved));
@@ -67,7 +67,7 @@ const FloatingChat: React.FC<{ orchestrator: OrchestratorClient }> = ({ orchestr
     localStorage.setItem("floating_chat_logs", JSON.stringify(messages));
   }, [messages]);
 
-  // --- Send Command to Orchestrator ---
+  // --- Send Command ---
   const send = async () => {
     if (!input.trim()) return;
     const context = chatContext.getAll();
@@ -79,7 +79,7 @@ const FloatingChat: React.FC<{ orchestrator: OrchestratorClient }> = ({ orchestr
     try {
       const res = await orchestrator.execute({ command: input, context });
 
-      // ML reasoning and risk
+      // ML reasoning & risk
       if (res.reasoning) addMessage(`🧠 Reasoning: ${res.reasoning}`, "ml");
       if (res.intent) addMessage(`🎯 Intent: ${res.intent}`, "ml");
       if (res.risk) addMessage(`⚠️ Risk Level: ${res.risk}`, "warn");
@@ -93,7 +93,6 @@ const FloatingChat: React.FC<{ orchestrator: OrchestratorClient }> = ({ orchestr
       // Execution results
       if (res.results) res.results.forEach((r: ExecutionResult) => {
         if (r.stdout.includes("```")) {
-          // Handle code blocks
           addMessage(r.stdout, r.success ? "info" : "error", extractLanguage(r.stdout), true);
         } else {
           addMessage(r.success ? r.stdout : `❌ ${r.stderr}`, r.success ? "info" : "error");
@@ -101,9 +100,7 @@ const FloatingChat: React.FC<{ orchestrator: OrchestratorClient }> = ({ orchestr
       });
 
       // Approval requests
-      if (res.approvals) res.approvals.forEach((app: ApprovalRequest) => {
-        addApproval(app);
-      });
+      if (res.approvals) res.approvals.forEach((app: ApprovalRequest) => addApproval(app));
 
     } catch (err: any) {
       addMessage(`❌ Error: ${err.message || err}`, "error");
@@ -117,13 +114,14 @@ const FloatingChat: React.FC<{ orchestrator: OrchestratorClient }> = ({ orchestr
   };
 
   const addApproval = (app: ApprovalRequest) => {
-    const id = app.id;
-    setMessages(m => [...m, { id, text: `[Approval] ${app.message}`, type: "ml", associatedId: id }]);
+    setMessages(m => [...m, { id: app.id, text: `[Approval] ${app.message}`, type: "ml", associatedId: app.id }]);
   };
 
   const handleApproval = (id: string, approved: boolean) => {
     orchestrator.sendApproval({ id, approved });
-    setMessages(m => m.map(msg => msg.associatedId === id ? { ...msg, text: `${msg.text} => ${approved ? "✅ Approved" : "❌ Rejected"}` } : msg));
+    setMessages(m => m.map(msg =>
+      msg.associatedId === id ? { ...msg, text: `${msg.text} => ${approved ? "✅ Approved" : "❌ Rejected"}` } : msg
+    ));
   };
 
   const extractLanguage = (codeBlock: string) => {
@@ -144,7 +142,18 @@ const FloatingChat: React.FC<{ orchestrator: OrchestratorClient }> = ({ orchestr
       return (
         <div key={msg.id} style={{ marginBottom: "0.5rem" }}>
           {msg.collapsible && (
-            <button onClick={() => toggleCollapse(msg.id)} style={{ marginBottom: "2px", background: "#444", color: "#fff", border: "none", cursor: "pointer" }}>
+            <button
+              onClick={() => toggleCollapse(msg.id)}
+              style={{
+                marginBottom: "2px",
+                background: "#444",
+                color: "#fff",
+                border: "none",
+                cursor: "pointer",
+                padding: "2px 6px",
+                borderRadius: "4px"
+              }}
+            >
               {msg.collapsibleOpen ? "▼ Collapse" : "▶ Expand"}
             </button>
           )}
@@ -153,7 +162,10 @@ const FloatingChat: React.FC<{ orchestrator: OrchestratorClient }> = ({ orchestr
               <SyntaxHighlighter language={language} style={okaidia} showLineNumbers>
                 {code}
               </SyntaxHighlighter>
-              <button onClick={() => navigator.clipboard.writeText(code)} style={{ marginTop: "2px", background: "#3a3aff", color: "#fff", border: "none", padding: "2px 5px", cursor: "pointer" }}>
+              <button
+                onClick={() => navigator.clipboard.writeText(code)}
+                style={{ marginTop: "2px", background: "#3a3aff", color: "#fff", border: "none", padding: "2px 5px", cursor: "pointer" }}
+              >
                 Copy
               </button>
             </>
