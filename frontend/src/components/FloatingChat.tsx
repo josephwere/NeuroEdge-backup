@@ -29,34 +29,51 @@ interface ApprovalRequest {
   command?: string;
 }
 
-const FloatingChat: React.FC<{ orchestrator: OrchestratorClient }> = ({ orchestrator }) => {
+interface FloatingChatProps {
+  orchestrator: OrchestratorClient;
+  initialPosition?: { x: number; y: number };
+  onPositionChange?: (pos: { x: number; y: number }) => void;
+}
+
+const FloatingChat: React.FC<FloatingChatProps> = ({ orchestrator, initialPosition, onPositionChange }) => {
   const [messages, setMessages] = useState<LogLine[]>([]);
   const [input, setInput] = useState("");
   const [minimized, setMinimized] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
+  const [position, setPosition] = useState(initialPosition || { x: 20, y: 20 });
 
   // --- Dragging Floating Chat ---
   useEffect(() => {
     const el = containerRef.current;
     if (!el) return;
 
-    let x = 0, y = 0, mx = 0, my = 0;
+    let mx = 0, my = 0;
+    let x = position.x, y = position.y;
+
     const down = (e: MouseEvent) => {
       mx = e.clientX;
       my = e.clientY;
       document.onmousemove = move;
       document.onmouseup = up;
     };
+
     const move = (e: MouseEvent) => {
       x += e.clientX - mx;
       y += e.clientY - my;
       mx = e.clientX;
       my = e.clientY;
-      el.style.transform = `translate(${x}px, ${y}px)`;
+      setPosition({ x, y });
+      onPositionChange?.({ x, y });
     };
-    const up = () => { document.onmousemove = null; document.onmouseup = null; };
+
+    const up = () => {
+      document.onmousemove = null;
+      document.onmouseup = null;
+    };
+
     el.querySelector(".header")?.addEventListener("mousedown", down);
-  }, []);
+    return () => el.querySelector(".header")?.removeEventListener("mousedown", down);
+  }, [onPositionChange, position.x, position.y]);
 
   // --- Load & Save History ---
   useEffect(() => {
@@ -73,24 +90,19 @@ const FloatingChat: React.FC<{ orchestrator: OrchestratorClient }> = ({ orchestr
     const context = chatContext.getAll();
     const commandId = Date.now().toString();
 
-    setMessages(m => [...m, { id: commandId, text: `💻 ${input}`, type: "info" }]);
+    addMessage(`💻 ${input}`, "info");
     setInput("");
 
     try {
       const res = await orchestrator.execute({ command: input, context });
 
-      // ML reasoning & risk
       if (res.reasoning) addMessage(`🧠 Reasoning: ${res.reasoning}`, "ml");
       if (res.intent) addMessage(`🎯 Intent: ${res.intent}`, "ml");
       if (res.risk) addMessage(`⚠️ Risk Level: ${res.risk}`, "warn");
 
-      // Logs
       if (res.logs) res.logs.forEach((l: string) => addMessage(`[Log] ${l}`, "info"));
-
-      // Mesh execution
       if (res.meshStatus) res.meshStatus.forEach((node: any) => addMessage(`🌐 [${node.node}] ${node.status}`, "mesh"));
 
-      // Execution results
       if (res.results) res.results.forEach((r: ExecutionResult) => {
         if (r.stdout.includes("```")) {
           addMessage(r.stdout, r.success ? "info" : "error", extractLanguage(r.stdout), true);
@@ -99,9 +111,7 @@ const FloatingChat: React.FC<{ orchestrator: OrchestratorClient }> = ({ orchestr
         }
       });
 
-      // Approval requests
       if (res.approvals) res.approvals.forEach((app: ApprovalRequest) => addApproval(app));
-
     } catch (err: any) {
       addMessage(`❌ Error: ${err.message || err}`, "error");
     }
@@ -186,8 +196,8 @@ const FloatingChat: React.FC<{ orchestrator: OrchestratorClient }> = ({ orchestr
   return (
     <div ref={containerRef} style={{
       position: "fixed",
-      bottom: "20px",
-      right: "20px",
+      left: position.x,
+      top: position.y,
       width: "450px",
       height: minimized ? "48px" : "560px",
       background: "#1e1e2f",
