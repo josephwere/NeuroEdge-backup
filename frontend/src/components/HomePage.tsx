@@ -20,9 +20,9 @@ interface Props {
   orchestrator: OrchestratorClient;
 }
 
+// Home content with chat, search bar, AI overlay, and command palette
 const HomeContent: React.FC<{ orchestrator: OrchestratorClient }> = ({ orchestrator }) => {
-  const { setSearchQuery, history } = useChatHistory();
-
+  const { setSearchQuery } = useChatHistory();
   const [paletteVisible, setPaletteVisible] = useState(false);
 
   // Keyboard shortcut: Ctrl+K / Cmd+K to toggle Command Palette
@@ -65,6 +65,7 @@ const HomeContent: React.FC<{ orchestrator: OrchestratorClient }> = ({ orchestra
   );
 };
 
+// Main HomePage component with sidebar, topbar, and views
 const HomePage: React.FC<Props> = ({ orchestrator }) => {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [activeView, setActiveView] = useState<"chat" | "dashboard" | "settings">("chat");
