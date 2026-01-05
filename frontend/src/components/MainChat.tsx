@@ -7,6 +7,13 @@ import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 import { okaidia } from "react-syntax-highlighter/dist/esm/styles/prism";
 import { useChatHistory } from "../../services/chatHistoryStore";
 import { saveToCache, getCache } from "../services/offlineCache";
+// Add ChatExportMenu above chat messages
+import ChatExportMenu from "./ChatExportMenu";
+import { useChatHistory } from "../services/chatHistoryStore";
+
+const { messages, importHistory } = useChatHistory();
+
+<ChatExportMenu chatHistory={messages} onImport={importHistory} />
 import { useNotifications } from "../services/notificationStore";
 
 const { addNotification } = useNotifications();
