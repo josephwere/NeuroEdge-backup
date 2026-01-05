@@ -1,47 +1,34 @@
-import React, { useState } from "react";
+import React from "react";
 import MainChat from "./MainChat";
 import FloatingChat from "./FloatingChat";
 import { OrchestratorClient } from "../../services/orchestrator_client";
+import { EventBusProvider } from "../../services/eventBus";
 
-const UnifiedChat: React.FC<{ orchestrator: OrchestratorClient }> = ({ orchestrator }) => {
-  const [activeTab, setActiveTab] = useState<"main" | "floating">("main");
+interface Props {
+  orchestrator: OrchestratorClient;
+}
 
+const UnifiedChat: React.FC<Props> = ({ orchestrator }) => {
   return (
-    <div style={{ height: "100vh", display: "flex", flexDirection: "column" }}>
-      {/* Tab Switcher */}
-      <div style={{ display: "flex", backgroundColor: "#1e1e2f" }}>
-        <button
-          onClick={() => setActiveTab("main")}
-          style={{
-            flex: 1,
-            padding: "0.75rem",
-            backgroundColor: activeTab === "main" ? "#3a3aff" : "#2b2b3c",
-            color: "#fff",
-            border: "none",
-          }}
-        >
-          Main Chat
-        </button>
-        <button
-          onClick={() => setActiveTab("floating")}
-          style={{
-            flex: 1,
-            padding: "0.75rem",
-            backgroundColor: activeTab === "floating" ? "#3a3aff" : "#2b2b3c",
-            color: "#fff",
-            border: "none",
-          }}
-        >
-          Floating Chat
-        </button>
-      </div>
+    <EventBusProvider>
+      <div
+        style={{
+          height: "100vh",
+          width: "100vw",
+          position: "relative",
+          backgroundColor: "#f5f6fa",
+          overflow: "hidden",
+        }}
+      >
+        {/* Main Chat – Always visible */}
+        <div style={{ height: "100%", width: "100%" }}>
+          <MainChat />
+        </div>
 
-      {/* Chat Display */}
-      <div style={{ flex: 1, position: "relative" }}>
-        {activeTab === "main" && <MainChat />}
-        {activeTab === "floating" && <FloatingChat orchestrator={orchestrator} />}
+        {/* Floating Chat – Overlay control plane */}
+        <FloatingChat orchestrator={orchestrator} />
       </div>
-    </div>
+    </EventBusProvider>
   );
 };
 
