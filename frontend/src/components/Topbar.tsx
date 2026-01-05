@@ -169,6 +169,37 @@ const CommandPalette: React.FC<CommandPaletteProps> = ({
     </div>
   );
 };
+// Topbar.tsx (add after imports)
+import { useEffect, useState } from "react";
+
+const [isOffline, setIsOffline] = useState(!navigator.onLine);
+
+useEffect(() => {
+  const goOnline = () => setIsOffline(false);
+  const goOffline = () => setIsOffline(true);
+
+  window.addEventListener("online", goOnline);
+  window.addEventListener("offline", goOffline);
+
+  return () => {
+    window.removeEventListener("online", goOnline);
+    window.removeEventListener("offline", goOffline);
+  };
+}, []);
+{isOffline && (
+  <span
+    style={{
+      marginLeft: "1rem",
+      padding: "0.2rem 0.5rem",
+      background: "#f87171",
+      color: "#fff",
+      borderRadius: "6px",
+      fontSize: "0.75rem",
+    }}
+  >
+    Offline
+  </span>
+)}
 
 /* -------------------- */
 /* Styles */
