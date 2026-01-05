@@ -120,3 +120,45 @@ export const useChatHistory = () => {
   if (!ctx) throw new Error("useChatHistory must be used inside ChatHistoryProvider");
   return ctx;
 };
+// inside chatHistoryStore.ts
+
+interface ChatHistoryContextValue {
+  ...
+  // New
+  replayIndex: number;
+  startReplay: () => void;
+  stepReplay: () => void;
+  resetReplay: () => void;
+  importHistory: (messages: ChatMessage[]) => void;
+}
+
+export const ChatHistoryProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [replayIndex, setReplayIndex] = useState(-1);
+
+  const importHistory = (msgs: ChatMessage[]) => {
+    setMessages(msgs);
+    setReplayIndex(-1);
+  };
+
+  const startReplay = () => setReplayIndex(0);
+  const stepReplay = () => setReplayIndex(i => Math.min(i + 1, messages.length - 1));
+  const resetReplay = () => setReplayIndex(-1);
+
+  ...
+  return (
+    <ChatHistoryContext.Provider value={{
+      messages,
+      addMessage,
+      searchQuery,
+      setSearchQuery,
+      replayIndex,
+      startReplay,
+      stepReplay,
+      resetReplay,
+      importHistory,
+    }}>
+      {children}
+    </ChatHistoryContext.Provider>
+  );
+};
