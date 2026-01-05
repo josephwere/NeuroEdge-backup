@@ -1,11 +1,12 @@
 // frontend/src/components/HomePage.tsx
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Sidebar from "./Sidebar";
 import Topbar from "./Topbar";
 import UnifiedChat from "./UnifiedChat";
 import ChatSearchBar from "./ChatSearchBar";
 import AISuggestionsOverlay from "./AISuggestionsOverlay";
 import Dashboard from "./Dashboard";
+import CommandPalette from "./CommandPalette";
 import { ChatHistoryProvider, useChatHistory } from "../services/chatHistoryStore";
 import { OrchestratorClient } from "../services/orchestrator_client";
 
@@ -20,7 +21,21 @@ interface Props {
 }
 
 const HomeContent: React.FC<{ orchestrator: OrchestratorClient }> = ({ orchestrator }) => {
-  const { setSearchQuery } = useChatHistory();
+  const { setSearchQuery, history } = useChatHistory();
+
+  const [paletteVisible, setPaletteVisible] = useState(false);
+
+  // Keyboard shortcut: Ctrl+K / Cmd+K to toggle Command Palette
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "k") {
+        e.preventDefault();
+        setPaletteVisible(v => !v);
+      }
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, []);
 
   return (
     <div style={{ flex: 1, display: "flex", flexDirection: "column", position: "relative" }}>
@@ -38,6 +53,13 @@ const HomeContent: React.FC<{ orchestrator: OrchestratorClient }> = ({ orchestra
           console.log("AI Suggestion selected:", suggestion);
           // Optionally auto-fill input in FloatingChat/MainChat
         }}
+      />
+
+      {/* Command Palette */}
+      <CommandPalette
+        orchestrator={orchestrator}
+        visible={paletteVisible}
+        onClose={() => setPaletteVisible(false)}
       />
     </div>
   );
