@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
-import { eventBus } from "../../services/eventBus";
-import { executeCommand } from "../../services/orchestrator_client";
+import { chatContext } from "../../services/chatContext";
+import { OrchestratorClient } from "../../services/orchestrator_client";
 
 interface ExecutionResult {
   id: string;
@@ -9,118 +9,159 @@ interface ExecutionResult {
   stderr: string;
 }
 
-interface FixSuggestion {
-  id: string;
-  fixPlan: string;
-}
-
-interface ApprovalRequest {
-  id: string;
-  message: string;
-}
-
-const FloatingChat: React.FC<{ orchestrator: any }> = ({ orchestrator }) => {
+const FloatingChat: React.FC<{ orchestrator: OrchestratorClient }> = ({ orchestrator }) => {
   const [messages, setMessages] = useState<string[]>([]);
   const [input, setInput] = useState("");
-  const [pendingApprovals, setPendingApprovals] = useState<ApprovalRequest[]>([]);
-  const messageEndRef = useRef<HTMLDivElement>(null);
+  const [minimized, setMinimized] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
 
-  const scrollToBottom = () => messageEndRef.current?.scrollIntoView({ behavior: "smooth" });
-
-  useEffect(() => scrollToBottom(), [messages, pendingApprovals]);
-
-  // --- Subscriptions ---
+  /* ---------- Drag ---------- */
   useEffect(() => {
-    const execSub = eventBus.subscribe("floating_chat:execution_result", (res: ExecutionResult) => {
-      const output = res.success ? res.stdout : `❌ Error: ${res.stderr}`;
-      setMessages((msgs) => [...msgs, `[Execution] ${output}`]);
-    });
+    const el = containerRef.current;
+    if (!el) return;
 
-    const fixSub = eventBus.subscribe("floating_chat:fix_suggestion", (res: FixSuggestion) => {
-      setMessages((msgs) => [...msgs, `[ML Fix] ${res.fixPlan}`]);
-    });
+    let x = 0, y = 0, mx = 0, my = 0;
 
-    const logSub = eventBus.subscribe("floating_chat:log_stream", (log: string) => {
-      setMessages((msgs) => [...msgs, `[Log] ${log}`]);
-    });
-
-    const approvalSub = eventBus.subscribe("floating_chat:approval_request", (req: ApprovalRequest) => {
-      setPendingApprovals((prev) => [...prev, req]);
-      setMessages((msgs) => [...msgs, `[Approval Needed] ${req.message}`]);
-    });
-
-    return () => {
-      execSub.unsubscribe();
-      fixSub.unsubscribe();
-      logSub.unsubscribe();
-      approvalSub.unsubscribe();
+    const down = (e: MouseEvent) => {
+      mx = e.clientX;
+      my = e.clientY;
+      document.onmousemove = move;
+      document.onmouseup = up;
     };
+
+    const move = (e: MouseEvent) => {
+      x += e.clientX - mx;
+      y += e.clientY - my;
+      mx = e.clientX;
+      my = e.clientY;
+      el.style.transform = `translate(${x}px, ${y}px)`;
+    };
+
+    const up = () => {
+      document.onmousemove = null;
+      document.onmouseup = null;
+    };
+
+    el.querySelector(".header")?.addEventListener("mousedown", down);
   }, []);
 
-  const sendCommand = async () => {
-    if (!input) return;
-    setMessages((msgs) => [...msgs, `💻 You: ${input}`]);
-    const req = { id: Date.now().toString(), command: input };
+  /* ---------- Persistence ---------- */
+  useEffect(() => {
+    const saved = localStorage.getItem("floating_chat_logs");
+    if (saved) setMessages(JSON.parse(saved));
+  }, []);
 
-    // Emit command to backend / ML orchestrator
-    try {
-      const response = await executeCommand(req);
+  useEffect(() => {
+    localStorage.setItem("floating_chat_logs", JSON.stringify(messages));
+  }, [messages]);
 
-      // Show reasoning & auto-fix suggestions
-      if (response.reasoning) setMessages((msgs) => [...msgs, `🧠 Reasoning: ${response.reasoning}`]);
-      if (response.fixes) response.fixes.forEach((fix: string) => setMessages((msgs) => [...msgs, `🛠️ Suggested Fix: ${fix}`]));
+  const send = async () => {
+    if (!input.trim()) return;
 
-      // Stream logs
-      if (response.logs) response.logs.forEach((log: string) => setMessages((msgs) => [...msgs, `[Log] ${log}`]));
+    const context = chatContext.getAll();
 
-      // Handle remote nodes execution results
-      if (response.remoteResults) {
-        response.remoteResults.forEach((r: ExecutionResult) =>
-          setMessages((msgs) => [...msgs, `[Node ${r.id}] ${r.success ? r.stdout : `❌ ${r.stderr}`}`])
-        );
-      }
-    } catch (err: any) {
-      setMessages((msgs) => [...msgs, `❌ Execution error: ${err.message || err}`]);
-    }
+    setMessages(m => [...m, `💻 ${input}`]);
+
+    const res = await orchestrator.execute({
+      command: input,
+      context
+    });
+
+    if (res.reasoning)
+      setMessages(m => [...m, `🧠 Reasoning: ${res.reasoning}`]);
+
+    if (res.intent)
+      setMessages(m => [...m, `🎯 Intent: ${res.intent}`]);
+
+    if (res.risk)
+      setMessages(m => [...m, `⚠️ Risk Level: ${res.risk}`]);
+
+    if (res.logs)
+      res.logs.forEach((l: string) =>
+        setMessages(m => [...m, `[Log] ${l}`])
+      );
+
+    if (res.results)
+      res.results.forEach((r: ExecutionResult) =>
+        setMessages(m => [
+          ...m,
+          r.success ? r.stdout : `❌ ${r.stderr}`
+        ])
+      );
 
     setInput("");
   };
 
-  const handleApproval = (id: string, approved: boolean) => {
-    eventBus.emit("floating_chat:user_approval", { id, approved });
-    setPendingApprovals((prev) => prev.filter((p) => p.id !== id));
-    setMessages((msgs) => [...msgs, `📝 Proposal ${id} ${approved ? "approved ✅" : "rejected ❌"}`]);
-  };
-
   return (
-    <div style={{ padding: "1rem", height: "100%", display: "flex", flexDirection: "column", backgroundColor: "#1e1e2f", color: "#fff" }}>
-      <div style={{ flex: 1, overflowY: "auto", marginBottom: "1rem", fontFamily: "monospace" }}>
-        {messages.map((msg, idx) => (
-          <div key={idx} style={{ margin: "2px 0" }}>{msg}</div>
-        ))}
-        {pendingApprovals.map((p) => (
-          <div key={p.id} style={{ margin: "2px 0" }}>
-            <strong>{p.message}</strong>
-            <button onClick={() => handleApproval(p.id, true)} style={{ marginLeft: "0.5rem" }}>✅ Approve</button>
-            <button onClick={() => handleApproval(p.id, false)} style={{ marginLeft: "0.5rem" }}>❌ Reject</button>
-          </div>
-        ))}
-        <div ref={messageEndRef} />
-      </div>
-
-      <div style={{ display: "flex" }}>
-        <input
-          type="text"
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          onKeyDown={(e) => e.key === "Enter" && sendCommand()}
-          placeholder="Run commands, debug code, analyze logs, fix issues..."
-          style={{ flex: 1, padding: "0.5rem", fontFamily: "monospace", backgroundColor: "#2b2b3c", color: "#fff", border: "none", borderRadius: "6px 0 0 6px" }}
-        />
-        <button onClick={sendCommand} style={{ padding: "0.5rem 1rem", backgroundColor: "#3a3aff", color: "#fff", border: "none", borderRadius: "0 6px 6px 0" }}>
-          Send
+    <div
+      ref={containerRef}
+      style={{
+        position: "fixed",
+        bottom: "20px",
+        right: "20px",
+        width: "380px",
+        height: minimized ? "48px" : "520px",
+        background: "#1e1e2f",
+        color: "#fff",
+        borderRadius: "12px",
+        boxShadow: "0 0 30px rgba(0,0,0,0.6)",
+        zIndex: 9999,
+        display: "flex",
+        flexDirection: "column"
+      }}
+    >
+      <div
+        className="header"
+        style={{
+          padding: "10px",
+          cursor: "move",
+          background: "#2b2b3c",
+          display: "flex",
+          justifyContent: "space-between"
+        }}
+      >
+        <strong>NeuroEdge Control</strong>
+        <button onClick={() => setMinimized(!minimized)}>
+          {minimized ? "⬆️" : "⬇️"}
         </button>
       </div>
+
+      {!minimized && (
+        <>
+          <div style={{ flex: 1, overflowY: "auto", padding: "10px", fontFamily: "monospace" }}>
+            {messages.map((m, i) => (
+              <div key={i}>{m}</div>
+            ))}
+          </div>
+
+          <div style={{ display: "flex" }}>
+            <input
+              value={input}
+              onChange={e => setInput(e.target.value)}
+              onKeyDown={e => e.key === "Enter" && send()}
+              placeholder="execute • debug • fix • analyze"
+              style={{
+                flex: 1,
+                padding: "10px",
+                background: "#2b2b3c",
+                border: "none",
+                color: "#fff"
+              }}
+            />
+            <button
+              onClick={send}
+              style={{
+                padding: "10px",
+                background: "#3a3aff",
+                border: "none",
+                color: "#fff"
+              }}
+            >
+              ▶
+            </button>
+          </div>
+        </>
+      )}
     </div>
   );
 };
