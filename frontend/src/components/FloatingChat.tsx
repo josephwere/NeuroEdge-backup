@@ -5,6 +5,7 @@ import { chatContext } from "../../services/chatContext";
 import { OrchestratorClient } from "../../services/orchestrator_client";
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 import { okaidia } from "react-syntax-highlighter/dist/esm/styles/prism";
+import { useChatHistory } from "../../services/chatHistoryStore";
 
 interface ExecutionResult {
   id: string;
@@ -47,8 +48,9 @@ const FloatingChat: React.FC<FloatingChatProps> = ({ orchestrator, initialPositi
   const [minimized, setMinimized] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const [position, setPosition] = useState(initialPosition || { x: 20, y: 20 });
+  const { searchQuery } = useChatHistory();
 
-  // --- Dragging Floating Chat ---
+  // --- Dragging ---
   useEffect(() => {
     const el = containerRef.current;
     if (!el) return;
@@ -78,7 +80,7 @@ const FloatingChat: React.FC<FloatingChatProps> = ({ orchestrator, initialPositi
     return () => el.querySelector(".header")?.removeEventListener("mousedown", down);
   }, [onPositionChange, position.x, position.y]);
 
-  // --- Load & Save History ---
+  // --- Load / Save ---
   useEffect(() => {
     const saved = localStorage.getItem("floating_chat_logs");
     if (saved) {
@@ -88,11 +90,12 @@ const FloatingChat: React.FC<FloatingChatProps> = ({ orchestrator, initialPositi
       setPage(1);
     }
   }, []);
+
   useEffect(() => {
     localStorage.setItem("floating_chat_logs", JSON.stringify(messages));
   }, [messages]);
 
-  // --- Infinite Scroll Fetch ---
+  // --- Infinite scroll ---
   const fetchMore = () => {
     const start = messages.length - (page + 1) * PAGE_SIZE;
     const nextBatch = messages.slice(Math.max(0, start), messages.length - page * PAGE_SIZE);
@@ -100,12 +103,12 @@ const FloatingChat: React.FC<FloatingChatProps> = ({ orchestrator, initialPositi
     setPage(prev => prev + 1);
   };
 
-  // --- Send Command ---
+  // --- Send command ---
   const send = async () => {
     if (!input.trim()) return;
     const context = chatContext.getAll();
-    const commandId = Date.now().toString();
 
+    const commandId = Date.now().toString();
     addMessage(`💻 ${input}`, "info");
     setInput("");
 
@@ -161,7 +164,18 @@ const FloatingChat: React.FC<FloatingChatProps> = ({ orchestrator, initialPositi
     setDisplayed(d => d.map(msg => msg.id === id ? { ...msg, collapsibleOpen: !msg.collapsibleOpen } : msg));
   };
 
+  // --- Render messages with search highlights ---
   const renderMessage = (msg: LogLine) => {
+    const searchTerm = searchQuery?.toLowerCase();
+    const highlightText = (text: string) => {
+      if (!searchTerm) return text;
+      return text.split(new RegExp(`(${searchTerm})`, "gi")).map((part, i) =>
+        part.toLowerCase() === searchTerm
+          ? <mark key={i} style={{ background: "#fffa65", color: "#000" }}>{part}</mark>
+          : part
+      );
+    };
+
     if (msg.isCode) {
       const codeMatch = msg.text.match(/```(\w+)?\n([\s\S]*?)```/);
       const language = msg.codeLanguage || (codeMatch ? codeMatch[1] : "text");
@@ -185,7 +199,7 @@ const FloatingChat: React.FC<FloatingChatProps> = ({ orchestrator, initialPositi
           {msg.collapsibleOpen && (
             <>
               <SyntaxHighlighter language={language} style={okaidia} showLineNumbers>
-                {code}
+                {highlightText(code)}
               </SyntaxHighlighter>
               <button onClick={() => navigator.clipboard.writeText(code)} style={{ marginTop: "2px", background: "#3a3aff", color: "#fff", border: "none", padding: "2px 5px", cursor: "pointer" }}>
                 Copy
@@ -202,7 +216,11 @@ const FloatingChat: React.FC<FloatingChatProps> = ({ orchestrator, initialPositi
     else if (msg.type === "ml") color = "#40a9ff";
     else if (msg.type === "mesh") color = "#36cfc9";
 
-    return <div key={msg.id} style={{ color, whiteSpace: "pre-wrap", marginBottom: "2px" }}>{msg.text}</div>;
+    return (
+      <div key={msg.id} style={{ color, whiteSpace: "pre-wrap", marginBottom: "2px" }}>
+        {highlightText(msg.text)}
+      </div>
+    );
   };
 
   return (
