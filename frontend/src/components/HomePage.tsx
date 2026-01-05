@@ -149,5 +149,26 @@ const HomePage: React.FC<Props> = ({ orchestrator }) => {
     </NotificationProvider>
   );
 };
-
+// inside HomePage.tsx — dashboard view
+{activeView === "dashboard" && (
+  <AnalyticsOverview
+    stats={{
+      executedCommands: 1245,
+      successCount: 1130,
+      failureCount: 115,
+      errorTypes: {
+        "SyntaxError": 50,
+        "RuntimeError": 30,
+        "Timeout": 20,
+        "Unknown": 15,
+      },
+      approvalLatencyAvg: 12.4,
+      aiConfidenceAvg: 87.2,
+      meshNodes: [
+        { node: "Node-1", status: "online" },
+        { node: "Node-2", status: "offline" },
+      ],
+    }}
+  />
+)}
 export default HomePage;
