@@ -1,101 +1,117 @@
-// frontend/src/components/AISuggestionsOverlay.tsx
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useState } from "react";
 
-export interface Suggestion {
+/* ===============================
+   NeuroEdge Suggestion Contract
+   =============================== */
+
+export interface AISuggestion {
   id: string;
   text: string;
-  command?: string;
-  type?: "command" | "completion" | "insight";
+  type: "command" | "code" | "fix" | "explain" | "continue";
+  confidence?: number;
   action?: () => void;
 }
 
 interface Props {
-  suggestions: Suggestion[];
-  onSelect: (suggestion: Suggestion) => void;
-  hotkey?: string; // optional hotkey to trigger dynamic suggestions
+  suggestions: AISuggestion[];
+  onAccept: (suggestion: AISuggestion) => void;
 }
 
-const AISuggestionsOverlay: React.FC<Props> = ({ suggestions, onSelect, hotkey = " " }) => {
+/* ===============================
+   AI Suggestions Overlay
+   =============================== */
+
+const AISuggestionsOverlay: React.FC<Props> = ({ suggestions, onAccept }) => {
   const [selected, setSelected] = useState(0);
-  const [visibleSuggestions, setVisibleSuggestions] = useState<Suggestion[]>([]);
 
   useEffect(() => {
-    setVisibleSuggestions(suggestions);
     setSelected(0);
   }, [suggestions]);
 
   useEffect(() => {
-    const handleKey = (e: KeyboardEvent) => {
-      if (!visibleSuggestions.length) return;
+    if (!suggestions.length) return;
 
-      // navigation
+    const handleKey = (e: KeyboardEvent) => {
       if (e.key === "ArrowDown") {
         e.preventDefault();
-        setSelected(prev => (prev + 1) % visibleSuggestions.length);
-      }
-      if (e.key === "ArrowUp") {
-        e.preventDefault();
-        setSelected(prev => (prev - 1 + visibleSuggestions.length) % visibleSuggestions.length);
-      }
-      // select
-      if (e.key === "Enter") {
-        visibleSuggestions[selected]?.action?.();
-        onSelect(visibleSuggestions[selected]);
-        setVisibleSuggestions([]);
-      }
-      // dismiss
-      if (e.key === "Escape") {
-        setVisibleSuggestions([]);
+        setSelected(prev => (prev + 1) % suggestions.length);
       }
 
-      // optional hotkey to fetch dynamic suggestions
-      if (e.ctrlKey && e.key === hotkey) {
+      if (e.key === "ArrowUp") {
         e.preventDefault();
-        // simulate dynamic suggestions, can be replaced with real API
-        setVisibleSuggestions([
-          { id: "1", text: "Run diagnostics", type: "command", action: () => console.log("Diagnostics run") },
-          { id: "2", text: "Optimize memory usage", type: "completion", action: () => console.log("Memory optimized") },
-        ]);
+        setSelected(prev => (prev - 1 + suggestions.length) % suggestions.length);
+      }
+
+      if (e.key === "Enter") {
+        e.preventDefault();
+        const s = suggestions[selected];
+        s?.action?.();
+        onAccept(s);
+      }
+
+      if (e.key === "Escape") {
+        e.preventDefault();
+        onAccept(null as any); // parent clears suggestions
+      }
+
+      if (e.key === "Tab") {
+        e.preventDefault();
+        const s = suggestions[0];
+        s?.action?.();
+        onAccept(s);
       }
     };
 
     window.addEventListener("keydown", handleKey);
     return () => window.removeEventListener("keydown", handleKey);
-  }, [visibleSuggestions, selected, onSelect, hotkey]);
+  }, [suggestions, selected, onAccept]);
 
-  if (!visibleSuggestions.length) return null;
+  if (!suggestions.length) return null;
 
   return (
-    <div style={{
-      position: "fixed",
-      bottom: "80px",
-      left: "50%",
-      transform: "translateX(-50%)",
-      width: "480px",
-      maxHeight: "300px",
-      overflowY: "auto",
-      background: "#1e1e2f",
-      color: "#fff",
-      borderRadius: "10px",
-      boxShadow: "0 0 20px rgba(0,0,0,0.5)",
-      zIndex: 10000,
-      fontFamily: "monospace",
-    }}>
-      {visibleSuggestions.map((s, i) => (
+    <div
+      style={{
+        position: "absolute",
+        bottom: "64px",
+        left: "12px",
+        maxWidth: "92%",
+        background: "#1e1e2f",
+        borderRadius: "10px",
+        padding: "6px",
+        boxShadow: "0 0 22px rgba(0,0,0,0.6)",
+        zIndex: 10000,
+        fontFamily: "monospace",
+      }}
+    >
+      {suggestions.map((s, i) => (
         <div
           key={s.id}
-          onClick={() => { s.action?.(); onSelect(s); setVisibleSuggestions([]); }}
+          onClick={() => {
+            s.action?.();
+            onAccept(s);
+          }}
           style={{
-            padding: "8px 16px",
-            background: i === selected ? "#3a3aff" : "transparent",
-            color: i === selected ? "#fff" : "#eee",
+            padding: "8px 10px",
+            marginBottom: "2px",
+            borderRadius: "6px",
             cursor: "pointer",
             display: "flex",
             justifyContent: "space-between",
+            alignItems: "center",
+            background: i === selected ? "#2f2fff" : "transparent",
+            color: i === selected ? "#fff" : "#eaeaf0",
+            transition: "background 0.15s ease",
           }}
+          onMouseEnter={() => setSelected(i)}
         >
           <span>{s.text}</span>
-          {s.type && <span style={{ opacity: 0.5 }}>{s.type}</span>}
+
+          <span style={{ opacity: 0.55, fontSize: "0.75rem" }}>
+            {s.type}
+            {s.confidence !== undefined
+              ? ` • ${Math.round(s.confidence * 100)}%`
+              : ""}
+          </span>
         </div>
       ))}
     </div>
