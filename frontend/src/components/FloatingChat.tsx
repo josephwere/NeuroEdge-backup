@@ -8,6 +8,13 @@ import { okaidia } from "react-syntax-highlighter/dist/esm/styles/prism";
 import { useChatHistory } from "../../services/chatHistoryStore";
 import { saveToCache, getCache } from "../services/offlineCache";
 
+/* 🔹 AI Suggestions */
+import AISuggestionOverlay from "./AISuggestionOverlay";
+import {
+  generateSuggestions,
+  AISuggestion
+} from "../../services/aiSuggestionEngine";
+
 interface ExecutionResult {
   id: string;
   success: boolean;
@@ -41,12 +48,20 @@ interface FloatingChatProps {
 
 const PAGE_SIZE = 20;
 
-const FloatingChat: React.FC<FloatingChatProps> = ({ orchestrator, initialPosition, onPositionChange }) => {
+const FloatingChat: React.FC<FloatingChatProps> = ({
+  orchestrator,
+  initialPosition,
+  onPositionChange
+}) => {
   const [messages, setMessages] = useState<LogLine[]>([]);
   const [displayed, setDisplayed] = useState<LogLine[]>([]);
   const [page, setPage] = useState(0);
   const [input, setInput] = useState("");
   const [minimized, setMinimized] = useState(false);
+
+  /* 🔹 AI suggestions */
+  const [suggestions, setSuggestions] = useState<AISuggestion[]>([]);
+
   const containerRef = useRef<HTMLDivElement>(null);
   const [position, setPosition] = useState(initialPosition || { x: 20, y: 20 });
   const { searchQuery } = useChatHistory();
@@ -66,8 +81,10 @@ const FloatingChat: React.FC<FloatingChatProps> = ({ orchestrator, initialPositi
     };
 
     const move = (e: MouseEvent) => {
-      x += e.clientX - mx; y += e.clientY - my;
-      mx = e.clientX; my = e.clientY;
+      x += e.clientX - mx;
+      y += e.clientY - my;
+      mx = e.clientX;
+      my = e.clientY;
       setPosition({ x, y });
       onPositionChange?.({ x, y });
     };
@@ -78,8 +95,9 @@ const FloatingChat: React.FC<FloatingChatProps> = ({ orchestrator, initialPositi
     };
 
     el.querySelector(".header")?.addEventListener("mousedown", down);
-    return () => el.querySelector(".header")?.removeEventListener("mousedown", down);
-  }, [onPositionChange, position.x, position.y]);
+    return () =>
+      el.querySelector(".header")?.removeEventListener("mousedown", down);
+  }, [position.x, position.y, onPositionChange]);
 
   // --- Load cached logs ---
   useEffect(() => {
@@ -101,15 +119,40 @@ const FloatingChat: React.FC<FloatingChatProps> = ({ orchestrator, initialPositi
     }
   }, []);
 
-  // --- Save to localStorage + offline cache whenever messages update ---
+  // --- AI suggestion watcher (floating mode) ---
   useEffect(() => {
-    localStorage.setItem("floating_chat_logs", JSON.stringify(messages));
-  }, [messages]);
+    if (!input.trim()) {
+      setSuggestions([]);
+      return;
+    }
+
+    const timer = setTimeout(async () => {
+      const s = await generateSuggestions(input, "floating");
+      setSuggestions(s);
+    }, 250);
+
+    return () => clearTimeout(timer);
+  }, [input]);
+
+  // --- Accept AI suggestion ---
+  const acceptSuggestion = (s: AISuggestion) => {
+    if (s.type === "command") {
+      setInput(s.text);
+      setSuggestions([]);
+      setTimeout(send, 0);
+    } else {
+      setInput(prev => prev + " " + s.text);
+      setSuggestions([]);
+    }
+  };
 
   // --- Infinite scroll ---
   const fetchMore = () => {
     const start = messages.length - (page + 1) * PAGE_SIZE;
-    const nextBatch = messages.slice(Math.max(0, start), messages.length - page * PAGE_SIZE);
+    const nextBatch = messages.slice(
+      Math.max(0, start),
+      messages.length - page * PAGE_SIZE
+    );
     setDisplayed(prev => [...nextBatch, ...prev]);
     setPage(prev => prev + 1);
   };
@@ -117,12 +160,14 @@ const FloatingChat: React.FC<FloatingChatProps> = ({ orchestrator, initialPositi
   // --- Send command ---
   const send = async () => {
     if (!input.trim()) return;
+
+    setSuggestions([]);
+
     const context = chatContext.getAll();
     const commandId = Date.now().toString();
 
     addMessage(`💻 ${input}`, "info");
 
-    // Save user command to offline cache
     saveToCache({
       id: commandId,
       timestamp: Date.now(),
@@ -134,25 +179,46 @@ const FloatingChat: React.FC<FloatingChatProps> = ({ orchestrator, initialPositi
     setInput("");
 
     try {
-      const res = await orchestrator.execute({ command: userInput, context });
+      const res = await orchestrator.execute({
+        command: userInput,
+        context
+      });
 
-      // Process AI reasoning, logs, mesh results
       if (res.reasoning) addMessage(`🧠 Reasoning: ${res.reasoning}`, "ml");
       if (res.intent) addMessage(`🎯 Intent: ${res.intent}`, "ml");
       if (res.risk) addMessage(`⚠️ Risk Level: ${res.risk}`, "warn");
 
-      if (res.logs) res.logs.forEach((l: string) => addMessage(`[Log] ${l}`, "info"));
-      if (res.meshStatus) res.meshStatus.forEach((node: any) => addMessage(`🌐 [${node.node}] ${node.status}`, "mesh"));
+      if (res.logs)
+        res.logs.forEach((l: string) =>
+          addMessage(`[Log] ${l}`, "info")
+        );
 
-      if (res.results) res.results.forEach((r: ExecutionResult) => {
-        if (r.stdout.includes("```")) {
-          addMessage(r.stdout, r.success ? "info" : "error", extractLanguage(r.stdout), true);
-        } else {
-          addMessage(r.success ? r.stdout : `❌ ${r.stderr}`, r.success ? "info" : "error");
-        }
-      });
+      if (res.meshStatus)
+        res.meshStatus.forEach((n: any) =>
+          addMessage(`🌐 [${n.node}] ${n.status}`, "mesh")
+        );
 
-      if (res.approvals) res.approvals.forEach((app: ApprovalRequest) => addApproval(app));
+      if (res.results)
+        res.results.forEach((r: ExecutionResult) => {
+          if (r.stdout.includes("```")) {
+            addMessage(
+              r.stdout,
+              r.success ? "info" : "error",
+              extractLanguage(r.stdout),
+              true
+            );
+          } else {
+            addMessage(
+              r.success ? r.stdout : `❌ ${r.stderr}`,
+              r.success ? "info" : "error"
+            );
+          }
+        });
+
+      if (res.approvals)
+        res.approvals.forEach((app: ApprovalRequest) =>
+          addApproval(app)
+        );
 
     } catch (err: any) {
       addMessage(`❌ Error: ${err.message || err}`, "error");
@@ -160,13 +226,26 @@ const FloatingChat: React.FC<FloatingChatProps> = ({ orchestrator, initialPositi
   };
 
   // --- Helpers ---
-  const addMessage = (text: string, type?: LogLine["type"], codeLanguage?: string, isCode?: boolean) => {
+  const addMessage = (
+    text: string,
+    type?: LogLine["type"],
+    codeLanguage?: string,
+    isCode?: boolean
+  ) => {
     const id = Date.now().toString() + Math.random();
-    const msg: LogLine = { id, text, type, codeLanguage, isCode, collapsible: isCode, collapsibleOpen: true, timestamp: Date.now() };
+    const msg: LogLine = {
+      id,
+      text,
+      type,
+      codeLanguage,
+      isCode,
+      collapsible: isCode,
+      collapsibleOpen: true,
+      timestamp: Date.now()
+    };
     setMessages(m => [...m, msg]);
     setDisplayed(d => [...d, msg]);
 
-    // Save to offline cache automatically
     saveToCache({
       id,
       timestamp: Date.now(),
@@ -176,23 +255,15 @@ const FloatingChat: React.FC<FloatingChatProps> = ({ orchestrator, initialPositi
   };
 
   const addApproval = (app: ApprovalRequest) => {
-    const approvalMsg: LogLine = { id: app.id, text: `[Approval] ${app.message}`, type: "ml", associatedId: app.id, timestamp: Date.now() };
-    setMessages(m => [...m, approvalMsg]);
-    setDisplayed(d => [...d, approvalMsg]);
-
-    saveToCache({
+    const msg: LogLine = {
       id: app.id,
-      timestamp: Date.now(),
-      type: "chat",
-      payload: { text: `[Approval] ${app.message}`, type: "ml", associatedId: app.id }
-    });
-  };
-
-  const handleApproval = (id: string, approved: boolean) => {
-    orchestrator.sendApproval({ id, approved });
-    setMessages(m => m.map(msg =>
-      msg.associatedId === id ? { ...msg, text: `${msg.text} => ${approved ? "✅ Approved" : "❌ Rejected"}` } : msg
-    ));
+      text: `[Approval] ${app.message}`,
+      type: "ml",
+      associatedId: app.id,
+      timestamp: Date.now()
+    };
+    setMessages(m => [...m, msg]);
+    setDisplayed(d => [...d, msg]);
   };
 
   const extractLanguage = (codeBlock: string) => {
@@ -200,84 +271,25 @@ const FloatingChat: React.FC<FloatingChatProps> = ({ orchestrator, initialPositi
     return match ? match[1] : "text";
   };
 
-  const toggleCollapse = (id: string) => {
-    setDisplayed(d => d.map(msg => msg.id === id ? { ...msg, collapsibleOpen: !msg.collapsibleOpen } : msg));
-  };
-
-  // --- Render messages with search highlights ---
-  const renderMessage = (msg: LogLine) => {
-    const searchTerm = searchQuery?.toLowerCase();
-    const highlightText = (text: string) => {
-      if (!searchTerm) return text;
-      return text.split(new RegExp(`(${searchTerm})`, "gi")).map((part, i) =>
-        part.toLowerCase() === searchTerm
-          ? <mark key={i} style={{ background: "#fffa65", color: "#000" }}>{part}</mark>
-          : part
-      );
-    };
-
-    if (msg.isCode) {
-      const codeMatch = msg.text.match(/```(\w+)?\n([\s\S]*?)```/);
-      const language = msg.codeLanguage || (codeMatch ? codeMatch[1] : "text");
-      const code = codeMatch ? codeMatch[2] : msg.text;
-
-      return (
-        <div key={msg.id} style={{ marginBottom: "0.5rem" }}>
-          {msg.collapsible && (
-            <button onClick={() => toggleCollapse(msg.id)} style={{
-              marginBottom: "2px",
-              background: "#444",
-              color: "#fff",
-              border: "none",
-              cursor: "pointer",
-              padding: "2px 6px",
-              borderRadius: "4px"
-            }}>
-              {msg.collapsibleOpen ? "▼ Collapse" : "▶ Expand"}
-            </button>
-          )}
-          {msg.collapsibleOpen && (
-            <>
-              <SyntaxHighlighter language={language} style={okaidia} showLineNumbers>
-                {highlightText(code)}
-              </SyntaxHighlighter>
-              <button onClick={() => navigator.clipboard.writeText(code)} style={{ marginTop: "2px", background: "#3a3aff", color: "#fff", border: "none", padding: "2px 5px", cursor: "pointer" }}>
-                Copy
-              </button>
-            </>
-          )}
-        </div>
-      );
-    }
-
-    let color = "#fff";
-    if (msg.type === "error") color = "#ff4d4f";
-    else if (msg.type === "warn") color = "#faad14";
-    else if (msg.type === "ml") color = "#40a9ff";
-    else if (msg.type === "mesh") color = "#36cfc9";
-
-    return (
-      <div key={msg.id} style={{ color, whiteSpace: "pre-wrap", marginBottom: "2px" }}>
-        {highlightText(msg.text)}
-      </div>
-    );
-  };
-
+  // --- Render ---
   return (
-    <div ref={containerRef} style={{
-      position: "fixed",
-      left: position.x,
-      top: position.y,
-      width: "450px",
-      height: minimized ? "48px" : "560px",
-      background: "#1e1e2f",
-      color: "#fff",
-      borderRadius: "12px",
-      boxShadow: "0 0 30px rgba(0,0,0,0.6)",
-      zIndex: 9999,
-      display: "flex",
-      flexDirection: "column"
-    }}>
+    <div
+      ref={containerRef}
+      style={{
+        position: "fixed",
+        left: position.x,
+        top: position.y,
+        width: "450px",
+        height: minimized ? "48px" : "560px",
+        background: "#1e1e2f",
+        color: "#fff",
+        borderRadius: "12px",
+        boxShadow: "0 0 30px rgba(0,0,0,0.6)",
+        zIndex: 9999,
+        display: "flex",
+        flexDirection: "column"
+      }}
+    >
       <div className="header" style={{
         padding: "10px",
         cursor: "move",
@@ -286,7 +298,9 @@ const FloatingChat: React.FC<FloatingChatProps> = ({ orchestrator, initialPositi
         justifyContent: "space-between"
       }}>
         <strong>NeuroEdge Floating Chat</strong>
-        <button onClick={() => setMinimized(!minimized)}>{minimized ? "⬆️" : "⬇️"}</button>
+        <button onClick={() => setMinimized(!minimized)}>
+          {minimized ? "⬆️" : "⬇️"}
+        </button>
       </div>
 
       {!minimized && (
@@ -296,29 +310,55 @@ const FloatingChat: React.FC<FloatingChatProps> = ({ orchestrator, initialPositi
               dataLength={displayed.length}
               next={fetchMore}
               hasMore={displayed.length < messages.length}
-              inverse={true}
-              loader={<div style={{ textAlign: "center", padding: "0.5rem" }}>Loading…</div>}
+              inverse
               scrollableTarget="floatingChatScroll"
+              loader={<div style={{ textAlign: "center" }}>Loading…</div>}
             >
-              {displayed.map(renderMessage)}
-              {displayed.filter(m => m.associatedId).map(app => (
-                <div key={app.associatedId} style={{ marginTop: "4px" }}>
-                  <button onClick={() => handleApproval(app.associatedId!, true)} style={{ marginRight: "4px" }}>✅ Approve</button>
-                  <button onClick={() => handleApproval(app.associatedId!, false)}>❌ Reject</button>
-                </div>
+              {displayed.map(m => (
+                <div key={m.id} style={{ marginBottom: "4px" }}>{m.text}</div>
               ))}
             </InfiniteScroll>
           </div>
 
-          <div style={{ display: "flex" }}>
+          {/* 🔹 Input + AI Overlay */}
+          <div style={{ position: "relative", display: "flex" }}>
+            <AISuggestionOverlay
+              suggestions={suggestions}
+              onAccept={acceptSuggestion}
+            />
+
             <input
               value={input}
               onChange={e => setInput(e.target.value)}
-              onKeyDown={e => e.key === "Enter" && send()}
+              onKeyDown={e => {
+                if (e.key === "Enter") send();
+                if (e.key === "Tab" && suggestions.length) {
+                  e.preventDefault();
+                  acceptSuggestion(suggestions[0]);
+                }
+                if (e.key === "Escape") setSuggestions([]);
+              }}
               placeholder="execute • debug • fix • analyze"
-              style={{ flex: 1, padding: "10px", background: "#2b2b3c", border: "none", color: "#fff" }}
+              style={{
+                flex: 1,
+                padding: "10px",
+                background: "#2b2b3c",
+                border: "none",
+                color: "#fff"
+              }}
             />
-            <button onClick={send} style={{ padding: "10px", background: "#3a3aff", border: "none", color: "#fff" }}>▶</button>
+
+            <button
+              onClick={send}
+              style={{
+                padding: "10px",
+                background: "#3a3aff",
+                border: "none",
+                color: "#fff"
+              }}
+            >
+              ▶
+            </button>
           </div>
         </>
       )}
