@@ -1,46 +1,30 @@
 // frontend/src/extensions/extensionLoader.ts
-import { ExtensionModule, ExtensionContext } from "./extensionAPI";
+import { ExtensionAPI, ExtensionContext } from "./extensionAPI";
 
-const loadedExtensions: Record<string, ExtensionModule> = {};
-
-export function loadExtension(ext: ExtensionModule, ctx: ExtensionContext) {
-  if (loadedExtensions[ext.id]) {
-    console.warn(`Extension ${ext.id} already loaded`);
-    return;
-  }
-
-  // Ask for permissions explicitly
-  if (ext.permissions && ext.permissions.length > 0) {
-    ext.permissions.forEach(async (perm) => {
-      const granted = await ctx.requestPermission(perm);
-      if (!granted) {
-        console.warn(`Permission "${perm}" denied for extension ${ext.id}`);
-      }
-    });
-  }
-
+/**
+ * Loads an extension safely within the provided context
+ */
+export const loadExtension = async (
+  ext: ExtensionAPI,
+  ctx: ExtensionContext
+) => {
   try {
-    ext.activate(ctx);
-    loadedExtensions[ext.id] = ext;
-    console.log(`Extension loaded: ${ext.id}`);
+    // Request permissions required by the extension
+    const granted = await Promise.all(
+      (ext.permissions || []).map((perm) => ctx.requestPermission(perm))
+    );
+
+    if (granted.every((g) => g)) {
+      // Initialize extension with sandboxed context
+      ext.activate?.(ctx);
+      console.log(`[Extension Loaded] ${ext.id} - ${ext.name}`);
+      ctx.notify(`Extension Loaded: ${ext.name}`, "success");
+    } else {
+      console.warn(`[Extension Skipped] Permissions denied for ${ext.id}`);
+      ctx.notify(`Extension Skipped: ${ext.name}`, "warning");
+    }
   } catch (err) {
-    console.error(`Error activating extension ${ext.id}:`, err);
+    console.error(`[Extension Error] ${ext.id}`, err);
+    ctx.notify(`Extension Failed: ${ext.name}`, "error");
   }
-}
-
-export function unloadExtension(id: string) {
-  const ext = loadedExtensions[id];
-  if (!ext) return;
-
-  try {
-    ext.deactivate?.();
-    delete loadedExtensions[id];
-    console.log(`Extension unloaded: ${id}`);
-  } catch (err) {
-    console.error(`Error deactivating extension ${id}:`, err);
-  }
-}
-
-export function listExtensions(): ExtensionModule[] {
-  return Object.values(loadedExtensions);
-      }
+};
