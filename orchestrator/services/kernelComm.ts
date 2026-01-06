@@ -1,5 +1,3 @@
-// orchestrator/services/kernelComm.ts
-
 import axios, { AxiosInstance } from "axios";
 
 /* -------------------- */
@@ -24,11 +22,23 @@ export interface KernelResponse {
   timestamp: string;
 }
 
-export interface KernelInfo {
+export interface KernelHealth {
+  component: string;
+  healthy: boolean;
+  lastCheck: string;
+  error?: string;
+}
+
+export interface KernelNode {
+  name: string;
+  type: "agent" | "engine" | "kernel";
+}
+
+export interface KernelCapabilities {
   version: string;
   capabilities: string[];
   status: "ready" | "busy" | "offline";
-  nodes?: string[];
+  nodes?: KernelNode[];
 }
 
 /* -------------------- */
@@ -44,35 +54,40 @@ export class KernelClient {
     this.client = axios.create({
       baseURL: baseUrl,
       timeout: 8000,
-      headers: {
-        "Content-Type": "application/json",
-      },
+      headers: { "Content-Type": "application/json" },
     });
   }
 
-  /* -------------------- Health Check -------------------- */
-  async health(): Promise<{ status: string }> {
+  /* -------------------- Health -------------------- */
+  async getHealth(): Promise<KernelHealth[]> {
     try {
-      const resp = await this.client.get("/health");
+      const resp = await this.client.get("/kernel/health");
       return resp.data;
     } catch (err) {
-      console.error("Kernel health check failed:", err);
-      return { status: "offline" };
+      console.error("[KernelClient] Health check failed:", err);
+      return [];
     }
   }
 
-  /* -------------------- Get Capabilities / Nodes -------------------- */
-  async getInfo(): Promise<KernelInfo> {
+  /* -------------------- Nodes -------------------- */
+  async getNodes(): Promise<KernelNode[]> {
     try {
-      const resp = await this.client.get("/info");
+      const resp = await this.client.get("/kernel/nodes");
       return resp.data;
     } catch (err) {
-      console.error("Failed to fetch kernel info:", err);
-      return {
-        version: "unknown",
-        capabilities: [],
-        status: "offline",
-      };
+      console.error("[KernelClient] Fetch nodes failed:", err);
+      return [];
+    }
+  }
+
+  /* -------------------- Capabilities -------------------- */
+  async getCapabilities(): Promise<KernelCapabilities> {
+    try {
+      const resp = await this.client.get("/kernel/capabilities");
+      return resp.data;
+    } catch (err) {
+      console.error("[KernelClient] Fetch capabilities failed:", err);
+      return { version: "unknown", capabilities: [], status: "offline", nodes: [] };
     }
   }
 
@@ -82,7 +97,7 @@ export class KernelClient {
       const resp = await this.client.post("/execute", cmd);
       return resp.data;
     } catch (err) {
-      console.error("Kernel command failed:", err);
+      console.error("[KernelClient] Command failed:", err);
       return {
         id: cmd.id,
         success: false,
@@ -99,6 +114,7 @@ export class KernelClient {
       const res = await this.sendCommand(cmd);
       if (res.success) return res;
       attempt++;
+      console.warn(`[KernelClient] Retry ${attempt} for command ${cmd.id}`);
       await new Promise((r) => setTimeout(r, delayMs));
     }
     return {
@@ -108,4 +124,9 @@ export class KernelClient {
       timestamp: new Date().toISOString(),
     };
   }
-    }
+
+  /* -------------------- Placeholder for Streaming -------------------- */
+  async streamCommand(cmd: KernelCommand, onData: (chunk: any) => void): Promise<void> {
+    console.warn("[KernelClient] streamCommand not implemented yet. Placeholder for future NeuroEdge streaming.");
+  }
+        }
