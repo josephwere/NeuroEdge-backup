@@ -85,6 +85,20 @@ export class KernelManager {
     }
   }
 
+  /** Send a command to a specific kernel */
+  async sendCommand(kernelId: string, cmd: KernelCommand): Promise<KernelResponse> {
+    const status = this.kernels.get(kernelId);
+    if (!status) {
+      return {
+        id: cmd.id,
+        success: false,
+        stderr: `Kernel "${kernelId}" not found`,
+        timestamp: new Date().toISOString(),
+      };
+    }
+    return status.client.sendWithRetry(cmd);
+  }
+
   /** -------------------- Health Monitoring -------------------- */
   private startHealthMonitoring() {
     if (this.healthTimer) return;
