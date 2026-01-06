@@ -44,7 +44,7 @@ console.log(`🚀 Orchestrator WebSocket Server running on ws://localhost:${WS_P
 console.log(`🚀 Orchestrator REST API running on http://localhost:${REST_PORT}`);
 
 // =========================
-// WebSocket Handler (Existing)
+// WebSocket Handler
 // =========================
 wss.on("connection", (ws: WebSocket) => {
   ws.on("message", async (message) => {
@@ -89,7 +89,7 @@ wss.on("connection", (ws: WebSocket) => {
 });
 
 // =========================
-// REST Endpoints (New)
+// REST Endpoints
 // =========================
 
 // POST /chat
@@ -100,6 +100,32 @@ app.post("/execute", (req: Request, res: Response) => handleExecution(req, res))
 
 // POST /ai
 app.post("/ai", (req: Request, res: Response) => handleAIInference(req, res));
+
+// =========================
+// Kernel Lifecycle Management Endpoints
+// =========================
+
+// GET /kernels → list all kernels and their health
+app.get("/kernels", async (_req: Request, res: Response) => {
+  const health = await globalKernelManager.getAllHealth();
+  res.json(health);
+});
+
+// POST /kernels → add a new kernel
+// Body: { id: string, baseUrl: string }
+app.post("/kernels", (req: Request, res: Response) => {
+  const { id, baseUrl } = req.body;
+  if (!id || !baseUrl) return res.status(400).json({ error: "id and baseUrl required" });
+  globalKernelManager.addKernel(id, baseUrl);
+  res.json({ success: true, message: `Kernel "${id}" added.` });
+});
+
+// DELETE /kernels/:id → remove a kernel
+app.delete("/kernels/:id", (req: Request, res: Response) => {
+  const { id } = req.params;
+  globalKernelManager.removeKernel(id);
+  res.json({ success: true, message: `Kernel "${id}" removed.` });
+});
 
 // Start REST server
 app.listen(REST_PORT, () => {
@@ -117,6 +143,6 @@ async function fetchMLProposal(command: string): Promise<{ explanation: string }
 async function validateWithKernel(kernelId: string, proposal: { explanation: string }): Promise<{ approved: boolean }> {
   // Simulate approval check
   const health = await globalKernelManager.getAllHealth();
-  console.log(`[OrchestratorServer] Kernel health:`, health[kernelId] || "unknown");
+  console.log(`[OrchestratorServer] Kernel health for "${kernelId}":`, health[kernelId] || "unknown");
   return { approved: true };
-    }
+                  }
