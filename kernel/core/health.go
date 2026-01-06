@@ -67,6 +67,21 @@ func (hm *HealthManager) StopMonitoring() {
 	hm.stopChan <- true
 	hm.ticker.Stop()
 }
+// StatusesSnapshot returns a thread-safe copy of all statuses
+func (hm *HealthManager) StatusesSnapshot() map[string]*HealthStatus {
+	hm.mu.Lock()
+	defer hm.mu.Unlock()
+
+	copy := make(map[string]*HealthStatus)
+	for k, v := range hm.statuses {
+		tmp := *v // copy struct
+		copy[k] = &tmp
+	}
+	return copy
+}
+
+// Global instance for API
+var GlobalHealthManager = NewHealthManager()
 
 // runChecks performs health checks on all registered components
 func (hm *HealthManager) runChecks() {
