@@ -2,72 +2,111 @@ import { KernelClient, KernelCommand, KernelResponse, KernelHealth, KernelCapabi
 
 /**
  * Manages multiple KernelClient instances
+ * Handles lifecycle, health, capabilities, nodes, and command routing
  */
 export class KernelManager {
   private kernels: Map<string, KernelClient> = new Map();
 
-  /** Add a new kernel by ID and base URL */
+  /** -------------------- Add a new kernel -------------------- */
   addKernel(id: string, baseUrl: string) {
-    if (this.kernels.has(id)) return;
+    if (this.kernels.has(id)) {
+      console.warn(`[KernelManager] Kernel ${id} already exists`);
+      return;
+    }
     const client = new KernelClient(baseUrl);
     this.kernels.set(id, client);
-    console.log(`[KernelManager] Added kernel ${id} at ${baseUrl}`);
+    console.log(`[KernelManager] Added kernel "${id}" at ${baseUrl}`);
   }
 
-  /** Remove a kernel */
+  /** -------------------- Remove a kernel -------------------- */
   removeKernel(id: string) {
-    if (!this.kernels.has(id)) return;
+    if (!this.kernels.has(id)) {
+      console.warn(`[KernelManager] Kernel ${id} not found`);
+      return;
+    }
     this.kernels.delete(id);
-    console.log(`[KernelManager] Removed kernel ${id}`);
+    console.log(`[KernelManager] Removed kernel "${id}"`);
   }
 
-  /** Get a specific kernel client */
+  /** -------------------- Get a specific kernel client -------------------- */
   getKernel(id: string): KernelClient | undefined {
     return this.kernels.get(id);
   }
 
-  /** Get all kernel IDs */
+  /** -------------------- List all kernel IDs -------------------- */
   getKernelIds(): string[] {
     return Array.from(this.kernels.keys());
   }
 
-  /** Get health from all kernels */
+  /** -------------------- Fetch health from all kernels -------------------- */
   async getAllHealth(): Promise<Record<string, KernelHealth[]>> {
     const results: Record<string, KernelHealth[]> = {};
     for (const [id, client] of this.kernels.entries()) {
-      results[id] = await client.getHealth();
+      try {
+        results[id] = await client.getHealth();
+      } catch (err) {
+        console.error(`[KernelManager] Failed to fetch health for ${id}:`, err);
+        results[id] = [];
+      }
     }
     return results;
   }
 
-  /** Get capabilities from all kernels */
+  /** -------------------- Fetch capabilities from all kernels -------------------- */
   async getAllCapabilities(): Promise<Record<string, KernelCapabilities>> {
     const results: Record<string, KernelCapabilities> = {};
     for (const [id, client] of this.kernels.entries()) {
-      results[id] = await client.getCapabilities();
+      try {
+        results[id] = await client.getCapabilities();
+      } catch (err) {
+        console.error(`[KernelManager] Failed to fetch capabilities for ${id}:`, err);
+        results[id] = { version: "unknown", capabilities: [], status: "offline" };
+      }
     }
     return results;
   }
 
-  /** Get nodes from all kernels */
+  /** -------------------- Fetch nodes from all kernels -------------------- */
   async getAllNodes(): Promise<Record<string, KernelNode[]>> {
     const results: Record<string, KernelNode[]> = {};
     for (const [id, client] of this.kernels.entries()) {
-      results[id] = await client.getNodes();
+      try {
+        results[id] = await client.getNodes();
+      } catch (err) {
+        console.error(`[KernelManager] Failed to fetch nodes for ${id}:`, err);
+        results[id] = [];
+      }
     }
     return results;
   }
 
-  /** Send a command to a specific kernel */
+  /** -------------------- Send a command to a specific kernel -------------------- */
   async sendCommand(kernelId: string, cmd: KernelCommand): Promise<KernelResponse> {
     const client = this.kernels.get(kernelId);
     if (!client) {
       console.warn(`[KernelManager] Kernel ${kernelId} not found`);
-      return { id: cmd.id, success: false, stderr: "Kernel not found", timestamp: new Date().toISOString() };
+      return {
+        id: cmd.id,
+        success: false,
+        stderr: "Kernel not found",
+        timestamp: new Date().toISOString(),
+      };
     }
-    return await client.sendWithRetry(cmd);
+    try {
+      const res = await client.sendWithRetry(cmd);
+      console.log(`[KernelManager] Command ${cmd.id} sent to kernel ${kernelId} → success: ${res.success}`);
+      return res;
+    } catch (err: any) {
+      console.error(`[KernelManager] Command ${cmd.id} failed on kernel ${kernelId}:`, err);
+      return {
+        id: cmd.id,
+        success: false,
+        stderr: err instanceof Error ? err.message : "Unknown error",
+        timestamp: new Date().toISOString(),
+      };
+    }
   }
 }
 
-// Singleton instance for orchestrator handlers
+/** -------------------- Singleton instance -------------------- */
 export const globalKernelManager = new KernelManager();
