@@ -84,6 +84,7 @@ func main() {
 	core.InitializeAllAgents() // 71+ agents
 	engineRegistry := core.NewEngineRegistry(eventBus)
 	engineRegistry.RegisterAllEngines() // 42 engines
+	discovery.RegisterEngineSnapshot(engineRegistry)
 
 	// =========================
 	// Boot Kernel
