@@ -13,7 +13,7 @@ import { handleExecution } from "./handlers/executionHandler";
 import { handleAIInference } from "./handlers/aiHandler";
 
 // =========================
-// Initialize Core Services
+// Configuration
 // =========================
 const WS_PORT = 4000;
 const REST_PORT = 5000;
@@ -50,39 +50,42 @@ wss.on("connection", (ws: WebSocket) => {
   ws.on("message", async (message) => {
     try {
       const payload = JSON.parse(message.toString());
-      const command = payload.command;
-      const kernelId = payload.kernelId || "local"; // default
+      const commandText: string = payload.command;
+      const kernelId: string = payload.kernelId || "local"; // default
+      const cmdId = `ws-${Date.now()}`;
 
-      logger.info("OrchestratorServer", `Received WS command: ${command}`);
+      logger.info("OrchestratorServer", `Received WS command: ${commandText}`);
 
-      // 1️⃣ ML proposes steps
-      const mlProposal = await fetchMLProposal(command);
+      // 1️⃣ ML proposes steps (simulate for now)
+      const mlProposal = await fetchMLProposal(commandText);
 
-      // 2️⃣ Kernel validation
+      // 2️⃣ Validate with kernel (simulate / check health)
       const kernelValidation = await validateWithKernel(kernelId, mlProposal);
 
-      // 3️⃣ Execute if approved
-      let executionResult = { stdout: "", stderr: "" };
+      // 3️⃣ Create kernel command and send if approved
+      let kernelResponse = { stdout: "", stderr: "", success: false, approvals: [], risk: "low", timestamp: new Date().toISOString() };
       if (kernelValidation.approved) {
         const cmd: KernelCommand = {
-          id: `ws-${Date.now()}`,
+          id: cmdId,
           type: "execute",
-          payload: { command, args: payload.args || [], cwd: payload.cwd || process.cwd() },
-          metadata: { user: payload.user || "web" },
+          payload: { command: commandText, args: payload.args || [], cwd: payload.cwd || process.cwd() },
+          metadata: { user: payload.user || "websocket" },
         };
-        executionResult = await globalKernelManager.sendCommand(kernelId, cmd);
+        kernelResponse = await globalKernelManager.sendCommandBalanced(cmd);
       }
 
+      // 4️⃣ Send structured response
       ws.send(JSON.stringify({
+        id: cmdId,
         reasoning: mlProposal.explanation,
-        execution: executionResult.stdout || executionResult.stderr,
-        approvals: executionResult.approvals || [],
-        risk: executionResult.risk || "low",
-        timestamp: executionResult.timestamp,
+        execution: kernelResponse.stdout || kernelResponse.stderr,
+        approvals: kernelResponse.approvals || [],
+        risk: kernelResponse.risk || "low",
+        timestamp: kernelResponse.timestamp,
       }));
 
     } catch (err: any) {
-      console.error("[OrchestratorServer] WS error:", err);
+      logger.error("OrchestratorServer", `WS error: ${err.message}`);
       ws.send(JSON.stringify({ reasoning: "❌ Error", execution: err.message }));
     }
   });
@@ -91,28 +94,18 @@ wss.on("connection", (ws: WebSocket) => {
 // =========================
 // REST Endpoints
 // =========================
-
-// POST /chat
 app.post("/chat", (req: Request, res: Response) => handleChat(req, res));
-
-// POST /execute
 app.post("/execute", (req: Request, res: Response) => handleExecution(req, res));
-
-// POST /ai
 app.post("/ai", (req: Request, res: Response) => handleAIInference(req, res));
 
 // =========================
-// Kernel Lifecycle Management Endpoints
+// Kernel Lifecycle Management
 // =========================
-
-// GET /kernels → list all kernels and their health
 app.get("/kernels", async (_req: Request, res: Response) => {
   const health = await globalKernelManager.getAllHealth();
   res.json(health);
 });
 
-// POST /kernels → add a new kernel
-// Body: { id: string, baseUrl: string }
 app.post("/kernels", (req: Request, res: Response) => {
   const { id, baseUrl } = req.body;
   if (!id || !baseUrl) return res.status(400).json({ error: "id and baseUrl required" });
@@ -120,7 +113,6 @@ app.post("/kernels", (req: Request, res: Response) => {
   res.json({ success: true, message: `Kernel "${id}" added.` });
 });
 
-// DELETE /kernels/:id → remove a kernel
 app.delete("/kernels/:id", (req: Request, res: Response) => {
   const { id } = req.params;
   globalKernelManager.removeKernel(id);
@@ -133,7 +125,7 @@ app.listen(REST_PORT, () => {
 });
 
 // =========================
-// Helpers (ML & Kernel Validation)
+// Helpers (ML Proposal & Kernel Validation)
 // =========================
 async function fetchMLProposal(command: string): Promise<{ explanation: string }> {
   // Simulate ML reasoning
@@ -141,8 +133,8 @@ async function fetchMLProposal(command: string): Promise<{ explanation: string }
 }
 
 async function validateWithKernel(kernelId: string, proposal: { explanation: string }): Promise<{ approved: boolean }> {
-  // Simulate approval check
+  // Check kernel health
   const health = await globalKernelManager.getAllHealth();
   console.log(`[OrchestratorServer] Kernel health for "${kernelId}":`, health[kernelId] || "unknown");
   return { approved: true };
-                  }
+      }
