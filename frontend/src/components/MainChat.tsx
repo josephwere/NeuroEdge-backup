@@ -2,32 +2,20 @@
 import React, { useState, useEffect, useRef } from "react";
 import InfiniteScroll from "react-infinite-scroll-component";
 import { chatContext } from "../../services/chatContext";
-import { sendMessage } from "../../services/orchestrator_client";
+import { OrchestratorClient } from "../services/orchestrator_client";
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 import { okaidia } from "react-syntax-highlighter/dist/esm/styles/prism";
-import { useChatHistory } from "../../services/chatHistoryStore";
-import { saveToCache, getCache } from "../services/offlineCache";
-// Add ChatExportMenu above chat messages
-import ChatExportMenu from "./ChatExportMenu";
 import { useChatHistory } from "../services/chatHistoryStore";
-
-const { messages, importHistory } = useChatHistory();
-
-<ChatExportMenu chatHistory={messages} onImport={importHistory} />
+import { saveToCache, getCache } from "../services/offlineCache";
+import AISuggestionOverlay from "./AISuggestionOverlay";
+import { generateSuggestions, AISuggestion } from "../services/aiSuggestionEngine";
 import { useNotifications } from "../services/notificationStore";
+import { FounderMessage } from "./FounderAssistant";
 
 const { addNotification } = useNotifications();
-
 addNotification({ message: "New AI suggestion available", type: "ai" });
 addNotification({ message: "Error executing command", type: "error" });
 addNotification({ message: "Chat synced successfully", type: "success" });
-
-/* 🔹 AI Suggestions Overlay */
-import AISuggestionOverlay from "./AISuggestionOverlay";
-import {
-  generateSuggestions,
-  AISuggestion
-} from "../../services/aiSuggestionEngine";
 
 interface Message {
   id: string;
@@ -41,21 +29,22 @@ interface Message {
   timestamp?: number;
 }
 
+interface MainChatProps {
+  orchestrator: OrchestratorClient;
+}
+
 const PAGE_SIZE = 30;
 
-const MainChat: React.FC = () => {
+const MainChat: React.FC<MainChatProps> = ({ orchestrator }) => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [displayed, setDisplayed] = useState<Message[]>([]);
   const [page, setPage] = useState(0);
   const [input, setInput] = useState("");
-
-  /* 🔹 AI suggestions state */
   const [suggestions, setSuggestions] = useState<AISuggestion[]>([]);
-
   const messageEndRef = useRef<HTMLDivElement>(null);
   const { searchQuery } = useChatHistory();
 
-  // --- Load cached messages on init ---
+  // --- Load cache & history ---
   useEffect(() => {
     const cached = getCache();
     if (cached.length) {
@@ -73,18 +62,6 @@ const MainChat: React.FC = () => {
       setMessages(logs);
       setDisplayed(logs.slice(-PAGE_SIZE));
       setPage(1);
-    } else {
-      const history = chatContext.getAll().map((m, i) => ({
-        id: String(i),
-        role: m.role,
-        text: m.content,
-        type: "info",
-        isCode: false,
-        timestamp: Date.now() - (chatContext.getAll().length - i) * 1000
-      }));
-      setMessages(history);
-      setDisplayed(history.slice(-PAGE_SIZE));
-      setPage(1);
     }
   }, []);
 
@@ -101,33 +78,53 @@ const MainChat: React.FC = () => {
 
   const scrollToBottom = () =>
     messageEndRef.current?.scrollIntoView({ behavior: "smooth" });
-
   useEffect(scrollToBottom, [displayed]);
 
-  // --- 🔹 AI suggestions watcher ---
+  // --- AI suggestions ---
   useEffect(() => {
-    if (!input.trim()) {
-      setSuggestions([]);
-      return;
-    }
-
+    if (!input.trim()) return setSuggestions([]);
     const timer = setTimeout(async () => {
       const s = await generateSuggestions(input, "main");
       setSuggestions(s);
-    }, 300);
-
+    }, 250);
     return () => clearTimeout(timer);
   }, [input]);
 
   const acceptSuggestion = (s: AISuggestion) => {
-    setInput(prev => prev + " " + s.text);
-    setSuggestions([]);
+    if (s.type === "command") {
+      setInput(s.text);
+      setSuggestions([]);
+      setTimeout(handleSend, 0);
+    } else {
+      setInput(prev => prev + " " + s.text);
+      setSuggestions([]);
+    }
   };
 
-  // --- Send message ---
+  // --- FounderAssistant command parsing ---
+  useEffect(() => {
+    const founderHandler = (msg: FounderMessage) => {
+      const text = msg.message.toLowerCase();
+      if (text.includes("inspect")) {
+        const node = text.split("inspect ")[1];
+        addMessage(`🔍 Inspecting node: ${node}…`, "ml");
+
+        orchestrator.runCheck?.(node).then(res => {
+          addMessage(`✅ Node ${node} status: ${res.status}`, "info");
+          speak(`Inspection complete: ${node} is ${res.status}`);
+        }).catch(err => {
+          addMessage(`❌ Node inspection failed: ${err.message}`, "error");
+          speak(`Error inspecting node: ${node}`);
+        });
+      }
+    };
+    orchestrator.onFounderMessage(founderHandler);
+    return () => orchestrator.offFounderMessage(founderHandler);
+  }, [orchestrator]);
+
+  // --- Send message / command ---
   const handleSend = async () => {
     if (!input.trim()) return;
-
     setSuggestions([]);
 
     const id = Date.now().toString();
@@ -136,80 +133,40 @@ const MainChat: React.FC = () => {
     setDisplayed(d => [...d, userMsg]);
     chatContext.add({ role: "user", content: input });
 
-    saveToCache({
-      id,
-      timestamp: Date.now(),
-      type: "chat",
-      payload: { role: "user", text: input, type: "info" }
-    });
-
+    saveToCache({ id, timestamp: Date.now(), type: "chat", payload: { role: "user", text: input, type: "info" } });
     const userInput = input;
     setInput("");
 
     try {
-      const res = await sendMessage({
-        id,
-        text: userInput,
-        context: chatContext.getAll()
-      });
+      const res = await orchestrator.execute({ command: userInput, context: chatContext.getAll() });
 
       if (res.reasoning) addMessage(`🧠 Reasoning: ${res.reasoning}`, "ml");
       if (res.intent) addMessage(`🎯 Intent: ${res.intent}`, "ml");
       if (res.risk) addMessage(`⚠️ Risk Level: ${res.risk}`, "warn");
 
-      if (res.logs)
-        res.logs.forEach((l: string) =>
-          addMessage(`[Log] ${l}`, "info")
-        );
-
-      if (res.results)
-        res.results.forEach((r: any) => {
-          if (r.stdout.includes("```")) {
-            addMessage(
-              r.stdout,
-              r.success ? "info" : "error",
-              extractLanguage(r.stdout),
-              true
-            );
-          } else {
-            addMessage(
-              r.success ? r.stdout : `❌ ${r.stderr}`,
-              r.success ? "info" : "error"
-            );
-          }
-        });
+      if (res.logs) res.logs.forEach((l: string) => addMessage(`[Log] ${l}`, "info"));
+      if (res.results) res.results.forEach((r: any) => addMessage(r.success ? r.stdout : `❌ ${r.stderr}`, r.success ? "info" : "error"));
     } catch (err: any) {
       addMessage(`❌ Error: ${err.message || err}`, "error");
     }
   };
 
-  const addMessage = (
-    text: string,
-    type?: Message["type"],
-    codeLanguage?: string,
-    isCode?: boolean
-  ) => {
+  // --- Helpers ---
+  const addMessage = (text: string, type?: Message["type"], codeLanguage?: string, isCode?: boolean) => {
     const id = Date.now().toString() + Math.random();
-    const msg: Message = {
-      id,
-      text,
-      type,
-      isCode,
-      codeLanguage,
-      collapsible: isCode,
-      collapsibleOpen: true,
-      role: "assistant",
-      timestamp: Date.now()
-    };
+    const msg: Message = { id, text, type, isCode, codeLanguage, collapsible: isCode, collapsibleOpen: true, role: "assistant", timestamp: Date.now() };
     setMessages(m => [...m, msg]);
     setDisplayed(d => [...d, msg]);
+    saveToCache({ id, timestamp: Date.now(), type: "chat", payload: { role: "assistant", text, type, codeLanguage, isCode } });
+  };
 
-    saveToCache({
-      id,
-      timestamp: Date.now(),
-      type: "chat",
-      payload: { role: "assistant", text, type, codeLanguage, isCode }
-    });
+  const speak = (text: string) => {
+    if ("speechSynthesis" in window) {
+      const utter = new SpeechSynthesisUtterance(text);
+      utter.rate = 1;
+      utter.pitch = 1;
+      window.speechSynthesis.speak(utter);
+    }
   };
 
   const extractLanguage = (codeBlock: string) => {
@@ -217,36 +174,23 @@ const MainChat: React.FC = () => {
     return match ? match[1] : "text";
   };
 
-  // --- Render messages ---
   const renderMessage = (msg: Message) => {
     if (msg.isCode) {
       const codeMatch = msg.text.match(/```(\w+)?\n([\s\S]*?)```/);
-      const language =
-        msg.codeLanguage || (codeMatch ? codeMatch[1] : "text");
+      const language = msg.codeLanguage || (codeMatch ? codeMatch[1] : "text");
       const code = codeMatch ? codeMatch[2] : msg.text;
-
       return (
         <div key={msg.id} style={{ marginBottom: "0.5rem" }}>
-          <SyntaxHighlighter language={language} style={okaidia} showLineNumbers>
-            {code}
-          </SyntaxHighlighter>
+          <SyntaxHighlighter language={language} style={okaidia} showLineNumbers>{code}</SyntaxHighlighter>
         </div>
       );
     }
-
-    return (
-      <div key={msg.id} style={{ marginBottom: "4px" }}>
-        {msg.text}
-      </div>
-    );
+    return <div key={msg.id} style={{ marginBottom: "4px" }}>{msg.text}</div>;
   };
 
   return (
     <div style={{ flex: 1, display: "flex", flexDirection: "column", height: "100%" }}>
-      <div
-        id="chatScroll"
-        style={{ flex: 1, overflowY: "auto", padding: "1rem" }}
-      >
+      <div id="chatScroll" style={{ flex: 1, overflowY: "auto", padding: "1rem" }}>
         <InfiniteScroll
           dataLength={displayed.length}
           next={fetchMore}
@@ -260,47 +204,21 @@ const MainChat: React.FC = () => {
         <div ref={messageEndRef} />
       </div>
 
-      {/* 🔹 Input + AI Overlay */}
-      <div
-        style={{
-          position: "relative",
-          display: "flex",
-          padding: "0.5rem",
-          background: "#e0e0e0"
-        }}
-      >
-        <AISuggestionOverlay
-          suggestions={suggestions}
-          onAccept={acceptSuggestion}
-        />
-
+      {/* Input + AI Overlay */}
+      <div style={{ position: "relative", display: "flex", padding: "0.5rem", background: "#e0e0e0" }}>
+        <AISuggestionOverlay suggestions={suggestions} onAccept={acceptSuggestion} />
         <input
           value={input}
           onChange={e => setInput(e.target.value)}
           onKeyDown={e => {
             if (e.key === "Enter") handleSend();
-            if (e.key === "Tab" && suggestions.length) {
-              e.preventDefault();
-              acceptSuggestion(suggestions[0]);
-            }
+            if (e.key === "Tab" && suggestions.length) { e.preventDefault(); acceptSuggestion(suggestions[0]); }
             if (e.key === "Escape") setSuggestions([]);
           }}
           placeholder="Ask, debug, code, research…"
           style={{ flex: 1, padding: "0.5rem" }}
         />
-
-        <button
-          onClick={handleSend}
-          style={{
-            marginLeft: "0.5rem",
-            padding: "0.5rem 1rem",
-            background: "#3a3aff",
-            color: "#fff",
-            border: "none"
-          }}
-        >
-          Send
-        </button>
+        <button onClick={handleSend} style={{ marginLeft: "0.5rem", padding: "0.5rem 1rem", background: "#3a3aff", color: "#fff", border: "none" }}>Send</button>
       </div>
     </div>
   );
