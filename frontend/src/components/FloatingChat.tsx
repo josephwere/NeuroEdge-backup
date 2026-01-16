@@ -1,15 +1,10 @@
-// frontend/src/components/FloatingChat.tsx
 import React, { useState, useEffect, useRef } from "react";
 import InfiniteScroll from "react-infinite-scroll-component";
 import { chatContext } from "../../services/chatContext";
 import { OrchestratorClient } from "../../services/orchestrator_client";
-import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
-import { okaidia } from "react-syntax-highlighter/dist/esm/styles/prism";
-import { useChatHistory } from "../../services/chatHistoryStore";
 import { saveToCache, getCache } from "../services/offlineCache";
-import { useNotifications } from "../services/notificationStore";
 import AISuggestionOverlay from "./AISuggestionsOverlay";
-import { generateSuggestions, AISuggestion } from "../../services/aiSuggestionEngine";
+import { generateSuggestions, AISuggestion } from "../services/aiSuggestionEngine";
 import { FounderMessage } from "./FounderAssistant";
 
 interface ExecutionResult {
@@ -56,12 +51,10 @@ const FloatingChat: React.FC<FloatingChatProps> = ({
   const [input, setInput] = useState("");
   const [minimized, setMinimized] = useState(false);
   const [suggestions, setSuggestions] = useState<AISuggestion[]>([]);
-
   const containerRef = useRef<HTMLDivElement>(null);
   const [position, setPosition] = useState(initialPosition || { x: 20, y: 20 });
-  const { searchQuery } = useChatHistory();
 
-  // --- Dragging ---
+  // --- Drag & Move ---
   useEffect(() => {
     const el = containerRef.current;
     if (!el) return;
@@ -78,23 +71,18 @@ const FloatingChat: React.FC<FloatingChatProps> = ({
     const move = (e: MouseEvent) => {
       x += e.clientX - mx;
       y += e.clientY - my;
-      mx = e.clientX;
-      my = e.clientY;
+      mx = e.clientX; my = e.clientY;
       setPosition({ x, y });
       onPositionChange?.({ x, y });
     };
 
-    const up = () => {
-      document.onmousemove = null;
-      document.onmouseup = null;
-    };
+    const up = () => { document.onmousemove = null; document.onmouseup = null; };
 
     el.querySelector(".header")?.addEventListener("mousedown", down);
-    return () =>
-      el.querySelector(".header")?.removeEventListener("mousedown", down);
+    return () => el.querySelector(".header")?.removeEventListener("mousedown", down);
   }, [position.x, position.y, onPositionChange]);
 
-  // --- Load cached logs ---
+  // --- Load cache ---
   useEffect(() => {
     const cached = getCache();
     if (cached.length) {
@@ -114,7 +102,7 @@ const FloatingChat: React.FC<FloatingChatProps> = ({
     }
   }, []);
 
-  // --- FounderAssistant Commands Integration ---
+  // --- FounderAssistant Commands ---
   useEffect(() => {
     const founderHandler = (msg: FounderMessage) => {
       const text = msg.message.toLowerCase();
@@ -122,15 +110,15 @@ const FloatingChat: React.FC<FloatingChatProps> = ({
         const node = text.split("inspect ")[1];
         addMessage(`🔍 Inspecting node: ${node}…`, "ml");
 
-        orchestrator.runCheck?.(node).then(res => {
-          addMessage(`✅ Node ${node} status: ${res.status}`, "info");
-          orchestrator.emitFounderMessage({
-            type: "status",
-            message: `Inspection complete: ${node} is ${res.status}`
-          });
-        }).catch(err => {
-          addMessage(`❌ Node inspection failed: ${err.message}`, "error");
-        });
+        orchestrator.runCheck?.(node)
+          .then(res => {
+            addMessage(`✅ Node ${node} status: ${res.status}`, "info");
+            orchestrator.emitFounderMessage({
+              type: "status",
+              message: `Inspection complete: ${node} is ${res.status}`
+            });
+          })
+          .catch(err => addMessage(`❌ Node inspection failed: ${err.message}`, "error"));
       }
     };
 
@@ -138,59 +126,41 @@ const FloatingChat: React.FC<FloatingChatProps> = ({
     return () => orchestrator.offFounderMessage(founderHandler);
   }, [orchestrator]);
 
-  // --- AI suggestion watcher ---
+  // --- AI Suggestions ---
   useEffect(() => {
-    if (!input.trim()) {
-      setSuggestions([]);
-      return;
-    }
-
+    if (!input.trim()) return setSuggestions([]);
     const timer = setTimeout(async () => {
       const s = await generateSuggestions(input, "floating");
       setSuggestions(s);
     }, 250);
-
     return () => clearTimeout(timer);
   }, [input]);
 
   const acceptSuggestion = (s: AISuggestion) => {
     if (s.type === "command") {
-      setInput(s.text);
-      setSuggestions([]);
-      setTimeout(send, 0);
+      setInput(s.text); setSuggestions([]); setTimeout(send, 0);
     } else {
-      setInput(prev => prev + " " + s.text);
-      setSuggestions([]);
+      setInput(prev => prev + " " + s.text); setSuggestions([]);
     }
   };
 
   // --- Infinite scroll ---
   const fetchMore = () => {
     const start = messages.length - (page + 1) * PAGE_SIZE;
-    const nextBatch = messages.slice(
-      Math.max(0, start),
-      messages.length - page * PAGE_SIZE
-    );
+    const nextBatch = messages.slice(Math.max(0, start), messages.length - page * PAGE_SIZE);
     setDisplayed(prev => [...nextBatch, ...prev]);
     setPage(prev => prev + 1);
   };
 
-  // --- Send command ---
+  // --- Send Command ---
   const send = async () => {
     if (!input.trim()) return;
-
     setSuggestions([]);
     const context = chatContext.getAll();
     const commandId = Date.now().toString();
 
     addMessage(`💻 ${input}`, "info");
-
-    saveToCache({
-      id: commandId,
-      timestamp: Date.now(),
-      type: "chat",
-      payload: { role: "user", text: input, type: "info" }
-    });
+    saveToCache({ id: commandId, timestamp: Date.now(), type: "chat", payload: { role: "user", text: input, type: "info" } });
 
     const userInput = input;
     setInput("");
@@ -202,29 +172,9 @@ const FloatingChat: React.FC<FloatingChatProps> = ({
       if (res.intent) addMessage(`🎯 Intent: ${res.intent}`, "ml");
       if (res.risk) addMessage(`⚠️ Risk Level: ${res.risk}`, "warn");
 
-      if (res.logs) res.logs.forEach((l: string) => addMessage(`[Log] ${l}`, "info"));
-
-      if (res.meshStatus) res.meshStatus.forEach((n: any) =>
-        addMessage(`🌐 [${n.node}] ${n.status}`, "mesh")
-      );
-
-      if (res.results)
-        res.results.forEach((r: ExecutionResult) => {
-          if (r.stdout.includes("```")) {
-            addMessage(
-              r.stdout,
-              r.success ? "info" : "error",
-              extractLanguage(r.stdout),
-              true
-            );
-          } else {
-            addMessage(
-              r.success ? r.stdout : `❌ ${r.stderr}`,
-              r.success ? "info" : "error"
-            );
-          }
-        });
-
+      if (res.logs) res.logs.forEach(l => addMessage(`[Log] ${l}`, "info"));
+      if (res.meshStatus) res.meshStatus.forEach((n: any) => addMessage(`🌐 [${n.node}] ${n.status}`, "mesh"));
+      if (res.results) res.results.forEach((r: ExecutionResult) => addMessage(r.success ? r.stdout : `❌ ${r.stderr}`, r.success ? "info" : "error"));
       if (res.approvals) res.approvals.forEach(addApproval);
 
     } catch (err: any) {
@@ -235,22 +185,14 @@ const FloatingChat: React.FC<FloatingChatProps> = ({
   // --- Helpers ---
   const addMessage = (text: string, type?: LogLine["type"], codeLanguage?: string, isCode?: boolean) => {
     const id = Date.now().toString() + Math.random();
-    const msg: LogLine = {
-      id, text, type, codeLanguage, isCode, collapsible: isCode, collapsibleOpen: true, timestamp: Date.now()
-    };
+    const msg: LogLine = { id, text, type, codeLanguage, isCode, collapsible: isCode, collapsibleOpen: true, timestamp: Date.now() };
     setMessages(m => [...m, msg]);
     setDisplayed(d => [...d, msg]);
     saveToCache({ id, timestamp: Date.now(), type: "chat", payload: { text, type, codeLanguage, isCode } });
   };
 
   const addApproval = (app: ApprovalRequest) => {
-    const msg: LogLine = {
-      id: app.id,
-      text: `[Approval] ${app.message}`,
-      type: "ml",
-      associatedId: app.id,
-      timestamp: Date.now()
-    };
+    const msg: LogLine = { id: app.id, text: `[Approval] ${app.message}`, type: "ml", associatedId: app.id, timestamp: Date.now() };
     setMessages(m => [...m, msg]);
     setDisplayed(d => [...d, msg]);
   };
@@ -295,9 +237,7 @@ const FloatingChat: React.FC<FloatingChatProps> = ({
               scrollableTarget="floatingChatScroll"
               loader={<div style={{ textAlign: "center" }}>Loading…</div>}
             >
-              {displayed.map(m => (
-                <div key={m.id} style={{ marginBottom: "4px" }}>{m.text}</div>
-              ))}
+              {displayed.map(m => <div key={m.id} style={{ marginBottom: "4px" }}>{m.text}</div>)}
             </InfiniteScroll>
           </div>
 
