@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+
+    <!-- Viewport -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <!-- Identity -->
+    <title>NeuroEdge</title>
+    <meta name="description" content="NeuroEdge — Cognitive Orchestration Interface" />
+
+    <!-- Theme bootstrap (prevents flash) -->
+    <script>
+      (() => {
+        const theme = localStorage.getItem("neuroedge-theme") || "light";
+        document.documentElement.dataset.theme = theme;
+      })();
+    </script>
+
+    <!-- Fonts (optional, safe) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+
+  </head>
+  <body>
+    <!-- React mounts here -->
+    <div id="root"></div>
+
+    <!-- Entry script (Vite / CRA compatible) -->
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
