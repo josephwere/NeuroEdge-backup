@@ -1,9 +1,9 @@
+// frontend/src/components/FounderAssistant.tsx
+
 import React, { useEffect, useState } from "react";
 import { OrchestratorClient } from "../services/orchestrator_client";
 
-/* -------------------- */
-/* Types */
-/* -------------------- */
+/* -------------------- Types -------------------- */
 interface FounderMessage {
   type: "status" | "info" | "warning" | "error";
   message: string;
@@ -18,9 +18,7 @@ interface AlertItem extends FounderMessage {
   id: number;
 }
 
-/* -------------------- */
-/* FounderAssistant Component */
-/* -------------------- */
+/* -------------------- FounderAssistant Component -------------------- */
 const FounderAssistant: React.FC<Props> = ({ orchestrator }) => {
   const [alerts, setAlerts] = useState<AlertItem[]>([]);
   const [nextId, setNextId] = useState(1);
@@ -31,27 +29,29 @@ const FounderAssistant: React.FC<Props> = ({ orchestrator }) => {
       const id = nextId;
       setNextId(id + 1);
 
+      // Add alert to UI
       setAlerts(prev => [...prev, { ...msg, id }]);
+
+      // Speak message
       speak(msg.message);
-      
+
       // Auto-remove after 6 seconds
       setTimeout(() => removeAlert(id), 6000);
     };
 
     orchestrator.onFounderMessage(handler);
-
-    return () => {
-      orchestrator.offFounderMessage(handler);
-    };
+    return () => orchestrator.offFounderMessage(handler);
   }, [orchestrator, nextId]);
 
   /* ---------------- TTS ---------------- */
   const speak = (text: string) => {
     if ("speechSynthesis" in window) {
       const utter = new SpeechSynthesisUtterance(text);
-      utter.rate = 1; // normal speed
-      utter.pitch = 1; // normal pitch
+      utter.rate = 1;
+      utter.pitch = 1;
       window.speechSynthesis.speak(utter);
+    } else {
+      console.warn("TTS not supported in this browser");
     }
   };
 
@@ -64,10 +64,10 @@ const FounderAssistant: React.FC<Props> = ({ orchestrator }) => {
   const typeColor = (type: FounderMessage["type"]) => {
     switch (type) {
       case "status": return "#3b82f6"; // blue
-      case "info": return "#10b981"; // green
-      case "warning": return "#f59e0b"; // orange
-      case "error": return "#ef4444"; // red
-      default: return "#6b7280"; // gray
+      case "info": return "#10b981";   // green
+      case "warning": return "#f59e0b";// orange
+      case "error": return "#ef4444";  // red
+      default: return "#6b7280";       // gray
     }
   };
 
@@ -95,6 +95,7 @@ const FounderAssistant: React.FC<Props> = ({ orchestrator }) => {
             boxShadow: "0 4px 12px rgba(0,0,0,0.2)",
             cursor: "pointer",
             fontSize: "0.85rem",
+            transition: "transform 0.2s ease, opacity 0.2s ease",
           }}
           onClick={() => removeAlert(alert.id)}
         >
