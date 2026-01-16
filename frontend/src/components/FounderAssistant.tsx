@@ -1,118 +1,104 @@
-// frontend/src/components/FounderAssistant.tsx
-
-import React, { useState, useEffect, useRef } from "react";
+import React, { useEffect, useState } from "react";
 import { OrchestratorClient } from "../services/orchestrator_client";
 
-/**
- * FounderAssistant
- * - Displays alerts, logs, and messages for the founder
- * - Integrates TTS for real-time voice notifications
- * - Stacks messages in modern style (top-right corner)
- */
-
-interface AlertMessage {
-  id: number;
-  type: "info" | "success" | "warning" | "error";
+/* -------------------- */
+/* Types */
+/* -------------------- */
+interface FounderMessage {
+  type: "status" | "info" | "warning" | "error";
   message: string;
-  timestamp: number;
+  timestamp?: number;
 }
 
 interface Props {
   orchestrator: OrchestratorClient;
 }
 
+interface AlertItem extends FounderMessage {
+  id: number;
+}
+
+/* -------------------- */
+/* FounderAssistant Component */
+/* -------------------- */
 const FounderAssistant: React.FC<Props> = ({ orchestrator }) => {
-  const [alerts, setAlerts] = useState<AlertMessage[]>([]);
-  const alertIdRef = useRef(0);
-  const ttsQueueRef = useRef<AlertMessage[]>([]);
-  const speakingRef = useRef(false);
+  const [alerts, setAlerts] = useState<AlertItem[]>([]);
+  const [nextId, setNextId] = useState(1);
 
-  /* ------------------------ TTS Function ------------------------ */
-  const speakMessage = (msg: string) => {
-    if (!("speechSynthesis" in window)) return;
+  /* ---------------- Listen for founder messages ---------------- */
+  useEffect(() => {
+    const handler = (msg: FounderMessage) => {
+      const id = nextId;
+      setNextId(id + 1);
 
-    const utterance = new SpeechSynthesisUtterance(msg);
-    utterance.lang = "en-US";
-    utterance.rate = 1;
-    utterance.pitch = 1;
-
-    utterance.onend = () => {
-      speakingRef.current = false;
-      if (ttsQueueRef.current.length > 0) {
-        const next = ttsQueueRef.current.shift()!;
-        speakMessage(next.message);
-      }
+      setAlerts(prev => [...prev, { ...msg, id }]);
+      speak(msg.message);
+      
+      // Auto-remove after 6 seconds
+      setTimeout(() => removeAlert(id), 6000);
     };
 
-    speakingRef.current = true;
-    window.speechSynthesis.speak(utterance);
-  };
-
-  /* ------------------------ Add Alert ------------------------ */
-  const addAlert = (type: AlertMessage["type"], message: string) => {
-    const id = alertIdRef.current++;
-    const alert: AlertMessage = { id, type, message, timestamp: Date.now() };
-    setAlerts((prev) => [alert, ...prev]);
-    ttsQueueRef.current.push(alert);
-    if (!speakingRef.current) speakMessage(alert.message);
-  };
-
-  /* ------------------------ Listen to Orchestrator ------------------------ */
-  useEffect(() => {
-    const subscription = orchestrator.onFounderMessage((msg) => {
-      const type: AlertMessage["type"] =
-        msg.type === "error" ? "error" : msg.type === "status" ? "success" : "info";
-      addAlert(type, msg.message);
-    });
+    orchestrator.onFounderMessage(handler);
 
     return () => {
-      subscription.unsubscribe();
+      orchestrator.offFounderMessage(handler);
     };
-  }, [orchestrator]);
+  }, [orchestrator, nextId]);
 
-  /* ------------------------ Render ------------------------ */
+  /* ---------------- TTS ---------------- */
+  const speak = (text: string) => {
+    if ("speechSynthesis" in window) {
+      const utter = new SpeechSynthesisUtterance(text);
+      utter.rate = 1; // normal speed
+      utter.pitch = 1; // normal pitch
+      window.speechSynthesis.speak(utter);
+    }
+  };
+
+  /* ---------------- Remove Alert ---------------- */
+  const removeAlert = (id: number) => {
+    setAlerts(prev => prev.filter(a => a.id !== id));
+  };
+
+  /* ---------------- Type Colors ---------------- */
+  const typeColor = (type: FounderMessage["type"]) => {
+    switch (type) {
+      case "status": return "#3b82f6"; // blue
+      case "info": return "#10b981"; // green
+      case "warning": return "#f59e0b"; // orange
+      case "error": return "#ef4444"; // red
+      default: return "#6b7280"; // gray
+    }
+  };
+
+  /* ---------------- Render ---------------- */
   return (
-    <div
-      style={{
-        position: "fixed",
-        top: "1rem",
-        right: "1rem",
-        width: "320px",
-        maxHeight: "80vh",
-        overflowY: "auto",
-        display: "flex",
-        flexDirection: "column",
-        gap: "0.5rem",
-        zIndex: 9999,
-      }}
-    >
-      {alerts.map((alert) => (
+    <div style={{
+      position: "fixed",
+      top: 20,
+      right: 20,
+      display: "flex",
+      flexDirection: "column",
+      gap: "0.5rem",
+      zIndex: 9999,
+    }}>
+      {alerts.map(alert => (
         <div
           key={alert.id}
           style={{
+            backgroundColor: "#1f2937",
+            color: "#fff",
+            borderLeft: `5px solid ${typeColor(alert.type)}`,
             padding: "0.75rem 1rem",
-            borderRadius: "8px",
-            background:
-              alert.type === "info"
-                ? "#f0f4ff"
-                : alert.type === "success"
-                ? "#e6ffed"
-                : alert.type === "warning"
-                ? "#fff7e6"
-                : "#ffe6e6",
-            color:
-              alert.type === "info"
-                ? "#1e3a8a"
-                : alert.type === "success"
-                ? "#166534"
-                : alert.type === "warning"
-                ? "#78350f"
-                : "#991b1b",
-            boxShadow: "0 2px 6px rgba(0,0,0,0.15)",
+            borderRadius: "6px",
+            minWidth: "280px",
+            boxShadow: "0 4px 12px rgba(0,0,0,0.2)",
+            cursor: "pointer",
             fontSize: "0.85rem",
           }}
+          onClick={() => removeAlert(alert.id)}
         >
-          {alert.message}
+          <strong style={{ textTransform: "capitalize" }}>{alert.type}</strong>: {alert.message}
         </div>
       ))}
     </div>
