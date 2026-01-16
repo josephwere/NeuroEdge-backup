@@ -1,4 +1,3 @@
-// frontend/src/components/HomePage.tsx
 import React, { useState, useEffect } from "react";
 import Sidebar from "./Sidebar";
 import Topbar from "./Topbar";
@@ -10,6 +9,7 @@ import CommandPalette from "./CommandPalette";
 import ChatHistoryPanel from "./ChatHistoryPanel";
 import SettingsPanel from "./settings/SettingsPanel";
 import ExtensionsPanel from "./ExtensionsPanel";
+import FounderAssistant from "./FounderAssistant"; // <-- NEW
 
 import { ChatHistoryProvider } from "../services/chatHistoryStore";
 import { OrchestratorClient } from "../services/orchestrator_client";
@@ -24,7 +24,6 @@ import codeLinter from "../extensions/examples/codeLinter";
 const HomeContent: React.FC<{ orchestrator: OrchestratorClient }> = ({ orchestrator }) => {
   const [paletteVisible, setPaletteVisible] = useState(false);
 
-  /* Command Palette Keyboard Shortcut */
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "k") {
@@ -38,23 +37,13 @@ const HomeContent: React.FC<{ orchestrator: OrchestratorClient }> = ({ orchestra
 
   return (
     <div style={{ flex: 1, display: "flex", flexDirection: "column", position: "relative" }}>
-      <ChatSearchBar
-        onSearch={(query: string, filters: any) => {
-          // Chat search handled via chat history context
-        }}
-      />
+      <ChatSearchBar onSearch={(query, filters) => { /* handled via context */ }} />
 
       <UnifiedChat orchestrator={orchestrator} />
 
-      <AISuggestionsOverlay
-        onSelect={(suggestion) => console.log("AI Suggestion selected:", suggestion)}
-      />
+      <AISuggestionsOverlay onSelect={(s) => console.log("AI Suggestion:", s)} />
 
-      <CommandPalette
-        orchestrator={orchestrator}
-        visible={paletteVisible}
-        onClose={() => setPaletteVisible(false)}
-      />
+      <CommandPalette orchestrator={orchestrator} visible={paletteVisible} onClose={() => setPaletteVisible(false)} />
     </div>
   );
 };
@@ -70,23 +59,14 @@ const HomePage: React.FC<Props> = ({ orchestrator }) => {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [activeView, setActiveView] = useState<"chat" | "dashboard" | "settings" | "history" | "extensions">("chat");
 
-  /* ---------------- Extensions Context & Loader ---------------- */
   useEffect(() => {
     const extCtx = {
       orchestrator,
-      notify: (msg: string, type: any = "info") =>
-        console.log(`[Notification ${type}] ${msg}`),
+      notify: (msg: string, type: any = "info") => console.log(`[Notification ${type}] ${msg}`),
       getUserProfile: () => ({ name: "Guest User", mode: "local" }),
-      requestPermission: async (perm: string) => {
-        console.log(`Requesting permission: ${perm}`);
-        // TODO: replace with a UI prompt for user approval
-        return true;
-      },
-      registerCommand: (cmd: any) =>
-        console.log("Registered extension command:", cmd),
+      requestPermission: async (perm: string) => true,
+      registerCommand: (cmd: any) => console.log("Registered extension command:", cmd),
     };
-
-    // Load default example extension
     loadExtension(codeLinter, extCtx);
   }, [orchestrator]);
 
@@ -96,11 +76,7 @@ const HomePage: React.FC<Props> = ({ orchestrator }) => {
         <div style={{ display: "flex", height: "100vh", width: "100vw", overflow: "hidden", backgroundColor: "#f5f6fa" }}>
           
           {/* Sidebar */}
-          <Sidebar
-            collapsed={sidebarCollapsed}
-            onToggle={() => setSidebarCollapsed(!sidebarCollapsed)}
-            onNavigate={setActiveView}
-          />
+          <Sidebar collapsed={sidebarCollapsed} onToggle={() => setSidebarCollapsed(!sidebarCollapsed)} onNavigate={setActiveView} />
 
           {/* Main Area */}
           <div style={{ flex: 1, display: "flex", flexDirection: "column", position: "relative" }}>
@@ -108,22 +84,15 @@ const HomePage: React.FC<Props> = ({ orchestrator }) => {
             {/* Topbar */}
             <Topbar onToggleSidebar={() => setSidebarCollapsed(!sidebarCollapsed)} />
 
+            {/* Founder Assistant */}
+            <FounderAssistant orchestrator={orchestrator} />
+
             {/* Main Content */}
             <div style={{ flex: 1, display: "flex", flexDirection: "column", position: "relative", overflow: "hidden" }}>
-              
-              {/* Chat View */}
               {activeView === "chat" && <HomeContent orchestrator={orchestrator} />}
-
-              {/* Dashboard View */}
               {activeView === "dashboard" && <Dashboard orchestrator={orchestrator} />}
-
-              {/* Settings View */}
               {activeView === "settings" && <SettingsPanel />}
-
-              {/* Extensions View */}
               {activeView === "extensions" && <ExtensionsPanel />}
-
-              {/* Chat History View */}
               {activeView === "history" && <ChatHistoryPanel />}
             </div>
           </div>
