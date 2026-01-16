@@ -4,6 +4,8 @@ import React from "react";
 import ReactDOM from "react-dom/client";
 
 import HomePage from "./components/HomePage";
+import BootScreen from "./components/BootScreen";
+
 import { UIProvider } from "./services/uiStore";
 import { ChatHistoryProvider } from "./services/chatHistoryStore";
 import { NotificationProvider } from "./services/notificationStore";
@@ -21,7 +23,22 @@ const orchestrator = new OrchestratorClient({
 });
 
 /* -------------------- */
-/* React Root */
+/* App Root (Boot-Aware) */
+/* -------------------- */
+
+const AppRoot: React.FC = () => {
+  const [booted, setBooted] = React.useState(false);
+
+  return (
+    <>
+      {!booted && <BootScreen onDone={() => setBooted(true)} />}
+      {booted && <HomePage orchestrator={orchestrator} />}
+    </>
+  );
+};
+
+/* -------------------- */
+/* React Mount */
 /* -------------------- */
 
 const rootElement = document.getElementById("root");
@@ -35,7 +52,7 @@ ReactDOM.createRoot(rootElement).render(
     <UIProvider>
       <NotificationProvider>
         <ChatHistoryProvider>
-          <HomePage orchestrator={orchestrator} />
+          <AppRoot />
         </ChatHistoryProvider>
       </NotificationProvider>
     </UIProvider>
