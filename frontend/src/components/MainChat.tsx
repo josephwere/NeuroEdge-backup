@@ -1,21 +1,13 @@
-// frontend/src/components/MainChat.tsx
 import React, { useState, useEffect, useRef } from "react";
 import InfiniteScroll from "react-infinite-scroll-component";
 import { chatContext } from "../../services/chatContext";
 import { OrchestratorClient } from "../services/orchestrator_client";
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 import { okaidia } from "react-syntax-highlighter/dist/esm/styles/prism";
-import { useChatHistory } from "../services/chatHistoryStore";
 import { saveToCache, getCache } from "../services/offlineCache";
-import AISuggestionOverlay from "./AISuggestionOverlay";
+import AISuggestionOverlay from "./AISuggestionsOverlay";
 import { generateSuggestions, AISuggestion } from "../services/aiSuggestionEngine";
-import { useNotifications } from "../services/notificationStore";
 import { FounderMessage } from "./FounderAssistant";
-
-const { addNotification } = useNotifications();
-addNotification({ message: "New AI suggestion available", type: "ai" });
-addNotification({ message: "Error executing command", type: "error" });
-addNotification({ message: "Chat synced successfully", type: "success" });
 
 interface Message {
   id: string;
@@ -42,9 +34,8 @@ const MainChat: React.FC<MainChatProps> = ({ orchestrator }) => {
   const [input, setInput] = useState("");
   const [suggestions, setSuggestions] = useState<AISuggestion[]>([]);
   const messageEndRef = useRef<HTMLDivElement>(null);
-  const { searchQuery } = useChatHistory();
 
-  // --- Load cache & history ---
+  // --- Load cached messages ---
   useEffect(() => {
     const cached = getCache();
     if (cached.length) {
@@ -68,16 +59,12 @@ const MainChat: React.FC<MainChatProps> = ({ orchestrator }) => {
   // --- Infinite scroll ---
   const fetchMore = () => {
     const start = messages.length - (page + 1) * PAGE_SIZE;
-    const nextBatch = messages.slice(
-      Math.max(0, start),
-      messages.length - page * PAGE_SIZE
-    );
+    const nextBatch = messages.slice(Math.max(0, start), messages.length - page * PAGE_SIZE);
     setDisplayed(prev => [...nextBatch, ...prev]);
     setPage(prev => prev + 1);
   };
 
-  const scrollToBottom = () =>
-    messageEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  const scrollToBottom = () => messageEndRef.current?.scrollIntoView({ behavior: "smooth" });
   useEffect(scrollToBottom, [displayed]);
 
   // --- AI suggestions ---
@@ -101,10 +88,12 @@ const MainChat: React.FC<MainChatProps> = ({ orchestrator }) => {
     }
   };
 
-  // --- FounderAssistant command parsing ---
+  // --- FounderAssistant command parsing + TTS ---
   useEffect(() => {
     const founderHandler = (msg: FounderMessage) => {
       const text = msg.message.toLowerCase();
+
+      // Node inspection command
       if (text.includes("inspect")) {
         const node = text.split("inspect ")[1];
         addMessage(`🔍 Inspecting node: ${node}…`, "ml");
@@ -116,8 +105,13 @@ const MainChat: React.FC<MainChatProps> = ({ orchestrator }) => {
           addMessage(`❌ Node inspection failed: ${err.message}`, "error");
           speak(`Error inspecting node: ${node}`);
         });
+      } else {
+        // Other founder messages
+        addMessage(`📣 Founder: ${msg.message}`, msg.type);
+        speak(msg.message);
       }
     };
+
     orchestrator.onFounderMessage(founderHandler);
     return () => orchestrator.offFounderMessage(founderHandler);
   }, [orchestrator]);
@@ -134,6 +128,7 @@ const MainChat: React.FC<MainChatProps> = ({ orchestrator }) => {
     chatContext.add({ role: "user", content: input });
 
     saveToCache({ id, timestamp: Date.now(), type: "chat", payload: { role: "user", text: input, type: "info" } });
+
     const userInput = input;
     setInput("");
 
@@ -145,7 +140,9 @@ const MainChat: React.FC<MainChatProps> = ({ orchestrator }) => {
       if (res.risk) addMessage(`⚠️ Risk Level: ${res.risk}`, "warn");
 
       if (res.logs) res.logs.forEach((l: string) => addMessage(`[Log] ${l}`, "info"));
-      if (res.results) res.results.forEach((r: any) => addMessage(r.success ? r.stdout : `❌ ${r.stderr}`, r.success ? "info" : "error"));
+      if (res.results) res.results.forEach((r: any) =>
+        addMessage(r.success ? r.stdout : `❌ ${r.stderr}`, r.success ? "info" : "error")
+      );
     } catch (err: any) {
       addMessage(`❌ Error: ${err.message || err}`, "error");
     }
@@ -169,11 +166,6 @@ const MainChat: React.FC<MainChatProps> = ({ orchestrator }) => {
     }
   };
 
-  const extractLanguage = (codeBlock: string) => {
-    const match = codeBlock.match(/```(\w+)?/);
-    return match ? match[1] : "text";
-  };
-
   const renderMessage = (msg: Message) => {
     if (msg.isCode) {
       const codeMatch = msg.text.match(/```(\w+)?\n([\s\S]*?)```/);
@@ -188,6 +180,7 @@ const MainChat: React.FC<MainChatProps> = ({ orchestrator }) => {
     return <div key={msg.id} style={{ marginBottom: "4px" }}>{msg.text}</div>;
   };
 
+  // --- Render ---
   return (
     <div style={{ flex: 1, display: "flex", flexDirection: "column", height: "100%" }}>
       <div id="chatScroll" style={{ flex: 1, overflowY: "auto", padding: "1rem" }}>
@@ -204,7 +197,7 @@ const MainChat: React.FC<MainChatProps> = ({ orchestrator }) => {
         <div ref={messageEndRef} />
       </div>
 
-      {/* Input + AI Overlay */}
+      {/* Input + AI Suggestions */}
       <div style={{ position: "relative", display: "flex", padding: "0.5rem", background: "#e0e0e0" }}>
         <AISuggestionOverlay suggestions={suggestions} onAccept={acceptSuggestion} />
         <input
