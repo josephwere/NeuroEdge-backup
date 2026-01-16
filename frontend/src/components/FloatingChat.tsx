@@ -8,19 +8,9 @@ import { okaidia } from "react-syntax-highlighter/dist/esm/styles/prism";
 import { useChatHistory } from "../../services/chatHistoryStore";
 import { saveToCache, getCache } from "../services/offlineCache";
 import { useNotifications } from "../services/notificationStore";
-
-const { addNotification } = useNotifications();
-
-addNotification({ message: "New AI suggestion available", type: "ai" });
-addNotification({ message: "Error executing command", type: "error" });
-addNotification({ message: "Chat synced successfully", type: "success" });
-
-/* 🔹 AI Suggestions */
-import AISuggestionOverlay from "./AISuggestionOverlay";
-import {
-  generateSuggestions,
-  AISuggestion
-} from "../../services/aiSuggestionEngine";
+import AISuggestionOverlay from "./AISuggestionsOverlay";
+import { generateSuggestions, AISuggestion } from "../../services/aiSuggestionEngine";
+import { FounderMessage } from "./FounderAssistant";
 
 interface ExecutionResult {
   id: string;
@@ -65,8 +55,6 @@ const FloatingChat: React.FC<FloatingChatProps> = ({
   const [page, setPage] = useState(0);
   const [input, setInput] = useState("");
   const [minimized, setMinimized] = useState(false);
-
-  /* 🔹 AI suggestions */
   const [suggestions, setSuggestions] = useState<AISuggestion[]>([]);
 
   const containerRef = useRef<HTMLDivElement>(null);
@@ -126,7 +114,31 @@ const FloatingChat: React.FC<FloatingChatProps> = ({
     }
   }, []);
 
-  // --- AI suggestion watcher (floating mode) ---
+  // --- FounderAssistant Commands Integration ---
+  useEffect(() => {
+    const founderHandler = (msg: FounderMessage) => {
+      const text = msg.message.toLowerCase();
+      if (text.includes("inspect")) {
+        const node = text.split("inspect ")[1];
+        addMessage(`🔍 Inspecting node: ${node}…`, "ml");
+
+        orchestrator.runCheck?.(node).then(res => {
+          addMessage(`✅ Node ${node} status: ${res.status}`, "info");
+          orchestrator.emitFounderMessage({
+            type: "status",
+            message: `Inspection complete: ${node} is ${res.status}`
+          });
+        }).catch(err => {
+          addMessage(`❌ Node inspection failed: ${err.message}`, "error");
+        });
+      }
+    };
+
+    orchestrator.onFounderMessage(founderHandler);
+    return () => orchestrator.offFounderMessage(founderHandler);
+  }, [orchestrator]);
+
+  // --- AI suggestion watcher ---
   useEffect(() => {
     if (!input.trim()) {
       setSuggestions([]);
@@ -141,7 +153,6 @@ const FloatingChat: React.FC<FloatingChatProps> = ({
     return () => clearTimeout(timer);
   }, [input]);
 
-  // --- Accept AI suggestion ---
   const acceptSuggestion = (s: AISuggestion) => {
     if (s.type === "command") {
       setInput(s.text);
@@ -169,7 +180,6 @@ const FloatingChat: React.FC<FloatingChatProps> = ({
     if (!input.trim()) return;
 
     setSuggestions([]);
-
     const context = chatContext.getAll();
     const commandId = Date.now().toString();
 
@@ -186,24 +196,17 @@ const FloatingChat: React.FC<FloatingChatProps> = ({
     setInput("");
 
     try {
-      const res = await orchestrator.execute({
-        command: userInput,
-        context
-      });
+      const res = await orchestrator.execute({ command: userInput, context });
 
       if (res.reasoning) addMessage(`🧠 Reasoning: ${res.reasoning}`, "ml");
       if (res.intent) addMessage(`🎯 Intent: ${res.intent}`, "ml");
       if (res.risk) addMessage(`⚠️ Risk Level: ${res.risk}`, "warn");
 
-      if (res.logs)
-        res.logs.forEach((l: string) =>
-          addMessage(`[Log] ${l}`, "info")
-        );
+      if (res.logs) res.logs.forEach((l: string) => addMessage(`[Log] ${l}`, "info"));
 
-      if (res.meshStatus)
-        res.meshStatus.forEach((n: any) =>
-          addMessage(`🌐 [${n.node}] ${n.status}`, "mesh")
-        );
+      if (res.meshStatus) res.meshStatus.forEach((n: any) =>
+        addMessage(`🌐 [${n.node}] ${n.status}`, "mesh")
+      );
 
       if (res.results)
         res.results.forEach((r: ExecutionResult) => {
@@ -222,10 +225,7 @@ const FloatingChat: React.FC<FloatingChatProps> = ({
           }
         });
 
-      if (res.approvals)
-        res.approvals.forEach((app: ApprovalRequest) =>
-          addApproval(app)
-        );
+      if (res.approvals) res.approvals.forEach(addApproval);
 
     } catch (err: any) {
       addMessage(`❌ Error: ${err.message || err}`, "error");
@@ -233,32 +233,14 @@ const FloatingChat: React.FC<FloatingChatProps> = ({
   };
 
   // --- Helpers ---
-  const addMessage = (
-    text: string,
-    type?: LogLine["type"],
-    codeLanguage?: string,
-    isCode?: boolean
-  ) => {
+  const addMessage = (text: string, type?: LogLine["type"], codeLanguage?: string, isCode?: boolean) => {
     const id = Date.now().toString() + Math.random();
     const msg: LogLine = {
-      id,
-      text,
-      type,
-      codeLanguage,
-      isCode,
-      collapsible: isCode,
-      collapsibleOpen: true,
-      timestamp: Date.now()
+      id, text, type, codeLanguage, isCode, collapsible: isCode, collapsibleOpen: true, timestamp: Date.now()
     };
     setMessages(m => [...m, msg]);
     setDisplayed(d => [...d, msg]);
-
-    saveToCache({
-      id,
-      timestamp: Date.now(),
-      type: "chat",
-      payload: { text, type, codeLanguage, isCode }
-    });
+    saveToCache({ id, timestamp: Date.now(), type: "chat", payload: { text, type, codeLanguage, isCode } });
   };
 
   const addApproval = (app: ApprovalRequest) => {
@@ -297,17 +279,9 @@ const FloatingChat: React.FC<FloatingChatProps> = ({
         flexDirection: "column"
       }}
     >
-      <div className="header" style={{
-        padding: "10px",
-        cursor: "move",
-        background: "#2b2b3c",
-        display: "flex",
-        justifyContent: "space-between"
-      }}>
+      <div className="header" style={{ padding: "10px", cursor: "move", background: "#2b2b3c", display: "flex", justifyContent: "space-between" }}>
         <strong>NeuroEdge Floating Chat</strong>
-        <button onClick={() => setMinimized(!minimized)}>
-          {minimized ? "⬆️" : "⬇️"}
-        </button>
+        <button onClick={() => setMinimized(!minimized)}>{minimized ? "⬆️" : "⬇️"}</button>
       </div>
 
       {!minimized && (
@@ -327,45 +301,20 @@ const FloatingChat: React.FC<FloatingChatProps> = ({
             </InfiniteScroll>
           </div>
 
-          {/* 🔹 Input + AI Overlay */}
           <div style={{ position: "relative", display: "flex" }}>
-            <AISuggestionOverlay
-              suggestions={suggestions}
-              onAccept={acceptSuggestion}
-            />
-
+            <AISuggestionOverlay suggestions={suggestions} onAccept={acceptSuggestion} />
             <input
               value={input}
               onChange={e => setInput(e.target.value)}
               onKeyDown={e => {
                 if (e.key === "Enter") send();
-                if (e.key === "Tab" && suggestions.length) {
-                  e.preventDefault();
-                  acceptSuggestion(suggestions[0]);
-                }
+                if (e.key === "Tab" && suggestions.length) { e.preventDefault(); acceptSuggestion(suggestions[0]); }
                 if (e.key === "Escape") setSuggestions([]);
               }}
               placeholder="execute • debug • fix • analyze"
-              style={{
-                flex: 1,
-                padding: "10px",
-                background: "#2b2b3c",
-                border: "none",
-                color: "#fff"
-              }}
+              style={{ flex: 1, padding: "10px", background: "#2b2b3c", border: "none", color: "#fff" }}
             />
-
-            <button
-              onClick={send}
-              style={{
-                padding: "10px",
-                background: "#3a3aff",
-                border: "none",
-                color: "#fff"
-              }}
-            >
-              ▶
-            </button>
+            <button onClick={send} style={{ padding: "10px", background: "#3a3aff", border: "none", color: "#fff" }}>▶</button>
           </div>
         </>
       )}
