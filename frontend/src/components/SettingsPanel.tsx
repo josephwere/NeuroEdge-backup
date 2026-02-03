@@ -1,6 +1,6 @@
 // frontend/src/components/SettingsPanel.tsx
 import React from "react";
-import { useAIPreferences } from "../services/aiPreferencesStore";
+import { useAIPreferences } from "@/services/aiPreferencesStore";
 
 const SettingsPanel: React.FC = () => {
   const { preferences, setPreferences } = useAIPreferences();
