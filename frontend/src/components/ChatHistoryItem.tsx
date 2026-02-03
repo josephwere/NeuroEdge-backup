@@ -1,7 +1,7 @@
 // frontend/src/components/ChatHistoryItem.tsx
 
 import React from "react";
-import { ChatRecord } from "../services/chatHistoryStore";
+import { ChatRecord } from "@/services/chatHistoryStore";
 
 interface Props {
   record: ChatRecord;
