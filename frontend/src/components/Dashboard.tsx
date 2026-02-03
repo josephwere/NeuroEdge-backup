@@ -1,7 +1,7 @@
 // frontend/src/components/Dashboard.tsx
 import React, { useEffect, useState } from "react";
-import { chatContext } from "../services/chatContext";
-import { useNotifications } from "../services/notificationStore";
+import { chatContext } from "@/services/chatContext";
+import { useNotifications } from "@/services/notificationStore";
 
 const { addNotification } = useNotifications();
 
