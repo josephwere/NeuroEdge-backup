@@ -1,24 +1,24 @@
 // frontend/src/components/HomePage.tsx
 
 import React, { useState, useEffect } from "react";
-import Sidebar from "./Sidebar";
-import Topbar from "./Topbar";
-import UnifiedChat from "./UnifiedChat";
-import ChatSearchBar from "./ChatSearchBar";
-import AISuggestionsOverlay from "./AISuggestionsOverlay";
-import Dashboard from "./Dashboard";
-import CommandPalette from "./CommandPalette";
-import ChatHistoryPanel from "./ChatHistoryPanel";
-import SettingsPanel from "./settings/SettingsPanel";
-import ExtensionsPanel from "./ExtensionsPanel";
-import FounderAssistant from "./FounderAssistant"; // Founder voice & alerts
+import Sidebar from "@/Sidebar";
+import Topbar from "@/Topbar";
+import UnifiedChat from "@/UnifiedChat";
+import ChatSearchBar from "@/ChatSearchBar";
+import AISuggestionsOverlay from "@/AISuggestionsOverlay";
+import Dashboard from "@/Dashboard";
+import CommandPalette from "@/CommandPalette";
+import ChatHistoryPanel from "@/ChatHistoryPanel";
+import SettingsPanel from "@/settings/SettingsPanel";
+import ExtensionsPanel from "@/ExtensionsPanel";
+import FounderAssistant from "@/FounderAssistant"; // Founder voice & alerts
 
-import { ChatHistoryProvider } from "../services/chatHistoryStore";
-import { OrchestratorClient } from "../services/orchestrator_client";
-import { NotificationProvider } from "../services/notificationStore";
+import { ChatHistoryProvider } from "@/services/chatHistoryStore";
+import { OrchestratorClient } from "@/services/orchestrator_client";
+import { NotificationProvider } from "@/services/notificationStore";
 
-import { loadExtension } from "../extensions/extensionLoader";
-import codeLinter from "../extensions/examples/codeLinter";
+import { loadExtension } from "@/extensions/extensionLoader";
+import codeLinter from "@/extensions/examples/codeLinter";
 
 /* ----------------------------- */
 /* Home Content for Chat View    */
