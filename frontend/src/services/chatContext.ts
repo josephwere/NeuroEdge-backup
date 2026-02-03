@@ -1,9 +1,11 @@
+import React, { createContext, useContext, useState, useEffect } from "react";
+
 type ChatMessage = {
   role: "user" | "assistant" | "system";
   content: string;
 };
 
-class ChatContext {
+class ChatContextClass {
   private messages: ChatMessage[] = [];
 
   add(message: ChatMessage) {
@@ -26,5 +28,51 @@ class ChatContext {
   }
 }
 
-export const chatContext = new ChatContext();
+export const chatContext = new ChatContextClass();
 chatContext.load();
+
+// ------------------------
+// React wrapper
+// ------------------------
+interface ChatProviderProps {
+  children: React.ReactNode;
+}
+
+interface ChatContextValue {
+  messages: ChatMessage[];
+  addMessage: (msg: ChatMessage) => void;
+  clearMessages: () => void;
+}
+
+const ChatReactContext = createContext<ChatContextValue | null>(null);
+
+export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
+  const [messages, setMessages] = useState<ChatMessage[]>(chatContext.getAll());
+
+  const addMessage = (msg: ChatMessage) => {
+    chatContext.add(msg);
+    setMessages([...chatContext.getAll()]);
+  };
+
+  const clearMessages = () => {
+    chatContext.clear();
+    setMessages([]);
+  };
+
+  // keep state in sync on mount
+  useEffect(() => {
+    setMessages(chatContext.getAll());
+  }, []);
+
+  return (
+    <ChatReactContext.Provider value={{ messages, addMessage, clearMessages }}>
+      {children}
+    </ChatReactContext.Provider>
+  );
+};
+
+export const useChatContext = () => {
+  const ctx = useContext(ChatReactContext);
+  if (!ctx) throw new Error("useChatContext must be used inside ChatProvider");
+  return ctx;
+};
