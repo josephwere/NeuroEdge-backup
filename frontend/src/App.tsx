@@ -1,10 +1,10 @@
 import React from "react";
-import UnifiedChat from "./components/UnifiedChat";
-import { OrchestratorClient } from "./services/orchestrator_client";
+import UnifiedChat from "@/components/UnifiedChat";
+import { OrchestratorClient } from "@/services/orchestrator_client";
 // In App.tsx or HomePage.tsx
 import React, { useState, useEffect } from "react";
-import CommandPalette from "./components/CommandPalette";
-import { registerCommand } from "./services/commandRegistry";
+import CommandPalette from "@/components/CommandPalette";
+import { registerCommand } from "@/services/commandRegistry";
 
 const HomePageWrapper: React.FC = () => {
   const [paletteVisible, setPaletteVisible] = useState(false);
