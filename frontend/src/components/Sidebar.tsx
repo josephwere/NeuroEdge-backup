@@ -1,6 +1,6 @@
 // frontend/src/components/Sidebar.tsx
 import React, { useEffect } from "react";
-import { useNotifications } from "@/services/notificationStore";
+import { useNotifications } from "@/stores/notificationStore";
 
 /* -------------------- */
 /* Types */
@@ -20,7 +20,6 @@ interface SidebarProps {
   // Indicators (optional, future-ready)
   unreadChats?: number;
   pendingApprovals?: number;
-  notifications?: number;
 
   // User
   user?: {
@@ -38,17 +37,18 @@ const Sidebar: React.FC<SidebarProps> = ({
   onNavigate,
   unreadChats = 0,
   pendingApprovals = 0,
-  notifications = 0,
   user = { name: "Guest User", mode: "local" },
 }) => {
-  const { addNotification } = useNotifications(); // ✅ Hook inside component
+  const { notifications, addNotification } = useNotifications(); // ✅ Hook inside component
 
   // Add initial notifications safely on mount
   useEffect(() => {
-    addNotification({ message: "New AI suggestion available", type: "ai" });
-    addNotification({ message: "Error executing command", type: "error" });
-    addNotification({ message: "Chat synced successfully", type: "success" });
-  }, [addNotification]);
+    if (notifications.length === 0) {
+      addNotification({ message: "New AI suggestion available", type: "ai" });
+      addNotification({ message: "Error executing command", type: "error" });
+      addNotification({ message: "Chat synced successfully", type: "success" });
+    }
+  }, [addNotification, notifications.length]);
 
   return (
     <div
@@ -125,25 +125,16 @@ const Sidebar: React.FC<SidebarProps> = ({
           onClick={() => onNavigate("settings")}
         />
 
-        <NavItem
-          icon="🕘"
-          label="History"
-          collapsed={collapsed}
-          disabled
-        />
+        <NavItem icon="🕘" label="History" collapsed={collapsed} disabled />
 
-        <NavItem
-          icon="🧩"
-          label="Extensions"
-          collapsed={collapsed}
-          disabled
-        />
+        <NavItem icon="🧩" label="Extensions" collapsed={collapsed} disabled />
 
+        {/* Notifications dynamically from store */}
         <NavItem
           icon="🔔"
           label="Notifications"
           collapsed={collapsed}
-          badge={notifications}
+          badge={notifications.length}
           disabled
         />
 
