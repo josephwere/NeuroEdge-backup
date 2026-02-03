@@ -1,6 +1,6 @@
 // frontend/src/services/chatExport.ts
 
-import { ChatMessage } from "./chatHistoryStore";
+import { ChatMessage } from "@/chatHistoryStore";
 
 /**
  * Export chat logs in JSON (full fidelity)
