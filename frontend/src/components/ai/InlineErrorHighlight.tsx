@@ -1,16 +1,19 @@
+// frontend/src/components/InlineErrorHighlight.tsx
 import React from "react";
+
+export interface CodeError {
+  start: number; // index in code
+  end: number;
+  message: string;
+}
 
 interface InlineErrorProps {
   code: string;
-  errors: {
-    start: number; // index in code
-    end: number;
-    message: string;
-  }[];
+  errors?: CodeError[];
 }
 
-const InlineErrorHighlight: React.FC<InlineErrorProps> = ({ code, errors }) => {
-  if (!errors || errors.length === 0) return <pre>{code}</pre>;
+const InlineErrorHighlight: React.FC<InlineErrorProps> = ({ code, errors = [] }) => {
+  if (errors.length === 0) return <pre>{code}</pre>;
 
   const segments: { text: string; error?: string }[] = [];
   let lastIndex = 0;
@@ -28,12 +31,22 @@ const InlineErrorHighlight: React.FC<InlineErrorProps> = ({ code, errors }) => {
   }
 
   return (
-    <pre style={{ fontFamily: "monospace", whiteSpace: "pre-wrap", lineHeight: "1.4" }}>
-      {segments.map((seg, idx) => (
+    <pre
+      style={{
+        fontFamily: "monospace",
+        whiteSpace: "pre-wrap",
+        lineHeight: 1.4,
+        margin: 0,
+      }}
+    >
+      {segments.map((seg, idx) =>
         seg.error ? (
           <span
             key={idx}
-            style={{ textDecoration: "underline red wavy", cursor: "help" }}
+            style={{
+              textDecoration: "underline wavy red",
+              cursor: "help",
+            }}
             title={seg.error}
           >
             {seg.text}
@@ -41,7 +54,7 @@ const InlineErrorHighlight: React.FC<InlineErrorProps> = ({ code, errors }) => {
         ) : (
           <span key={idx}>{seg.text}</span>
         )
-      ))}
+      )}
     </pre>
   );
 };
