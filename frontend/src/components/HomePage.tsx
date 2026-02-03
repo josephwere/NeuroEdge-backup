@@ -9,7 +9,7 @@ import AISuggestionsOverlay from "@/components/AISuggestionsOverlay";
 import Dashboard from "@/components/Dashboard";
 import CommandPalette from "@/components/CommandPalette";
 import ChatHistoryPanel from "@/components/ChatHistoryPanel";
-import SettingsPanel from "@/settings/SettingsPanel";
+import SettingsPanel from "@/components/settings/SettingsPanel";
 import ExtensionsPanel from "@/components/ExtensionsPanel";
 import FounderAssistant from "@/components/FounderAssistant"; // Founder voice & alerts
 
