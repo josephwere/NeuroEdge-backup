@@ -3,13 +3,13 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
 
-import HomePage from "./components/HomePage";
-import BootScreen from "./components/BootScreen";
+import HomePage from "@/components/HomePage";
+import BootScreen from "@/components/BootScreen";
 
-import { UIProvider } from "./services/uiStore";
-import { ChatHistoryProvider } from "./services/chatHistoryStore";
-import { NotificationProvider } from "./services/notificationStore";
-import { OrchestratorClient } from "./services/orchestrator_client";
+import { UIProvider } from "@/services/uiStore";
+import { ChatHistoryProvider } from "@/services/chatHistoryStore";
+import { NotificationProvider } from "@/services/notificationStore";
+import { OrchestratorClient } from "@/services/orchestrator_client";
 
 import "./styles/globals.css";
 
