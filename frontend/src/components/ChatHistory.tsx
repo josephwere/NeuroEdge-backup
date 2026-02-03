@@ -1,9 +1,9 @@
 // frontend/src/components/ChatHistory.tsx
 
 import React, { useEffect, useState } from "react";
-import ChatSearchBar from "./ChatSearchBar";
-import ChatHistoryItem from "./ChatHistoryItem";
-import { ChatHistoryStore, ChatRecord } from "../services/chatHistoryStore";
+import ChatSearchBar from "@/ChatSearchBar";
+import ChatHistoryItem from "@/ChatHistoryItem";
+import { ChatHistoryStore, ChatRecord } from "@/services/chatHistoryStore";
 
 const ChatHistory: React.FC = () => {
   const [records, setRecords] = useState<ChatRecord[]>([]);
