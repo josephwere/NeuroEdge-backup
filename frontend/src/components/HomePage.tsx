@@ -5,13 +5,13 @@ import Sidebar from "@/components/Sidebar";
 import Topbar from "@/components/Topbar";
 import UnifiedChat from "@/components/UnifiedChat";
 import ChatSearchBar from "@/components/ChatSearchBar";
-import AISuggestionsOverlay from "@/AISuggestionsOverlay";
-import Dashboard from "@/Dashboard";
-import CommandPalette from "@/CommandPalette";
-import ChatHistoryPanel from "@/ChatHistoryPanel";
+import AISuggestionsOverlay from "@/components/AISuggestionsOverlay";
+import Dashboard from "@/components/Dashboard";
+import CommandPalette from "@/components/CommandPalette";
+import ChatHistoryPanel from "@/components/ChatHistoryPanel";
 import SettingsPanel from "@/settings/SettingsPanel";
-import ExtensionsPanel from "@/ExtensionsPanel";
-import FounderAssistant from "@/FounderAssistant"; // Founder voice & alerts
+import ExtensionsPanel from "@/components/ExtensionsPanel";
+import FounderAssistant from "@/components/FounderAssistant"; // Founder voice & alerts
 
 import { ChatHistoryProvider } from "@/services/chatHistoryStore";
 import { OrchestratorClient } from "@/services/orchestrator_client";
