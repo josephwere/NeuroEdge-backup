@@ -1,20 +1,25 @@
-// frontend/src/App.tsx
 import React, { useEffect, useState } from "react";
 
+import BootScreen from "@/components/BootScreen";
 import UnifiedChat from "@/components/UnifiedChat";
 import CommandPalette from "@/components/CommandPalette";
 
 import { OrchestratorClient } from "@/services/orchestrator_client";
 import { registerCommand } from "@/services/commandRegistry";
 
-/* ---------------- Initialize Orchestrator ---------------- */
+/* -------------------------------------------------
+   Single Orchestrator Instance (global & stable)
+-------------------------------------------------- */
 const orchestrator = new OrchestratorClient();
 
-/* ---------------- App Component ---------------- */
+/* -------------------------------------------------
+   App
+-------------------------------------------------- */
 const App: React.FC = () => {
+  const [booted, setBooted] = useState(false);
   const [paletteVisible, setPaletteVisible] = useState(false);
 
-  /* ---------- Global Ctrl + P Command Palette ---------- */
+  /* ---------- Ctrl / Cmd + P : Command Palette ---------- */
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "p") {
@@ -27,7 +32,7 @@ const App: React.FC = () => {
     return () => window.removeEventListener("keydown", handler);
   }, []);
 
-  /* ---------- Register Global Commands ---------- */
+  /* ---------- Global Commands (safe offline) ---------- */
   useEffect(() => {
     registerCommand({
       id: "new-chat",
@@ -40,7 +45,7 @@ const App: React.FC = () => {
       id: "open-settings",
       label: "Open Settings",
       shortcut: "Ctrl+,",
-      action: () => console.log("Open Settings (hook SettingsPanel here)"),
+      action: () => console.log("Settings panel coming next"),
     });
 
     registerCommand({
@@ -52,12 +57,19 @@ const App: React.FC = () => {
 
   return (
     <>
-      <UnifiedChat orchestrator={orchestrator} />
+      {/* Boot overlay (offline + online safe) */}
+      {!booted && <BootScreen onDone={() => setBooted(true)} />}
 
-      <CommandPalette
-        visible={paletteVisible}
-        onClose={() => setPaletteVisible(false)}
-      />
+      {/* Main UI (never blocked) */}
+      {booted && (
+        <>
+          <UnifiedChat orchestrator={orchestrator} />
+          <CommandPalette
+            visible={paletteVisible}
+            onClose={() => setPaletteVisible(false)}
+          />
+        </>
+      )}
     </>
   );
 };
