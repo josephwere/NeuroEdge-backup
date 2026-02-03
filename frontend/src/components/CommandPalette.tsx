@@ -1,8 +1,8 @@
 // frontend/src/components/CommandPalette.tsx
 
 import React, { useState, useEffect, useRef, useCallback } from "react";
-import { useChatHistory } from "../services/chatHistoryStore";
-import { OrchestratorClient } from "../services/orchestrator_client";
+import { useChatHistory } from "@/services/chatHistoryStore";
+import { OrchestratorClient } from "@/services/orchestrator_client";
 
 /**
  * NeuroEdge Quick Command Palette
