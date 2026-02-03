@@ -6,7 +6,7 @@
  * All functions are explicit and controlled
  */
 
-import { OrchestratorClient } from "../services/orchestrator_client";
+import { OrchestratorClient } from "@/services/orchestrator_client";
 
 export interface ExtensionContext {
   orchestrator: OrchestratorClient;
