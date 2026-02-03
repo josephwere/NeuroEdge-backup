@@ -156,7 +156,6 @@ const Sidebar: React.FC<SidebarProps> = ({
                       : "#3a3aff",
                   fontSize: "0.8rem",
                   gap: "0.5rem",
-                  alignItems: "center",
                   transition: "background 0.3s",
                 }}
               >
