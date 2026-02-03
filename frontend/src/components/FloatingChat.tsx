@@ -1,11 +1,11 @@
 import React, { useState, useEffect, useRef } from "react";
 import InfiniteScroll from "react-infinite-scroll-component";
-import { chatContext } from "../../services/chatContext";
-import { OrchestratorClient } from "../../services/orchestrator_client";
-import { saveToCache, getCache } from "../services/offlineCache";
-import AISuggestionOverlay from "./AISuggestionsOverlay";
-import { generateSuggestions, AISuggestion } from "../services/aiSuggestionEngine";
-import { FounderMessage } from "./FounderAssistant";
+import { chatContext } from "@/services/chatContext";
+import { OrchestratorClient } from "@/services/orchestrator_client";
+import { saveToCache, getCache } from "@/services/offlineCache";
+import AISuggestionOverlay from "@/AISuggestionsOverlay";
+import { generateSuggestions, AISuggestion } from "@/services/aiSuggestionEngine";
+import { FounderMessage } from "@/FounderAssistant";
 
 interface ExecutionResult {
   id: string;
