@@ -1,7 +1,7 @@
 // frontend/src/components/FounderAssistant.tsx
 
 import React, { useEffect, useState } from "react";
-import { OrchestratorClient } from "../services/orchestrator_client";
+import { OrchestratorClient } from "@/services/orchestrator_client";
 
 /* -------------------- Types -------------------- */
 interface FounderMessage {
