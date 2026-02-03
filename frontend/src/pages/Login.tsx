@@ -1,7 +1,7 @@
 // frontend/src/pages/Login.tsx
 
 import React, { useState } from "react";
-import { useUI } from "../services/uiStore";
+import { useUI } from "@/services/uiStore";
 
 const Login: React.FC = () => {
   const { setUser } = useUI();
