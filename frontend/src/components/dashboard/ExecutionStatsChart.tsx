@@ -19,16 +19,36 @@ const ExecutionStatsChart: React.FC<ExecutionStatsChartProps> = ({ stats }) => {
   ];
 
   return (
-    <div style={{ width: "300px", height: "300px", background: "#1e1e2f", borderRadius: "12px", padding: "1rem", color: "#fff" }}>
+    <div
+      style={{
+        width: "300px",
+        height: "300px",
+        background: "#1e1e2f",
+        borderRadius: "12px",
+        padding: "1rem",
+        color: "#fff",
+      }}
+    >
       <h3 style={{ marginBottom: "0.5rem" }}>✅ Command Success vs Failure</h3>
       <ResponsiveContainer width="100%" height="80%">
         <PieChart>
-          <Pie data={data} dataKey="value" nameKey="name" innerRadius={50} outerRadius={80} fill="#8884d8" label>
+          <Pie
+            data={data}
+            dataKey="value"
+            nameKey="name"
+            innerRadius={50}
+            outerRadius={80}
+            fill="#8884d8"
+            label
+          >
             {data.map((entry, index) => (
               <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
             ))}
           </Pie>
-          <Tooltip />
+          <Tooltip
+            contentStyle={{ backgroundColor: "#333", borderRadius: "8px", color: "#fff" }}
+            formatter={(value: number) => [`${value}`, "Commands"]}
+          />
           <Legend />
         </PieChart>
       </ResponsiveContainer>
