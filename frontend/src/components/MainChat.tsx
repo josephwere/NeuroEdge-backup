@@ -1,13 +1,13 @@
 import React, { useState, useEffect, useRef } from "react";
 import InfiniteScroll from "react-infinite-scroll-component";
-import { chatContext } from "../../services/chatContext";
-import { OrchestratorClient } from "../services/orchestrator_client";
+import { chatContext } from "@/services/chatContext";
+import { OrchestratorClient } from "@/services/orchestrator_client";
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 import { okaidia } from "react-syntax-highlighter/dist/esm/styles/prism";
-import { saveToCache, getCache } from "../services/offlineCache";
-import AISuggestionOverlay from "./AISuggestionsOverlay";
-import { generateSuggestions, AISuggestion } from "../services/aiSuggestionEngine";
-import { FounderMessage } from "./FounderAssistant";
+import { saveToCache, getCache } from "@/services/offlineCache";
+import AISuggestionOverlay from "@/AISuggestionsOverlay";
+import { generateSuggestions, AISuggestion } from "@/services/aiSuggestionEngine";
+import { FounderMessage } from "@/FounderAssistant";
 
 interface Message {
   id: string;
