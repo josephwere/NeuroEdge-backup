@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { OrchestratorClient } from "../services/orchestrator_client";
+import { OrchestratorClient } from "@/services/orchestrator_client";
 
 interface Props {
   orchestrator: OrchestratorClient;
