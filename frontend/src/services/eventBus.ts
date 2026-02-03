@@ -1,4 +1,6 @@
-type Callback = (data: any) => void; 
+import React from "react";
+
+type Callback = (data: any) => void;
 
 class EventBus {
   private listeners: Map<string, Set<Callback>> = new Map();
@@ -15,3 +17,8 @@ class EventBus {
 }
 
 export const eventBus = new EventBus();
+
+// Minimal provider so components can import it
+export const EventBusProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  return <>{children}</>;
+};
