@@ -1,9 +1,9 @@
 // frontend/src/components/UnifiedChat.tsx
 import React, { useRef, useEffect, useState, KeyboardEvent } from "react";
-import MainChat from "./MainChat";
-import FloatingChat from "./FloatingChat";
-import { OrchestratorClient } from "../../services/orchestrator_client";
-import { EventBusProvider } from "../../services/eventBus";
+import MainChat from "@/MainChat";
+import FloatingChat from "@/FloatingChat";
+import { OrchestratorClient } from "@/services/orchestrator_client";
+import { EventBusProvider } from "@/services/eventBus";
 
 
 /**
