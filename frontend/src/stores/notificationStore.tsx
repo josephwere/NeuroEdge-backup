@@ -1,25 +1,38 @@
+// frontend/src/stores/notificationStore.tsx
 import React, { createContext, useContext, useState, ReactNode } from "react";
 import NotificationContainer, { Notification } from "@/components/NotificationContainer";
 
-interface NotificationContextType {
+/* -------------------- */
+/* Types */
+/* -------------------- */
+interface NotificationsContextType {
   notifications: Notification[];
   addNotification: (n: Omit<Notification, "id">) => void;
   removeNotification: (id: string) => void;
 }
 
-const NotificationContext = createContext<NotificationContextType | null>(null);
+/* -------------------- */
+/* Context */
+/* -------------------- */
+const NotificationsContext = createContext<NotificationsContextType | null>(null);
 
-export const useNotifications = () => {
-  const ctx = useContext(NotificationContext);
-  if (!ctx) throw new Error("useNotifications must be used within NotificationProvider");
+/* -------------------- */
+/* Hook for components */
+/* -------------------- */
+export const useNotifications = (): NotificationsContextType => {
+  const ctx = useContext(NotificationsContext);
+  if (!ctx) throw new Error("useNotifications must be used within NotificationsProvider");
   return ctx;
 };
 
-export const NotificationProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
+/* -------------------- */
+/* Provider */
+/* -------------------- */
+export const NotificationsProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [notifications, setNotifications] = useState<Notification[]>([]);
 
   const addNotification = (n: Omit<Notification, "id">) => {
-    const id = Date.now().toString();
+    const id = `${Date.now()}-${Math.floor(Math.random() * 10000)}`; // more unique
     setNotifications(prev => [...prev, { ...n, id }]);
   };
 
@@ -28,9 +41,9 @@ export const NotificationProvider: React.FC<{ children: ReactNode }> = ({ childr
   };
 
   return (
-    <NotificationContext.Provider value={{ notifications, addNotification, removeNotification }}>
+    <NotificationsContext.Provider value={{ notifications, addNotification, removeNotification }}>
       {children}
       <NotificationContainer notifications={notifications} remove={removeNotification} />
-    </NotificationContext.Provider>
+    </NotificationsContext.Provider>
   );
 };
