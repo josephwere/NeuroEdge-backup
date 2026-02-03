@@ -1,6 +1,6 @@
 // frontend/src/components/settings/AIPreferences.tsx
 import React from "react";
-import { useAIPreferences } from "../../services/aiPreferencesStore";
+import { useAIPreferences } from "@/services/aiPreferencesStore";
 
 const AIPreferences: React.FC = () => {
   const { preferences, setPreferences } = useAIPreferences();
