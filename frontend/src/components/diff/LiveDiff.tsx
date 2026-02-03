@@ -1,3 +1,4 @@
+// frontend/src/components/dashboard/LiveDiff.tsx
 import React, { useState } from "react";
 
 interface Hunk {
@@ -33,12 +34,30 @@ const LiveDiff: React.FC<LiveDiffProps> = ({ hunks, onApplyChange }) => {
           }}
         >
           {/* Original */}
-          <pre style={{ flex: 1, background: "#ffecec", margin: 0, padding: "0.5rem" }}>
+          <pre
+            style={{
+              flex: 1,
+              background: "#ffecec",
+              margin: 0,
+              padding: "0.5rem",
+              whiteSpace: "pre-wrap",
+              wordBreak: "break-word",
+            }}
+          >
             {hunk.original}
           </pre>
 
           {/* Modified */}
-          <pre style={{ flex: 1, background: "#e6ffed", margin: 0, padding: "0.5rem" }}>
+          <pre
+            style={{
+              flex: 1,
+              background: "#e6ffed",
+              margin: 0,
+              padding: "0.5rem",
+              whiteSpace: "pre-wrap",
+              wordBreak: "break-word",
+            }}
+          >
             {hunk.modified}
           </pre>
 
@@ -53,6 +72,7 @@ const LiveDiff: React.FC<LiveDiffProps> = ({ hunks, onApplyChange }) => {
               cursor: "pointer",
               background: applied[idx] ? "#3a3aff" : "#d1d5db",
               color: "#fff",
+              transition: "background 0.2s",
             }}
           >
             {applied[idx] ? "Applied" : "Apply"}
