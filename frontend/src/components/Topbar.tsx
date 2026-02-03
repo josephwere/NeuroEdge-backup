@@ -1,6 +1,6 @@
 // frontend/src/components/Topbar.tsx
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 
 interface TopbarProps {
   onSearch: (query: string) => void;
@@ -10,6 +10,23 @@ interface TopbarProps {
 const Topbar: React.FC<TopbarProps> = ({ onSearch, onCommand }) => {
   const [search, setSearch] = useState("");
   const [showCommands, setShowCommands] = useState(false);
+  const [isOffline, setIsOffline] = useState(!navigator.onLine);
+
+  /* -------------------- */
+  /* Network status */
+  /* -------------------- */
+  useEffect(() => {
+    const goOnline = () => setIsOffline(false);
+    const goOffline = () => setIsOffline(true);
+
+    window.addEventListener("online", goOnline);
+    window.addEventListener("offline", goOffline);
+
+    return () => {
+      window.removeEventListener("online", goOnline);
+      window.removeEventListener("offline", goOffline);
+    };
+  }, []);
 
   return (
     <div
@@ -35,6 +52,21 @@ const Topbar: React.FC<TopbarProps> = ({ onSearch, onCommand }) => {
       >
         NeuroEdge
       </div>
+
+      {/* Offline indicator */}
+      {isOffline && (
+        <span
+          style={{
+            padding: "0.2rem 0.5rem",
+            background: "#f87171",
+            color: "#fff",
+            borderRadius: "6px",
+            fontSize: "0.75rem",
+          }}
+        >
+          Offline
+        </span>
+      )}
 
       {/* Global Search */}
       <div style={{ flex: 1, position: "relative" }}>
@@ -76,11 +108,9 @@ const Topbar: React.FC<TopbarProps> = ({ onSearch, onCommand }) => {
       </button>
 
       {/* User Menu */}
-      <div style={{ position: "relative" }}>
-        <button title="User menu" style={iconButton}>
-          👤
-        </button>
-      </div>
+      <button title="User menu" style={iconButton}>
+        👤
+      </button>
 
       {/* Command Palette Overlay */}
       {showCommands && (
@@ -121,10 +151,7 @@ const CommandPalette: React.FC<CommandPaletteProps> = ({
     <div
       style={{
         position: "fixed",
-        top: 0,
-        left: 0,
-        height: "100vh",
-        width: "100vw",
+        inset: 0,
         background: "rgba(0,0,0,0.35)",
         display: "flex",
         alignItems: "center",
@@ -169,37 +196,6 @@ const CommandPalette: React.FC<CommandPaletteProps> = ({
     </div>
   );
 };
-// Topbar.tsx (add after imports)
-import { useEffect, useState } from "react";
-
-const [isOffline, setIsOffline] = useState(!navigator.onLine);
-
-useEffect(() => {
-  const goOnline = () => setIsOffline(false);
-  const goOffline = () => setIsOffline(true);
-
-  window.addEventListener("online", goOnline);
-  window.addEventListener("offline", goOffline);
-
-  return () => {
-    window.removeEventListener("online", goOnline);
-    window.removeEventListener("offline", goOffline);
-  };
-}, []);
-{isOffline && (
-  <span
-    style={{
-      marginLeft: "1rem",
-      padding: "0.2rem 0.5rem",
-      background: "#f87171",
-      color: "#fff",
-      borderRadius: "6px",
-      fontSize: "0.75rem",
-    }}
-  >
-    Offline
-  </span>
-)}
 
 /* -------------------- */
 /* Styles */
