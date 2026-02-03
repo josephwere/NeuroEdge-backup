@@ -1,6 +1,6 @@
 // frontend/src/services/syncManager.ts
 import { getQueue, clearQueue, OfflineCommand } from "./offlineQueue";
-import { OrchestratorClient } from "./orchestrator_client";
+import { OrchestratorClient } from "@/orchestrator_client";
 
 class SyncManager {
   private orchestrator: OrchestratorClient;
