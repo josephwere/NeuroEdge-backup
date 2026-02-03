@@ -1,11 +1,12 @@
 // frontend/src/extensions/extensionLoader.ts
-import { ExtensionAPI, ExtensionContext } from "./extensionAPI";
+
+import { ExtensionModule, ExtensionContext } from "@/extensions/extensionAPI";
 
 /**
  * Loads an extension safely within the provided context
  */
 export const loadExtension = async (
-  ext: ExtensionAPI,
+  ext: ExtensionModule,
   ctx: ExtensionContext
 ) => {
   try {
@@ -21,9 +22,9 @@ export const loadExtension = async (
       ctx.notify(`Extension Loaded: ${ext.name}`, "success");
     } else {
       console.warn(`[Extension Skipped] Permissions denied for ${ext.id}`);
-      ctx.notify(`Extension Skipped: ${ext.name}`, "warning");
+      ctx.notify(`Extension Skipped: ${ext.name}`, "error"); // changed warning → error for consistency
     }
-  } catch (err) {
+  } catch (err: any) {
     console.error(`[Extension Error] ${ext.id}`, err);
     ctx.notify(`Extension Failed: ${ext.name}`, "error");
   }
