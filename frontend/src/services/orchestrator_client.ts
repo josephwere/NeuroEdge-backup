@@ -1,5 +1,6 @@
 // frontend/src/services/orchestrator_client.ts
-import { eventBus } from "@/eventBus";
+import { eventBus } from "@/services/eventBus";
+
 
 interface CommandRequest {
   id: string;
