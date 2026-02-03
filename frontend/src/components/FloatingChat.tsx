@@ -3,9 +3,9 @@ import InfiniteScroll from "react-infinite-scroll-component";
 import { chatContext } from "@/services/chatContext";
 import { OrchestratorClient } from "@/services/orchestrator_client";
 import { saveToCache, getCache } from "@/services/offlineCache";
-import AISuggestionOverlay from "@/AISuggestionsOverlay";
+import AISuggestionOverlay from "@/components/AISuggestionsOverlay";
 import { generateSuggestions, AISuggestion } from "@/services/aiSuggestionEngine";
-import { FounderMessage } from "@/FounderAssistant";
+import { FounderMessage } from "@/components/FounderAssistant";
 
 interface ExecutionResult {
   id: string;
