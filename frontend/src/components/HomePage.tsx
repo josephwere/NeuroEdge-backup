@@ -2,9 +2,9 @@
 
 import React, { useState, useEffect } from "react";
 import Sidebar from "@/components/Sidebar";
-import Topbar from "@/Topbar";
-import UnifiedChat from "@/UnifiedChat";
-import ChatSearchBar from "@/ChatSearchBar";
+import Topbar from "@/components/Topbar";
+import UnifiedChat from "@/components/UnifiedChat";
+import ChatSearchBar from "@/components/ChatSearchBar";
 import AISuggestionsOverlay from "@/AISuggestionsOverlay";
 import Dashboard from "@/Dashboard";
 import CommandPalette from "@/CommandPalette";
