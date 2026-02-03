@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { useNotifications } from "@/stores/notificationStore"; // ✅ hook to trigger notifications
 
 interface BootScreenProps {
   onDone: () => void;
@@ -45,11 +46,11 @@ const BootScreen: React.FC<BootScreenProps> = ({ onDone }) => {
   const [hints, setHints] = useState<FloatingHint[]>([]);
   const [warning, setWarning] = useState<string | null>(null);
 
+  const { addNotification } = useNotifications(); // ✅ Get notification hook
+
   useEffect(() => {
     if (animatedProgress < progress) {
-      const id = setInterval(() => {
-        setAnimatedProgress(p => Math.min(p + 1, progress));
-      }, 10);
+      const id = setInterval(() => setAnimatedProgress(p => Math.min(p + 1, progress)), 10);
       return () => clearInterval(id);
     }
   }, [progress, animatedProgress]);
@@ -61,6 +62,8 @@ const BootScreen: React.FC<BootScreenProps> = ({ onDone }) => {
     const addLog = (msg: string) => setLogs(prev => [...prev, { id: logId++, message: msg }]);
     const addHint = (msg: string) =>
       setHints(prev => [...prev, { id: hintId++, message: msg, x: Math.random() * 80 + 10, y: Math.random() * 70 + 10 }]);
+
+    let offline = false; // track if we started offline
 
     const simulateModules = async () => {
       for (let i = 0; i < modules.length; i++) {
@@ -82,9 +85,24 @@ const BootScreen: React.FC<BootScreenProps> = ({ onDone }) => {
         if (res.ok) addLog("✔ Kernel online");
         else throw new Error("Kernel unhealthy");
       } catch {
+        offline = true;
         setWarning("Backend not connected — running in Offline Mode");
         addLog("⚠ Kernel unreachable (offline mode)");
+        addNotification({ message: "Running offline. Kernel not reachable", type: "warn" });
       }
+    };
+
+    const pollKernelOnline = async () => {
+      if (!offline) return; // already online
+      try {
+        const res = await fetch("/api/health");
+        if (res.ok) {
+          offline = false;
+          setWarning(null);
+          addLog("✔ Kernel now online");
+          addNotification({ message: "Kernel is now online ✅", type: "success" });
+        }
+      } catch {}
     };
 
     const runBoot = async () => {
@@ -93,10 +111,14 @@ const BootScreen: React.FC<BootScreenProps> = ({ onDone }) => {
       setProgress(100);
       addHint("NeuroEdge online 🚀");
       setTimeout(onDone, 800);
+
+      // Poll every 5s if backend comes online
+      const interval = setInterval(pollKernelOnline, 5000);
+      return () => clearInterval(interval);
     };
 
     runBoot();
-  }, [onDone]);
+  }, [onDone, addNotification]);
 
   return (
     <div style={{ position: "fixed", inset: 0, background: "#1e1e2f", color: "#fff", display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center", fontFamily: "monospace", zIndex: 9999, overflow: "hidden" }}>
