@@ -1,5 +1,5 @@
 // frontend/src/services/notificationStore.ts
-import NotificationContainer from "../components/NotificationContainer";
+import NotificationContainer from "@/components/NotificationContainer";
 import React, { createContext, useContext, useState } from "react";
 
 export type NotificationType = "info" | "success" | "warn" | "error" | "ai";
