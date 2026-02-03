@@ -14,12 +14,11 @@ interface FloatingHint {
   message: string;
   x: number;
   y: number;
-  visible: boolean;
 }
 
-/* -------------------- */
-/* Boot Modules (3 backends aligned) */
-/* -------------------- */
+/* -------------------------------- */
+/* Boot Modules (aligned to backends) */
+/* -------------------------------- */
 const modules = [
   "Kernel Core",        // kernel/health.go
   "ML Engine",          // ml/main.py
@@ -79,7 +78,6 @@ const BootScreen: React.FC<BootScreenProps> = ({ onDone }) => {
           message,
           x: Math.random() * 80 + 10,
           y: Math.random() * 70 + 10,
-          visible: true,
         },
       ]);
 
@@ -90,7 +88,7 @@ const BootScreen: React.FC<BootScreenProps> = ({ onDone }) => {
           await new Promise(res => setTimeout(res, 45));
           setProgress(Math.floor(((i + j / steps) / modules.length) * 85));
         }
-        addLog(`✔ ${modules[i]} ready`);
+        addLog(`✔ ${modules[i]} initialized`);
         addHint(aiHints[i % aiHints.length]);
       }
     };
@@ -98,7 +96,7 @@ const BootScreen: React.FC<BootScreenProps> = ({ onDone }) => {
     const checkKernelHealth = async () => {
       try {
         const controller = new AbortController();
-        const timeout = setTimeout(() => controller.abort(), 2000);
+        const timeout = setTimeout(() => controller.abort(), 1200);
 
         const res = await fetch("/api/health", {
           signal: controller.signal,
@@ -106,12 +104,15 @@ const BootScreen: React.FC<BootScreenProps> = ({ onDone }) => {
 
         clearTimeout(timeout);
 
-        if (!res.ok) throw new Error("Kernel unhealthy");
+        if (res.ok) {
+          addLog("✔ Kernel online");
+          return;
+        }
 
-        addLog("✔ Kernel health verified");
+        throw new Error("Kernel unhealthy");
       } catch {
         setWarning("Backend not connected — running in Offline Mode");
-        addLog("⚠ Kernel not reachable (offline mode)");
+        addLog("⚠ Kernel unreachable (offline mode)");
       }
     };
 
@@ -122,7 +123,7 @@ const BootScreen: React.FC<BootScreenProps> = ({ onDone }) => {
       setProgress(100);
       addHint("NeuroEdge online 🚀");
 
-      setTimeout(onDone, 900);
+      setTimeout(onDone, 800);
     };
 
     runBoot();
