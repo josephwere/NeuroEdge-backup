@@ -51,7 +51,7 @@ const Sidebar: React.FC<SidebarProps> = ({
     <div
       style={{
         width: collapsed ? "64px" : "240px",
-        transition: "width 0.2s ease",
+        transition: "width 0.25s ease",
         background: "#1e1e2f",
         color: "#fff",
         display: "flex",
@@ -107,7 +107,7 @@ const Sidebar: React.FC<SidebarProps> = ({
         <NavItem icon="🕘" label="History" collapsed={collapsed} disabled />
         <NavItem icon="🧩" label="Extensions" collapsed={collapsed} disabled />
 
-        {/* Notifications NavItem with dropdown */}
+        {/* Notifications with animated dropdown */}
         <div style={{ position: "relative" }}>
           <NavItem
             icon="🔔"
@@ -117,60 +117,71 @@ const Sidebar: React.FC<SidebarProps> = ({
             onClick={() => setShowNotifications(prev => !prev)}
           />
 
-          {!collapsed && showNotifications && notifications.length > 0 && (
-            <div
-              style={{
-                position: "absolute",
-                top: "40px",
-                right: 0,
-                width: "240px",
-                maxHeight: "300px",
-                overflowY: "auto",
-                background: "#2b2b3c",
-                borderRadius: "6px",
-                boxShadow: "0 4px 12px rgba(0,0,0,0.3)",
-                zIndex: 50,
-              }}
-            >
-              {notifications.map(n => (
-                <div
-                  key={n.id}
+          <div
+            style={{
+              position: "absolute",
+              top: "40px",
+              right: 0,
+              width: collapsed ? "0" : "240px",
+              maxHeight: showNotifications ? "300px" : "0",
+              overflow: "hidden",
+              background: "#2b2b3c",
+              borderRadius: "6px",
+              boxShadow: showNotifications ? "0 6px 20px rgba(0,0,0,0.4)" : "none",
+              zIndex: 50,
+              transition: "all 0.3s ease",
+            }}
+          >
+            {showNotifications && notifications.map(n => (
+              <div
+                key={n.id}
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  padding: "0.5rem 1rem",
+                  margin: "4px",
+                  borderRadius: "4px",
+                  background:
+                    n.type === "error"
+                      ? "#ff4d4f22"
+                      : n.type === "success"
+                      ? "#52c41a22"
+                      : "#3a3aff22",
+                  color:
+                    n.type === "error"
+                      ? "#ff4d4f"
+                      : n.type === "success"
+                      ? "#52c41a"
+                      : "#3a3aff",
+                  fontSize: "0.8rem",
+                  gap: "0.5rem",
+                  alignItems: "center",
+                  transition: "background 0.3s",
+                }}
+              >
+                <span style={{ fontSize: "1rem" }}>
+                  {n.type === "error" ? "❌" : n.type === "success" ? "✅" : "🤖"}
+                </span>
+                <span style={{ flex: 1 }}>{n.message}</span>
+                <button
+                  onClick={() => removeNotification(n.id)}
                   style={{
-                    padding: "0.5rem 1rem",
-                    borderBottom: "1px solid #3a3aff",
-                    display: "flex",
-                    justifyContent: "space-between",
-                    alignItems: "center",
-                    fontSize: "0.8rem",
-                    background:
-                      n.type === "error"
-                        ? "#ff4d4f33"
-                        : n.type === "success"
-                        ? "#52c41a33"
-                        : "#3a3aff33",
-                    color: n.type === "error" ? "#ff4d4f" : n.type === "success" ? "#52c41a" : "#3a3aff",
-                    borderRadius: "4px",
-                    margin: "4px",
+                    background: "none",
+                    border: "none",
+                    color: "#fff",
+                    cursor: "pointer",
+                    fontWeight: "bold",
                   }}
                 >
-                  <span>{n.message}</span>
-                  <button
-                    style={{
-                      background: "none",
-                      border: "none",
-                      color: "#fff",
-                      cursor: "pointer",
-                      fontWeight: "bold",
-                      marginLeft: "8px",
-                    }}
-                    onClick={() => removeNotification(n.id)}
-                  >
-                    ✕
-                  </button>
-                </div>
-              ))}
-            </div>
-          )}
+                  ✕
+                </button>
+              </div>
+            ))}
+            {notifications.length === 0 && (
+              <div style={{ padding: "0.5rem 1rem", color: "#aaa" }}>No notifications</div>
+            )}
+          </div>
         </div>
 
         <NavItem icon="✅" label="Approvals" collapsed={collapsed} badge={pendingApprovals} disabled />
@@ -206,7 +217,10 @@ const NavItem: React.FC<{
       gap: "0.75rem",
       opacity: disabled ? 0.4 : 1,
       position: "relative",
+      transition: "background 0.2s",
     }}
+    onMouseEnter={e => { if (!disabled) (e.currentTarget.style.background = "#3333ff22"); }}
+    onMouseLeave={e => { e.currentTarget.style.background = "transparent"; }}
   >
     <span>{icon}</span>
     {!collapsed && <span>{label}</span>}
@@ -261,6 +275,7 @@ const primaryAction: React.CSSProperties = {
   borderRadius: "6px",
   color: "#fff",
   cursor: "pointer",
+  transition: "background 0.2s",
 };
 
 const secondaryAction: React.CSSProperties = {
