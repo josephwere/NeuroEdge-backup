@@ -1,18 +1,10 @@
 // frontend/src/components/Sidebar.tsx
-
-import React from "react";
+import React, { useEffect } from "react";
 import { useNotifications } from "@/services/notificationStore";
-
-const { addNotification } = useNotifications();
-
-addNotification({ message: "New AI suggestion available", type: "ai" });
-addNotification({ message: "Error executing command", type: "error" });
-addNotification({ message: "Chat synced successfully", type: "success" });
 
 /* -------------------- */
 /* Types */
 /* -------------------- */
-
 export type ViewType =
   | "chat"
   | "dashboard"
@@ -38,9 +30,8 @@ interface SidebarProps {
 }
 
 /* -------------------- */
-/* Sidebar */
+/* Sidebar Component */
 /* -------------------- */
-
 const Sidebar: React.FC<SidebarProps> = ({
   collapsed,
   onToggle,
@@ -50,6 +41,15 @@ const Sidebar: React.FC<SidebarProps> = ({
   notifications = 0,
   user = { name: "Guest User", mode: "local" },
 }) => {
+  const { addNotification } = useNotifications(); // ✅ Hook inside component
+
+  // Add initial notifications safely on mount
+  useEffect(() => {
+    addNotification({ message: "New AI suggestion available", type: "ai" });
+    addNotification({ message: "Error executing command", type: "error" });
+    addNotification({ message: "Chat synced successfully", type: "success" });
+  }, [addNotification]);
+
   return (
     <div
       style={{
@@ -72,14 +72,8 @@ const Sidebar: React.FC<SidebarProps> = ({
           borderBottom: "1px solid #2b2b3c",
         }}
       >
-        {!collapsed && (
-          <strong style={{ fontSize: "1.1rem" }}>🧠 NeuroEdge</strong>
-        )}
-        <button
-          onClick={onToggle}
-          title="Toggle sidebar"
-          style={iconButton}
-        >
+        {!collapsed && <strong style={{ fontSize: "1.1rem" }}>🧠 NeuroEdge</strong>}
+        <button onClick={onToggle} title="Toggle sidebar" style={iconButton}>
           {collapsed ? "➡️" : "⬅️"}
         </button>
       </div>
@@ -186,7 +180,6 @@ export default Sidebar;
 /* -------------------- */
 /* Sub Components */
 /* -------------------- */
-
 const NavItem: React.FC<{
   icon: string;
   label: string;
@@ -244,9 +237,7 @@ const Avatar: React.FC<{ letter: string }> = ({ letter }) => (
 );
 
 /* -------------------- */
-/* Styles */
-/* -------------------- */
-
+/* Styles -------------------- */
 const iconButton: React.CSSProperties = {
   background: "none",
   border: "none",
