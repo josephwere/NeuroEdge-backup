@@ -1,4 +1,3 @@
-// frontend/src/components/NotificationContainer.tsx
 import React from "react";
 
 export type NotificationType = "success" | "warn" | "error" | "ai";
@@ -17,62 +16,59 @@ interface NotificationContainerProps {
 const NotificationContainer: React.FC<NotificationContainerProps> = ({
   notifications,
   remove,
-}) => {
-  return (
-    <div
-      style={{
-        position: "fixed",
-        top: "20px",
-        right: "20px",
-        display: "flex",
-        flexDirection: "column",
-        gap: "10px",
-        zIndex: 9999,
-      }}
-    >
-      {notifications.map((n) => (
-        <div
-          key={n.id}
+}) => (
+  <div
+    style={{
+      position: "fixed",
+      top: "20px",
+      right: "20px",
+      display: "flex",
+      flexDirection: "column",
+      gap: "10px",
+      zIndex: 9999,
+    }}
+  >
+    {notifications.map((n) => (
+      <div
+        key={n.id}
+        style={{
+          minWidth: "250px",
+          padding: "10px 14px",
+          borderRadius: "8px",
+          color: "#fff",
+          background: getColor(n.type),
+          boxShadow: "0 4px 10px rgba(0,0,0,0.2)",
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          fontSize: "0.85rem",
+          cursor: "pointer",
+          animation: "slideIn 0.3s ease",
+        }}
+        onClick={() => remove(n.id)}
+      >
+        <span>{n.message}</span>
+        <button
           style={{
-            minWidth: "250px",
-            padding: "10px 14px",
-            borderRadius: "8px",
+            marginLeft: "10px",
+            background: "transparent",
+            border: "none",
             color: "#fff",
-            background: getColor(n.type),
-            boxShadow: "0 4px 10px rgba(0,0,0,0.2)",
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            fontSize: "0.85rem",
             cursor: "pointer",
-            animation: "slideIn 0.3s ease",
+            fontWeight: "bold",
           }}
-          onClick={() => remove(n.id)}
+          onClick={(e) => {
+            e.stopPropagation();
+            remove(n.id);
+          }}
         >
-          <span>{n.message}</span>
-          <button
-            style={{
-              marginLeft: "10px",
-              background: "transparent",
-              border: "none",
-              color: "#fff",
-              cursor: "pointer",
-              fontWeight: "bold",
-            }}
-            onClick={(e) => {
-              e.stopPropagation();
-              remove(n.id);
-            }}
-          >
-            ✕
-          </button>
-        </div>
-      ))}
-    </div>
-  );
-};
+          ✕
+        </button>
+      </div>
+    ))}
+  </div>
+);
 
-/* Helper to map notification type → color */
 const getColor = (type?: NotificationType) => {
   switch (type) {
     case "success":
@@ -88,4 +84,4 @@ const getColor = (type?: NotificationType) => {
   }
 };
 
-export default NotificationContainer; // ✅ Must have default export
+export default NotificationContainer;
