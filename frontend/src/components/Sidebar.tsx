@@ -1,7 +1,7 @@
 // frontend/src/components/Sidebar.tsx
 
 import React from "react";
-import { useNotifications } from "../services/notificationStore";
+import { useNotifications } from "@/services/notificationStore";
 
 const { addNotification } = useNotifications();
 
