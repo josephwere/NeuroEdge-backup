@@ -1,5 +1,5 @@
 // frontend/src/extensions/examples/codeLinter.ts
-import { ExtensionModule } from "../extensionAPI";
+import { ExtensionModule } from "@/extensions/extensionAPI";
 
 const codeLinter: ExtensionModule = {
   id: "code-linter",
@@ -16,7 +16,7 @@ const codeLinter: ExtensionModule = {
       id: "lint-current-code",
       label: "Lint Current Code",
       action: () => {
-        console.log("Linting code in current session...");
+        console.log("[CodeLinter] Linting code in current session...");
         ctx.notify("Lint completed!", "success");
       },
     });
