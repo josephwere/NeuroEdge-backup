@@ -1,5 +1,5 @@
 // frontend/src/components/Sidebar.tsx
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { useNotifications } from "@/stores/notificationStore";
 
 /* -------------------- */
@@ -16,12 +16,8 @@ interface SidebarProps {
   collapsed: boolean;
   onToggle: () => void;
   onNavigate: (view: ViewType) => void;
-
-  // Indicators (optional, future-ready)
   unreadChats?: number;
   pendingApprovals?: number;
-
-  // User
   user?: {
     name: string;
     mode: "guest" | "local" | "account";
@@ -39,7 +35,8 @@ const Sidebar: React.FC<SidebarProps> = ({
   pendingApprovals = 0,
   user = { name: "Guest User", mode: "local" },
 }) => {
-  const { notifications, addNotification } = useNotifications(); // ✅ Hook inside component
+  const { notifications, addNotification, removeNotification } = useNotifications();
+  const [showNotifications, setShowNotifications] = useState(false);
 
   // Add initial notifications safely on mount
   useEffect(() => {
@@ -60,6 +57,7 @@ const Sidebar: React.FC<SidebarProps> = ({
         display: "flex",
         flexDirection: "column",
         height: "100vh",
+        position: "relative",
       }}
     >
       {/* ---------------- Header ---------------- */}
@@ -102,65 +100,86 @@ const Sidebar: React.FC<SidebarProps> = ({
       </div>
 
       {/* ---------------- Navigation ---------------- */}
-      <div style={{ flex: 1, paddingTop: "0.5rem" }}>
-        <NavItem
-          icon="💬"
-          label="Chat"
-          collapsed={collapsed}
-          badge={unreadChats}
-          onClick={() => onNavigate("chat")}
-        />
-
-        <NavItem
-          icon="📊"
-          label="Dashboard"
-          collapsed={collapsed}
-          onClick={() => onNavigate("dashboard")}
-        />
-
-        <NavItem
-          icon="⚙️"
-          label="Settings"
-          collapsed={collapsed}
-          onClick={() => onNavigate("settings")}
-        />
-
+      <div style={{ flex: 1, paddingTop: "0.5rem", position: "relative" }}>
+        <NavItem icon="💬" label="Chat" collapsed={collapsed} badge={unreadChats} onClick={() => onNavigate("chat")} />
+        <NavItem icon="📊" label="Dashboard" collapsed={collapsed} onClick={() => onNavigate("dashboard")} />
+        <NavItem icon="⚙️" label="Settings" collapsed={collapsed} onClick={() => onNavigate("settings")} />
         <NavItem icon="🕘" label="History" collapsed={collapsed} disabled />
-
         <NavItem icon="🧩" label="Extensions" collapsed={collapsed} disabled />
 
-        {/* Notifications dynamically from store */}
-        <NavItem
-          icon="🔔"
-          label="Notifications"
-          collapsed={collapsed}
-          badge={notifications.length}
-          disabled
-        />
+        {/* Notifications NavItem with dropdown */}
+        <div style={{ position: "relative" }}>
+          <NavItem
+            icon="🔔"
+            label="Notifications"
+            collapsed={collapsed}
+            badge={notifications.length}
+            onClick={() => setShowNotifications(prev => !prev)}
+          />
 
-        <NavItem
-          icon="✅"
-          label="Approvals"
-          collapsed={collapsed}
-          badge={pendingApprovals}
-          disabled
-        />
+          {!collapsed && showNotifications && notifications.length > 0 && (
+            <div
+              style={{
+                position: "absolute",
+                top: "40px",
+                right: 0,
+                width: "240px",
+                maxHeight: "300px",
+                overflowY: "auto",
+                background: "#2b2b3c",
+                borderRadius: "6px",
+                boxShadow: "0 4px 12px rgba(0,0,0,0.3)",
+                zIndex: 50,
+              }}
+            >
+              {notifications.map(n => (
+                <div
+                  key={n.id}
+                  style={{
+                    padding: "0.5rem 1rem",
+                    borderBottom: "1px solid #3a3aff",
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    fontSize: "0.8rem",
+                    background:
+                      n.type === "error"
+                        ? "#ff4d4f33"
+                        : n.type === "success"
+                        ? "#52c41a33"
+                        : "#3a3aff33",
+                    color: n.type === "error" ? "#ff4d4f" : n.type === "success" ? "#52c41a" : "#3a3aff",
+                    borderRadius: "4px",
+                    margin: "4px",
+                  }}
+                >
+                  <span>{n.message}</span>
+                  <button
+                    style={{
+                      background: "none",
+                      border: "none",
+                      color: "#fff",
+                      cursor: "pointer",
+                      fontWeight: "bold",
+                      marginLeft: "8px",
+                    }}
+                    onClick={() => removeNotification(n.id)}
+                  >
+                    ✕
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        <NavItem icon="✅" label="Approvals" collapsed={collapsed} badge={pendingApprovals} disabled />
       </div>
 
       {/* ---------------- Quick Actions ---------------- */}
-      <div
-        style={{
-          padding: "1rem",
-          borderTop: "1px solid #2b2b3c",
-        }}
-      >
-        <button style={primaryAction}>
-          ➕ {!collapsed && "New Chat"}
-        </button>
-
-        <button style={secondaryAction}>
-          🔐 {!collapsed && "Login / Get Started"}
-        </button>
+      <div style={{ padding: "1rem", borderTop: "1px solid #2b2b3c" }}>
+        <button style={primaryAction}>➕ {!collapsed && "New Chat"}</button>
+        <button style={secondaryAction}>🔐 {!collapsed && "Login / Get Started"}</button>
       </div>
     </div>
   );
@@ -168,9 +187,7 @@ const Sidebar: React.FC<SidebarProps> = ({
 
 export default Sidebar;
 
-/* -------------------- */
-/* Sub Components */
-/* -------------------- */
+/* -------------------- Sub Components -------------------- */
 const NavItem: React.FC<{
   icon: string;
   label: string;
@@ -193,7 +210,6 @@ const NavItem: React.FC<{
   >
     <span>{icon}</span>
     {!collapsed && <span>{label}</span>}
-
     {badge && badge > 0 && !collapsed && (
       <span
         style={{
@@ -227,8 +243,7 @@ const Avatar: React.FC<{ letter: string }> = ({ letter }) => (
   </div>
 );
 
-/* -------------------- */
-/* Styles -------------------- */
+/* -------------------- Styles -------------------- */
 const iconButton: React.CSSProperties = {
   background: "none",
   border: "none",
