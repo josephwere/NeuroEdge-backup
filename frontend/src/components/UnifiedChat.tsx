@@ -3,7 +3,8 @@ import React, { useRef, useEffect, useState, KeyboardEvent } from "react";
 import MainChat from "./MainChat";
 import FloatingChat from "./FloatingChat";
 import { OrchestratorClient } from "../../services/orchestrator_client";
-import { EventBusProvider } from "../../services/eventBus.tsx";
+import { EventBusProvider } from "../../services/eventBus";
+
 
 /**
  * UnifiedChat
