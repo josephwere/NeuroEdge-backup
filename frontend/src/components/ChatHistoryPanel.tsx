@@ -1,6 +1,6 @@
 // frontend/src/components/ChatHistoryPanel.tsx
 import React from "react";
-import { useChatHistory } from "../services/chatHistoryStore";
+import { useChatHistory } from "@/services/chatHistoryStore";
 
 const ChatHistoryPanel: React.FC = () => {
   const { logs, replayCommand, exportLogs } = useChatHistory();
