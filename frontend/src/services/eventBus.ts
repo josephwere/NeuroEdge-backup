@@ -1,4 +1,4 @@
-type Callback = (data: any) => void;
+type Callback = (data: any) => void; 
 
 class EventBus {
   private listeners: Map<string, Set<Callback>> = new Map();
