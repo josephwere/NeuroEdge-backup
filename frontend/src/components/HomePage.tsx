@@ -1,7 +1,7 @@
 // frontend/src/components/HomePage.tsx
 
 import React, { useState, useEffect } from "react";
-import Sidebar from "@/Sidebar";
+import Sidebar from "@/components/Sidebar";
 import Topbar from "@/Topbar";
 import UnifiedChat from "@/UnifiedChat";
 import ChatSearchBar from "@/ChatSearchBar";
