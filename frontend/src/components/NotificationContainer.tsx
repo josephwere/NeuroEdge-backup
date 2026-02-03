@@ -1,8 +1,23 @@
-// inline in notificationStore.ts or separate NotificationContainer.tsx
-const NotificationContainer: React.FC<{
+// frontend/src/components/NotificationContainer.tsx
+import React from "react";
+
+export type NotificationType = "success" | "warn" | "error" | "ai";
+
+export interface Notification {
+  id: string;
+  message: string;
+  type?: NotificationType;
+}
+
+interface NotificationContainerProps {
   notifications: Notification[];
   remove: (id: string) => void;
-}> = ({ notifications, remove }) => {
+}
+
+const NotificationContainer: React.FC<NotificationContainerProps> = ({
+  notifications,
+  remove,
+}) => {
   return (
     <div
       style={{
@@ -57,6 +72,7 @@ const NotificationContainer: React.FC<{
   );
 };
 
+/* Helper to map notification type → color */
 const getColor = (type?: NotificationType) => {
   switch (type) {
     case "success":
@@ -71,3 +87,5 @@ const getColor = (type?: NotificationType) => {
       return "#1e1e2f";
   }
 };
+
+export default NotificationContainer; // ✅ Must have default export
