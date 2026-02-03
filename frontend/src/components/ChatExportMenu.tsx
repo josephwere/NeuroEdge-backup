@@ -1,7 +1,7 @@
 // frontend/src/components/ChatExportMenu.tsx
 import React, { useRef } from "react";
-import { ChatMessage } from "../services/chatHistoryStore";
-import { exportChatJSON, exportChatTXT, importChatJSON } from "../services/chatExport";
+import { ChatMessage } from "@/services/chatHistoryStore";
+import { exportChatJSON, exportChatTXT, importChatJSON } from "@/services/chatExport";
 
 interface Props {
   chatHistory: ChatMessage[];
