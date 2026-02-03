@@ -2,11 +2,11 @@
 
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import Sidebar from "../components/Sidebar";
-import UnifiedChat from "../components/UnifiedChat";
-import ProfileSettings from "../components/ProfileSettings";
-import Dashboard from "../components/Dashboard";
-import { OrchestratorClient } from "../services/orchestrator_client";
+import Sidebar from "@/components/Sidebar";
+import UnifiedChat from "@/components/UnifiedChat";
+import ProfileSettings from "@/components/ProfileSettings";
+import Dashboard from "@/components/Dashboard";
+import { OrchestratorClient } from "@/services/orchestrator_client";
 
 /* -------------------- */
 /* Types / Session */
