@@ -1,15 +1,20 @@
-import React from "react";
+// frontend/src/App.tsx
+import React, { useEffect, useState } from "react";
+
 import UnifiedChat from "@/components/UnifiedChat";
-import { OrchestratorClient } from "@/services/orchestrator_client";
-// In App.tsx or HomePage.tsx
-import React, { useState, useEffect } from "react";
 import CommandPalette from "@/components/CommandPalette";
+
+import { OrchestratorClient } from "@/services/orchestrator_client";
 import { registerCommand } from "@/services/commandRegistry";
 
-const HomePageWrapper: React.FC = () => {
+/* ---------------- Initialize Orchestrator ---------------- */
+const orchestrator = new OrchestratorClient();
+
+/* ---------------- App Component ---------------- */
+const App: React.FC = () => {
   const [paletteVisible, setPaletteVisible] = useState(false);
 
-  // Global Ctrl+P listener
+  /* ---------- Global Ctrl + P Command Palette ---------- */
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "p") {
@@ -17,42 +22,44 @@ const HomePageWrapper: React.FC = () => {
         setPaletteVisible(v => !v);
       }
     };
+
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
   }, []);
 
-  // Example commands
+  /* ---------- Register Global Commands ---------- */
   useEffect(() => {
     registerCommand({
       id: "new-chat",
       label: "New Chat",
-      action: () => console.log("New Chat triggered"),
       shortcut: "Ctrl+N",
+      action: () => orchestrator.resetConversation(),
     });
+
     registerCommand({
       id: "open-settings",
       label: "Open Settings",
-      action: () => console.log("Open Settings"),
       shortcut: "Ctrl+,",
+      action: () => console.log("Open Settings (hook SettingsPanel here)"),
     });
+
     registerCommand({
       id: "export-chat",
       label: "Export Chat",
-      action: () => console.log("Export Chat triggered"),
+      action: () => console.log("Export Chat"),
     });
   }, []);
 
   return (
     <>
-      <HomePage orchestrator={/* orchestrator */ null as any} />
-      <CommandPalette visible={paletteVisible} onClose={() => setPaletteVisible(false)} />
+      <UnifiedChat orchestrator={orchestrator} />
+
+      <CommandPalette
+        visible={paletteVisible}
+        onClose={() => setPaletteVisible(false)}
+      />
     </>
   );
-};
-const orchestrator = new OrchestratorClient();
-
-const App: React.FC = () => {
-  return <UnifiedChat orchestrator={orchestrator} />;
 };
 
 export default App;
