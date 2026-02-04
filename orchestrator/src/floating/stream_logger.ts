@@ -1,5 +1,5 @@
-import { EventBus } from "../core/event_bus";
-import { Logger } from "../utils/logger";
+import { EventBus } from "@core/event_bus";
+import { Logger } from "@utils/logger";
 
 export type StreamLogEvent = {
   id: string;           // unique execution ID
