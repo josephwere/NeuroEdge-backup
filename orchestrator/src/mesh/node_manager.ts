@@ -1,6 +1,6 @@
 // mesh/node_manager.ts
-import { EventBus } from "../core/event_bus";
-import { Logger } from "../utils/logger";
+import { EventBus } from "@core/event_bus";
+import { Logger } from "@utils/logger";
 
 export interface MeshNode {
   id: string;
