@@ -1,6 +1,6 @@
-import { EventBus } from "../../core/event_bus";
-import { ImprovementRegistry } from "./improvement_registry";
-import { AgentEvaluator } from "./agent_evaluator";
+import { EventBus } from "@core/event_bus";
+import { ImprovementRegistry } from "@improvement_registry";
+import { AgentEvaluator } from "@agent_evaluator";
 
 export class SwarmController {
   private registry: ImprovementRegistry;
