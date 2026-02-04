@@ -1,35 +1,33 @@
-//orchestrator/src/index.ts
-import { startServer } from "@server/index";
-import { loadConfig } from "@config/config";
+// orchestrator/src/server/index.ts
+import express from "express";
+import { WebSocketServer } from "ws";
 import { EventBus } from "@core/event_bus";
-import { AgentManager } from "@core/agent_manager";
-import { KernelBridge } from "@bridge/kernel_bridge";
-import { MLBridge } from "@bridge/ml_bridge";
 import { Logger } from "@utils/logger";
 
-async function boot() {
-  console.log("🚀 Starting NeuroEdge Orchestrator v1.0");
+export function startServer(port: number, eventBus: EventBus, logger: Logger) {
+  const app = express();
+  const wss = new WebSocketServer({ port: port + 1000 }); // separate WS port
 
-  const config = loadConfig();
-  const logger = new Logger(config.logLevel);
+  // Middleware
+  app.use(express.json());
 
-  const eventBus = new EventBus(logger);
-  const agentManager = new AgentManager(eventBus, logger);
+  // REST API
+  app.get("/status", (_req, res) => {
+    res.json({ status: "ok", time: new Date().toISOString() });
+  });
 
-  const kernelBridge = new KernelBridge(config.kernelUrl, eventBus, logger);
-  const mlBridge = new MLBridge(config.mlUrl, eventBus, logger);
+  app.listen(port, () => {
+    console.log(`REST API running on http://localhost:${port}`);
+  });
 
-  await kernelBridge.connect();
-  await mlBridge.connect();
+  // WebSocket server
+  wss.on("connection", (ws) => {
+    ws.on("message", (msg) => {
+      console.log("WS message:", msg.toString());
+      // For now just echo back
+      ws.send(`Received: ${msg.toString()}`);
+    });
+  });
 
-  agentManager.start();
-
-  startServer(config.port, eventBus, logger);
-
-  logger.info("SYSTEM", "NeuroEdge Orchestrator is live");
+  console.log(`WebSocket Server running on ws://localhost:${port + 1000}`);
 }
-
-boot().catch((err) => {
-  console.error("❌ Orchestrator failed to start:", err);
-  process.exit(1);
-});
