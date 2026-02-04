@@ -1,4 +1,4 @@
-import { GitRiskLevel } from "@git_risk";
+import { GitRiskLevel } from "@github/git_risk";
 
 export const GIT_RISK_MAP: Record<string, GitRiskLevel> = {
   "git.status": "low",
