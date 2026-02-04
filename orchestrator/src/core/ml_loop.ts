@@ -1,5 +1,5 @@
-import { EventBus } from "./event_bus";
-import { MLIntentProposal } from "../ml/intent_proposal";
+import { EventBus } from "@event_bus";
+import { MLIntentProposal } from "@ml/intent_proposal";
 
 export class MLExecutionLoop {
   private ml: MLIntentProposal;
