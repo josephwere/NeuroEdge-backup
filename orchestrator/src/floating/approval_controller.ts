@@ -1,5 +1,5 @@
-import { EventBus } from "../core/event_bus";
-import { Logger } from "../utils/logger";
+import { EventBus } from "@core/event_bus";
+import { Logger } from "@utils/logger";
 
 export class ApprovalController {
   private pending = new Map<string, Function>();
