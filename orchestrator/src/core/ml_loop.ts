@@ -1,4 +1,4 @@
-import { EventBus } from "@event_bus";
+import { EventBus } from "@core/event_bus";
 import { MLIntentProposal } from "@ml/intent_proposal";
 
 export class MLExecutionLoop {
