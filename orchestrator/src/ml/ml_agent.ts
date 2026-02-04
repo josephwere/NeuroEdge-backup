@@ -1,7 +1,7 @@
 // orchestrator/ml/ml_agent.ts
-import { EventBus } from "../core/event_bus";
-import { Logger } from "../utils/logger";
-import { FloatingChatAgent } from "../agents/floating_chat_agent";
+import { EventBus } from "@core/event_bus";
+import { Logger } from "@utils/logger";
+import { FloatingChatAgent } from "@agents/floating_chat_agent";
 
 export class MLAgent {
   private eventBus: EventBus;
