@@ -1,6 +1,6 @@
 {
   "watch": ["src"],
   "ext": "ts,json",
-  "ignore": ["node_modules"],
-  "exec": "ts-node src/index.ts"
+  "ignore": ["node_modules", "dist"],
+  "exec": "node --enable-source-maps --loader ts-node/esm -r tsconfig-paths/register src/index.ts"
 }
