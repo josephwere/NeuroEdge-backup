@@ -1,10 +1,10 @@
-import { startServer } from "./server";
-import { loadConfig } from "./config/config";
-import { EventBus } from "./core/event_bus";
-import { AgentManager } from "./core/agent_manager";
-import { KernelBridge } from "./bridge/kernel_bridge";
-import { MLBridge } from "./bridge/ml_bridge";
-import { Logger } from "./utils/logger";
+import { startServer } from "@server"; // alias for server.ts
+import { loadConfig } from "@config/config";
+import { EventBus } from "@core/event_bus";
+import { AgentManager } from "@core/agent_manager";
+import { KernelBridge } from "@bridge/kernel_bridge";
+import { MLBridge } from "@bridge/ml_bridge";
+import { Logger } from "@utils/logger";
 
 async function boot() {
   console.log("🚀 Starting NeuroEdge Orchestrator v1.0");
