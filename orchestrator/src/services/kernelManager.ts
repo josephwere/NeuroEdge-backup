@@ -1,4 +1,4 @@
-import { KernelClient, KernelCommand, KernelResponse, KernelInfo } from "@kernelComm";
+import { KernelClient, KernelCommand, KernelResponse, KernelInfo } from "@services/kernelComm";
 
 interface KernelStatus {
   client: KernelClient;
