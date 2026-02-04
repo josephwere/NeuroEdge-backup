@@ -1,7 +1,7 @@
 import { OrchestratorAgent } from "@types";
 import { EventBus } from "@core/event_bus";
 import { Logger } from "@core/logger";
-import { DevExecutionAgent } from "@dev_execution_agent";
+import { DevExecutionAgent } from "@agents/dev_execution_agent";
 
 interface ExecutionRequest {
   id: string;
