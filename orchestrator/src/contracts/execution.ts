@@ -1,4 +1,4 @@
-import { CapabilityToken } from "../security/capability";
+import { CapabilityToken } from "@security/capability";
 
 /**
  * SecureExecutionRequest
