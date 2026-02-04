@@ -1,8 +1,8 @@
 // mesh/mesh_executor.ts
-import { NodeManager, MeshNode } from "./node_manager";
-import { SecureChannel } from "./secure_channel";
-import { Logger } from "../utils/logger";
-import { EventBus } from "../core/event_bus";
+import { NodeManager, MeshNode } from "@node_manager";
+import { SecureChannel } from "@secure_channel";
+import { Logger } from "@utils/logger";
+import { EventBus } from "@core/event_bus";
 
 export class MeshExecutor {
   private nodes: NodeManager;
