@@ -1,4 +1,4 @@
-import { MeshNode } from "./remote_node";
+import { MeshNode } from "@remote_node";
 
 export class MeshRegistry {
   private nodes = new Map<string, MeshNode>();
