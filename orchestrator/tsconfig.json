@@ -27,7 +27,7 @@
       "@federation/*": ["federation/*"],
       "@stream/*": ["stream/*"],
       "@types/*": ["types/*"],
-      "@server/*": ["server.ts"]
+      "@server": ["server.ts"]
     },
     "esModuleInterop": true,
     "resolveJsonModule": true,
