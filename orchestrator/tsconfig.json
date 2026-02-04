@@ -27,7 +27,7 @@
       "@federation/*": ["federation/*"],
       "@stream/*": ["stream/*"],
       "@types/*": ["types/*"],
-      "@server/*": ["server/*"]      <-- folder alias
+      "@server/*": ["server/*"]
     },
     "esModuleInterop": true,
     "resolveJsonModule": true,
