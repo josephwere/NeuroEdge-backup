@@ -1,4 +1,4 @@
-import { CityRegistry } from "../registry/city_registry";
+import { CityRegistry } from "@federation/registry/city_registry";
 
 export function selectBestCity(
   registry: CityRegistry,
