@@ -1,7 +1,7 @@
 // floating_chat/core/chat_manager.ts
-import { EventBus } from "../../core/event_bus";
-import { Logger } from "../../utils/logger";
-import { PermissionsAgent } from "./permissions_agent";
+import { EventBus } from "@core/event_bus";
+import { Logger } from "@utils/logger";
+import { PermissionsAgent } from "@permissions_agent";
 
 export class FloatingChatManager {
   private eventBus: EventBus;
