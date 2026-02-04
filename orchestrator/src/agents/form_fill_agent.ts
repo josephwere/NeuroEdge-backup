@@ -1,4 +1,4 @@
-import { EventBus } from "../core/event_bus";
+import { EventBus } from "@core/event_bus";
 
 export class FormFillAgent {
   constructor(private bus: EventBus) {}
