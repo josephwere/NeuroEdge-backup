@@ -1,4 +1,4 @@
-import { EventBus } from "@core/event_bus";
+import { EventBus } from "@cevent_bus";
 import { ExecutionIntent } from "@intent";
 import { KernelCapability } from "@capability";
 
