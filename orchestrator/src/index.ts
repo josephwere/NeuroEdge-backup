@@ -1,4 +1,4 @@
-import { startServer } from "@server"; // alias for server.ts
+import { startServer } from "@server"; 
 import { loadConfig } from "@config/config";
 import { EventBus } from "@core/event_bus";
 import { AgentManager } from "@core/agent_manager";
@@ -28,7 +28,7 @@ async function boot() {
   logger.info("SYSTEM", "NeuroEdge Orchestrator is live");
 }
 
-boot().catch(err => {
+boot().catch((err) => {
   console.error("❌ Orchestrator failed to start:", err);
   process.exit(1);
 });
