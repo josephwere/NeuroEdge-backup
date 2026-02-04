@@ -16,50 +16,42 @@ import { handleChat } from "@handlers/chatHandler";
 import { handleExecution } from "@handlers/executionHandler";
 import { handleAIInference } from "@handlers/aiHandler";
 
-export async function startServer(
-  port: number,
+export function startServer(
+  restPort: number,
   eventBus: EventBus,
   logger: Logger
 ) {
-  const WS_PORT = port + 1000; // WebSocket port
-  const REST_PORT = port;      // REST API port
+  const WS_PORT = restPort + 1; // ✅ predictable, low-collision
 
+  /* ---------------- REST API ---------------- */
   const app = express();
-  const wss = new WebSocketServer({ port: WS_PORT });
-
   app.use(express.json());
 
-  // Initialize permissions
-  const permissions = new PermissionManager();
-
-  // Initialize Agents
-  const devAgent = new DevExecutionAgent(eventBus, logger, permissions);
-  devAgent.start();
-
-  const githubAgent = new GitHubAgent();
-  // More agents can be added here
-
-  // Initialize Kernel Manager
-  globalKernelManager.addKernel("local", "http://localhost:8080");
-
-  // REST endpoints
   app.get("/status", (_req: Request, res: Response) => {
-    res.json({ status: "ok", time: new Date().toISOString() });
+    res.json({
+      status: "ok",
+      service: "orchestrator",
+      time: new Date().toISOString(),
+    });
   });
+
   app.post("/chat", handleChat);
   app.post("/execute", handleExecution);
   app.post("/ai", handleAIInference);
 
-  // Start REST API and keep process alive
-  await new Promise<void>((resolve) => {
-    app.listen(REST_PORT, () => {
-      console.log(`🚀 REST API listening on http://localhost:${REST_PORT}`);
-      resolve();
-    });
+  app.listen(restPort, () => {
+    logger.info(
+      "SERVER",
+      `REST API running on http://localhost:${restPort}`
+    );
   });
 
-  // WebSocket server
+  /* ---------------- WebSocket ---------------- */
+  const wss = new WebSocketServer({ port: WS_PORT });
+
   wss.on("connection", (ws) => {
+    logger.info("WS", "Client connected");
+
     ws.on("message", async (message) => {
       try {
         const payload = JSON.parse(message.toString());
@@ -72,17 +64,34 @@ export async function startServer(
           metadata: { user: payload.user || "websocket" },
         };
 
-        const response = await globalKernelManager.sendCommandBalanced(kernelCommand);
+        const response =
+          await globalKernelManager.sendCommandBalanced(kernelCommand);
+
         ws.send(JSON.stringify(response));
       } catch (err: any) {
         logger.error("WS", err.message);
         ws.send(JSON.stringify({ error: err.message }));
       }
     });
+
+    ws.on("close", () => {
+      logger.info("WS", "Client disconnected");
+    });
   });
 
-  console.log(`🚀 WebSocket Server running on ws://localhost:${WS_PORT}`);
+  logger.info(
+    "SERVER",
+    `WebSocket server running on ws://localhost:${WS_PORT}`
+  );
 
-  // Prevent exit — keep process alive
-  await new Promise(() => {});
+  /* ---------------- Agents ---------------- */
+  const permissions = new PermissionManager();
+
+  const devAgent = new DevExecutionAgent(eventBus, logger, permissions);
+  devAgent.start();
+
+  new GitHubAgent(); // placeholder, safe init
+
+  /* ---------------- Kernel ---------------- */
+  globalKernelManager.addKernel("local", "http://localhost:8080");
 }
