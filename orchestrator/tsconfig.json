@@ -1,0 +1,36 @@
+{
+  "compilerOptions": {
+    /* Language & Output */
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "node",
+    "strict": true,
+
+    /* Paths */
+    "rootDir": "src",
+    "outDir": "dist",
+    "baseUrl": "src",
+
+    "paths": {
+      "@core/*": ["core/*"],
+      "@agents/*": ["agents/*"],
+      "@mesh/*": ["mesh/*"],
+      "@swarm/*": ["swarm/*"],
+      "@floating/*": ["floating/*"],
+      "@ml/*": ["ml/*"],
+      "@bridge/*": ["bridge/*"],
+      "@handlers/*": ["handlers/*"],
+      "@security/*": ["security/*"],
+      "@utils/*": ["utils/*"],
+      "@contracts/*": ["contracts/*"],
+      "@config/*": ["config/*"]
+    },
+
+    /* Interop & Quality */
+    "esModuleInterop": true,
+    "resolveJsonModule": true,
+    "skipLibCheck": true
+  },
+  "include": ["src"],
+  "exclude": ["node_modules", "dist"]
+}
