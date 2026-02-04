@@ -3,7 +3,7 @@ import axios from "axios";
 import { OrchestratorAgent } from "@core/agent_manager";
 import { EventBus } from "@core/event_bus";
 import { Logger } from "@utils/logger";
-import { DevExecutionAgent } from "@dev_execution_agent";
+import { DevExecutionAgent } from "@agents/dev_execution_agent";
 
 export class MLFloatingChatAgent implements OrchestratorAgent {
   private eventBus: EventBus;
