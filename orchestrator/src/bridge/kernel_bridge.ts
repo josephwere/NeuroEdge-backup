@@ -25,20 +25,19 @@ export class KernelBridge {
 
     for (let attempt = 1; attempt <= retries; attempt++) {
       try {
-        await axios.get(`${this.baseUrl}/health`, { timeout: 2000 });
+        const res = await axios.get(`${this.baseUrl}/health`, { timeout: 2000 });
 
-        this.connected = true;
-        this.logger.info(
-          "KERNEL_BRIDGE",
-          "✅ Connected to kernel"
-        );
+        if (res.status === 200) {
+          this.connected = true;
+          this.logger.info("KERNEL_BRIDGE", "✅ Connected to kernel");
 
-        this.attachEventListeners();
-        return true;
-      } catch (err) {
+          this.attachEventListeners();
+          return true;
+        }
+      } catch (err: any) {
         this.logger.warn(
           "KERNEL_BRIDGE",
-          `⚠️ Kernel not ready (${attempt}/${retries}), retrying...`
+          `⚠️ Kernel not ready (${attempt}/${retries}): ${err.message}`
         );
         await new Promise((r) => setTimeout(r, delayMs));
       }
@@ -49,8 +48,12 @@ export class KernelBridge {
       "❌ Kernel unreachable, continuing without it"
     );
 
-    // Still attach listeners so kernel can come up later
+    // Still attach listeners — kernel might come up later
     this.attachEventListeners();
+
+    // Periodically retry in background without crashing orchestrator
+    this.startReconnectLoop(delayMs);
+
     return false;
   }
 
@@ -60,24 +63,54 @@ export class KernelBridge {
   private attachEventListeners() {
     this.eventBus.subscribe("kernel:event", (payload) => {
       if (!this.connected) {
-        this.logger.warn(
-          "KERNEL_BRIDGE",
-          "Kernel down — event skipped"
-        );
+        this.logger.warn("KERNEL_BRIDGE", "Kernel down — event skipped");
         return;
       }
       this.sendToKernel(payload);
     });
   }
 
+  /**
+   * Send an event to the kernel.
+   * Logs warning if kernel is down.
+   */
   async sendToKernel(payload: any) {
+    if (!this.connected) {
+      this.logger.warn("KERNEL_BRIDGE", "Cannot send — kernel is down");
+      return;
+    }
+
     try {
       await axios.post(`${this.baseUrl}/events`, payload);
-    } catch (err) {
+    } catch (err: any) {
       this.logger.warn(
         "KERNEL_BRIDGE",
-        "Failed to send event to kernel"
+        `Failed to send event to kernel: ${err.message}`
       );
+      this.connected = false; // mark disconnected
     }
+  }
+
+  /**
+   * Background reconnect loop — tries every delayMs until kernel responds
+   */
+  private startReconnectLoop(delayMs: number) {
+    const loop = async () => {
+      if (this.connected) return;
+
+      try {
+        const res = await axios.get(`${this.baseUrl}/health`, { timeout: 2000 });
+        if (res.status === 200) {
+          this.connected = true;
+          this.logger.info("KERNEL_BRIDGE", "✅ Kernel is back online");
+        }
+      } catch {
+        // ignore, will retry
+      } finally {
+        if (!this.connected) setTimeout(loop, delayMs);
+      }
+    };
+
+    setTimeout(loop, delayMs);
   }
 }
