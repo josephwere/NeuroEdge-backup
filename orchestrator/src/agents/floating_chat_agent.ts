@@ -1,11 +1,11 @@
 // orchestrator/agents/floating_chat_agent.ts
 
-import { OrchestratorAgent } from "../core/agent_manager";
-import { EventBus } from "../core/event_bus";
-import { Logger } from "../utils/logger";
-import { MeshManager } from "../mesh/mesh_manager";
-import { MLOrchestrator } from "../ml/ml_orchestrator";
-import { ExecutionRequest, ExecutionResult } from "../types/execution";
+import { OrchestratorAgent } from "@core/agent_manager";
+import { EventBus } from "@core/event_bus";
+import { Logger } from "@utils/logger";
+import { MeshManager } from "@mesh/mesh_manager";
+import { MLOrchestrator } from "@ml/ml_orchestrator";
+import { ExecutionRequest, ExecutionResult } from "@types/execution";
 
 export class FloatingChatAgent implements OrchestratorAgent {
   private eventBus: EventBus;
