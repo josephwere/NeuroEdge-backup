@@ -1,12 +1,15 @@
 {
   "compilerOptions": {
+    /* Language & Output */
     "target": "ES2022",
-    "module": "CommonJS",          // <-- stable in Node
+    "module": "CommonJS",              // <-- CommonJS avoids ESM headaches on Windows/Linux
     "moduleResolution": "node",
     "strict": true,
     "rootDir": "src",
     "outDir": "dist",
     "baseUrl": "src",
+
+    /* Paths / Aliases */
     "paths": {
       "@core/*": ["core/*"],
       "@agents/*": ["agents/*"],
@@ -27,9 +30,10 @@
       "@federation/*": ["federation/*"],
       "@stream/*": ["stream/*"],
       "@types/*": ["types/*"],
-      "@server": ["server/index"],   // bare import works
-      "@server/*": ["server/*"]     // future submodules
+      "@server": ["server/index"]        // <-- map the main server file
     },
+
+    /* Interop & Quality */
     "esModuleInterop": true,
     "resolveJsonModule": true,
     "skipLibCheck": true
