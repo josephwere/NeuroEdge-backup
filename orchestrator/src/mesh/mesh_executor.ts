@@ -1,6 +1,6 @@
 // mesh/mesh_executor.ts
-import { NodeManager, MeshNode } from "@node_manager";
-import { SecureChannel } from "@secure_channel";
+import { NodeManager, MeshNode } from "@mesh/node_manager";
+import { SecureChannel } from "@mesh/secure_channel";
 import { Logger } from "@utils/logger";
 import { EventBus } from "@core/event_bus";
 
