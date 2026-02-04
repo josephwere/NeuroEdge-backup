@@ -1,8 +1,8 @@
-import { EventBus } from "./event_bus";
-import { Logger } from "../utils/logger";
-import { MLIntegration } from "../ml_integration";
-import { MeshManager, Node } from "../mesh/mesh_manager";
-import { FloatingChatAgent } from "../agents/floating_chat_agent";
+import { EventBus } from "@event_bus";
+import { Logger } from "@utils/logger";
+import { MLIntegration } from "@ml_integration";
+import { MeshManager, Node } from "@mesh/mesh_manager";
+import { FloatingChatAgent } from "@agents/floating_chat_agent";
 
 export class Orchestrator {
   public eventBus: EventBus;
