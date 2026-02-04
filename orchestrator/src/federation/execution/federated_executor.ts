@@ -1,5 +1,5 @@
-import { executeRemote } from "../../mesh/execution/remote_executor";
-import { selectBestCity } from "../routing/city_router";
+import { executeRemote } from "@mesh/execution/remote_executor";
+import { selectBestCity } from "@routing/city_router";
 
 export async function executeFederated(
   registry: any,
