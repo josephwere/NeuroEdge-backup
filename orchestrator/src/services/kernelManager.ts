@@ -5,11 +5,12 @@ interface KernelStatus {
   consecutiveFailures: number;
   lastHealth: KernelInfo;
   busy: boolean; // for load balancing
+  healthy: boolean; // soft health flag
 }
 
 /**
  * Manages multiple KernelClient instances
- * Handles lifecycle, health, capabilities, nodes, and load-balanced command routing
+ * Handles lifecycle, health, nodes, and load-balanced command routing
  */
 export class KernelManager {
   private kernels: Map<string, KernelStatus> = new Map();
@@ -31,15 +32,9 @@ export class KernelManager {
       consecutiveFailures: 0,
       lastHealth: { version: "unknown", capabilities: [], status: "offline" },
       busy: false,
+      healthy: false,
     });
     console.log(`[KernelManager] Added kernel "${id}" at ${baseUrl}`);
-  }
-
-  /** -------------------- Remove a kernel -------------------- */
-  removeKernel(id: string) {
-    if (!this.kernels.has(id)) return;
-    this.kernels.delete(id);
-    console.log(`[KernelManager] Removed kernel "${id}"`);
   }
 
   /** -------------------- List all kernels -------------------- */
@@ -54,7 +49,7 @@ export class KernelManager {
   /** -------------------- Load-Balanced Command Dispatch -------------------- */
   private pickHealthyKernel(): KernelStatus | null {
     const healthyKernels = Array.from(this.kernels.values())
-      .filter(k => k.lastHealth.status === "ready" && !k.busy);
+      .filter(k => k.healthy && !k.busy);
 
     if (healthyKernels.length === 0) return null;
 
@@ -77,55 +72,54 @@ export class KernelManager {
 
     kernelStatus.busy = true;
     try {
-      const response = await kernelStatus.client.sendWithRetry(cmd);
-      console.log(`[KernelManager] Command ${cmd.id} sent → success: ${response.success}`);
-      return response;
+      return await kernelStatus.client.sendWithRetry(cmd);
+    } catch (err: any) {
+      console.warn(`[KernelManager] Command failed on kernel: ${err.message}`);
+      return {
+        id: cmd.id,
+        success: false,
+        stderr: err.message,
+        timestamp: new Date().toISOString(),
+      };
     } finally {
       kernelStatus.busy = false;
     }
   }
 
-  /** Send a command to a specific kernel */
-  async sendCommand(kernelId: string, cmd: KernelCommand): Promise<KernelResponse> {
-    const status = this.kernels.get(kernelId);
-    if (!status) {
-      return {
-        id: cmd.id,
-        success: false,
-        stderr: `Kernel "${kernelId}" not found`,
-        timestamp: new Date().toISOString(),
-      };
-    }
-    return status.client.sendWithRetry(cmd);
-  }
-
   /** -------------------- Health Monitoring -------------------- */
   private startHealthMonitoring() {
     if (this.healthTimer) return;
+
     this.healthTimer = setInterval(async () => {
       for (const [id, status] of this.kernels.entries()) {
         try {
-          const info = await status.client.getInfo();
+          // Safe call to getInfo — may not exist
+          const info = (status.client.getInfo?.() || {
+            version: "unknown",
+            capabilities: [],
+            status: "offline",
+          }) as KernelInfo;
+
           status.lastHealth = info;
 
-          if (info.status !== "ready") {
-            status.consecutiveFailures++;
-            console.warn(`[KernelManager] Kernel "${id}" not ready (${status.consecutiveFailures}/${this.maxFailures})`);
-          } else {
+          if (info.status === "ready") {
             status.consecutiveFailures = 0;
+            status.healthy = true;
+          } else {
+            status.consecutiveFailures++;
+            status.healthy = false;
+            console.warn(`[KernelManager] Kernel "${id}" not ready (${status.consecutiveFailures}/${this.maxFailures})`);
           }
 
           if (status.consecutiveFailures >= this.maxFailures) {
-            console.error(`[KernelManager] Kernel "${id}" removed after ${status.consecutiveFailures} consecutive failures`);
-            this.kernels.delete(id);
+            console.warn(`[KernelManager] Kernel "${id}" unhealthy, will keep retrying`);
+            // Do NOT delete — just mark unhealthy
+            status.healthy = false;
           }
-        } catch (err) {
+        } catch (err: any) {
           status.consecutiveFailures++;
-          console.error(`[KernelManager] Kernel "${id}" health check error:`, err);
-          if (status.consecutiveFailures >= this.maxFailures) {
-            console.error(`[KernelManager] Kernel "${id}" removed due to repeated failures`);
-            this.kernels.delete(id);
-          }
+          status.healthy = false;
+          console.warn(`[KernelManager] Kernel "${id}" health check error: ${err.message}`);
         }
       }
     }, this.healthCheckInterval);
