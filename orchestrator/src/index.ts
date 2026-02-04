@@ -10,32 +10,53 @@ import { Logger } from "@utils/logger";
 async function boot() {
   console.log("🚀 Starting NeuroEdge Orchestrator v1.0");
 
-  // Load config
+  /* ---------------- Config & Logger ---------------- */
   const config = loadConfig();
   const logger = new Logger(config.logLevel);
 
-  // Initialize core systems
+  /* ---------------- Core Systems ---------------- */
   const eventBus = new EventBus(logger);
   const agentManager = new AgentManager(eventBus, logger);
 
-  // Initialize bridges
-  const kernelBridge = new KernelBridge(config.kernelUrl, eventBus, logger);
-  const mlBridge = new MLBridge(config.mlUrl, eventBus, logger);
+  /* ---------------- Bridges (Soft Dependencies) ---------------- */
+  const kernelBridge = new KernelBridge(
+    config.kernelUrl,
+    eventBus,
+    logger
+  );
 
-  await kernelBridge.connect();
-  await mlBridge.connect();
+  const mlBridge = new MLBridge(
+    config.mlUrl,
+    eventBus,
+    logger
+  );
 
-  // Start agents
+  // 🔒 Soft-connect: NEVER crash orchestrator
+  kernelBridge.connect().catch(() => {
+    logger.warn(
+      "SYSTEM",
+      "Kernel unavailable — orchestrator running in degraded mode"
+    );
+  });
+
+  mlBridge.connect().catch(() => {
+    logger.warn(
+      "SYSTEM",
+      "ML system unavailable — orchestrator running in degraded mode"
+    );
+  });
+
+  /* ---------------- Agents ---------------- */
   agentManager.start();
 
-  // Start REST + WebSocket server and keep process alive
-  await startServer(config.port, eventBus, logger);
+  /* ---------------- Server ---------------- */
+  startServer(config.port, eventBus, logger);
 
-  logger.info("SYSTEM", "NeuroEdge Orchestrator is live");
+  logger.info("SYSTEM", "NeuroEdge Orchestrator is live 🚀");
 }
 
-// Catch all errors
+/* ---------------- Global Safety Net ---------------- */
 boot().catch((err) => {
-  console.error("❌ Orchestrator failed to start:", err);
+  console.error("❌ Fatal startup error:", err);
   process.exit(1);
 });
