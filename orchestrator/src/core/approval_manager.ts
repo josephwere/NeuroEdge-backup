@@ -1,6 +1,6 @@
 import { EventBus } from "@core/event_bus";
-import { ExecutionIntent } from "@intent";
-import { KernelCapability } from "@capability";
+import { ExecutionIntent } from "@core/intent";
+import { KernelCapability } from "@core/capability";
 
 export class ApprovalManager {
   constructor(private bus: EventBus) {
