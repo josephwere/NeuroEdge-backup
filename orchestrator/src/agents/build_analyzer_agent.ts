@@ -1,8 +1,8 @@
 // orchestrator/agents/build_analyzer_agent.ts
-import { OrchestratorAgent } from "../core/agent_manager";
-import { EventBus } from "../core/event_bus";
-import { Logger } from "../utils/logger";
-import { DevExecutionAgent } from "./dev_execution_agent";
+import { OrchestratorAgent } from "@core/agent_manager";
+import { EventBus } from "@core/event_bus";
+import { Logger } from "@utils/logger";
+import { DevExecutionAgent } from "@dev_execution_agent";
 
 export class BuildAnalyzerAgent implements OrchestratorAgent {
   private eventBus: EventBus;
