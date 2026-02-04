@@ -1,5 +1,5 @@
 import { spawn } from "child_process";
-import { EventBus } from "../core/event_bus";
+import { EventBus } from "@core/event_bus";
 
 export function runCommand(
   command: string,
