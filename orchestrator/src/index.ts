@@ -1,5 +1,5 @@
 // orchestrator/src/index.ts
-import { startServer } from "@server/index";
+import { startServer } from "@server";
 import { loadConfig } from "@config/config";
 import { EventBus } from "@core/event_bus";
 import { AgentManager } from "@core/agent_manager";
