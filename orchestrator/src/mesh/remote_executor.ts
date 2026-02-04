@@ -1,13 +1,13 @@
 import { EventBus } from "@core/event_bus";
 import { Logger } from "@utils/logger";
 import { DevExecutionAgent } from "@agents/dev_execution_agent";
-import { NodeRegistry } from "@node_registry";
+import { NodeRegistry } from "@mesh/node_registry";
 
 export class RemoteExecutor {
   private eventBus: EventBus;
   private logger: Logger;
   private executor: DevExecutionAgent;
-  private nodes: NodeRegistry;
+  private nodes: NodeRegistry
 
   constructor(eventBus: EventBus, logger: Logger, executor: DevExecutionAgent, nodes: NodeRegistry) {
     this.eventBus = eventBus;
