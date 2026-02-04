@@ -1,6 +1,6 @@
 // floating_chat/personas/student_agent.ts
-import { EventBus } from "../core/event_bus";
-import { Logger } from "../utils/logger";
+import { EventBus } from "@core/event_bus";
+import { Logger } from "@utils/logger";
 
 export class StudentAgent {
   constructor(private eventBus: EventBus, private logger: Logger) {}
