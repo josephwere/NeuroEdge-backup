@@ -1,4 +1,4 @@
-import { routeTask } from "../routing/task_router";
+import { routeTask } from "@routing/task_router";
 
 export async function executeRemote(
   nodeId: string,
