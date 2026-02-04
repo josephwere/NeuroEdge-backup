@@ -1,7 +1,7 @@
-import { EventBus } from "../core/event_bus";
-import { Logger } from "../utils/logger";
+import { EventBus } from "@core/event_bus";
+import { Logger } from "@utils/logger";
 import axios from "axios";
-import { RemoteExecutor } from "../mesh/remote_executor";
+import { RemoteExecutor } from "@mesh/remote_executor";
 
 export class MLMeshFloatingChatAgent {
   private eventBus: EventBus;
