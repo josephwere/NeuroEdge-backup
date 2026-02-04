@@ -1,7 +1,7 @@
 {
   "compilerOptions": {
     "target": "ES2022",
-    "module": "ESNext",
+    "module": "CommonJS",          // <-- stable in Node
     "moduleResolution": "node",
     "strict": true,
     "rootDir": "src",
@@ -27,7 +27,8 @@
       "@federation/*": ["federation/*"],
       "@stream/*": ["stream/*"],
       "@types/*": ["types/*"],
-      "@server/*": ["server/*"]
+      "@server": ["server/index"],   // bare import works
+      "@server/*": ["server/*"]     // future submodules
     },
     "esModuleInterop": true,
     "resolveJsonModule": true,
