@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
-import { globalKernelManager } from "../services/kernelManager";
-import { KernelCommand } from "../services/kernelComm";
+import { globalKernelManager } from "@services/kernelManager";
+import { KernelCommand } from "@services/kernelComm";
 
 /**
  * Handles code/command execution requests
