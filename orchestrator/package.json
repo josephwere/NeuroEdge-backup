@@ -2,9 +2,8 @@
   "name": "neuroedge-orchestrator",
   "version": "1.0.0",
   "private": true,
-  "type": "module",
   "scripts": {
-    "dev": "nodemon",
+    "dev": "nodemon -r tsconfig-paths/register src/index.ts",
     "start": "node dist/index.js",
     "build": "tsc",
     "clean": "rm -rf dist",
