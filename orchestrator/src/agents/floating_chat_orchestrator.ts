@@ -1,9 +1,9 @@
-import { EventBus } from "../core/event_bus";
-import { Logger } from "../core/logger";
-import { FloatingChatAgent } from "./floating_chat_agent";
-import { DevExecutionAgent } from "./dev_execution_agent";
-import { MLOrchestrator } from "../../ml/ml_integration";
-import { MeshExecutionAgent } from "./mesh_execution_agent";
+import { EventBus } from "@core/event_bus";
+import { Logger } from "@core/logger";
+import { FloatingChatAgent } from "@floating_chat_agent";
+import { DevExecutionAgent } from "@dev_execution_agent";
+import { MLOrchestrator } from "@ml/ml_integration";
+import { MeshExecutionAgent } from "@mesh_execution_agent";
 
 export class FloatingChatOrchestrator {
   constructor(
