@@ -1,5 +1,5 @@
 import WebSocket from "ws";
-import { EventBus } from "../core/event_bus";
+import { EventBus } from "@core/event_bus";
 
 export interface MLProposal {
   command: string;
