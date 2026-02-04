@@ -1,5 +1,5 @@
-import { GitIntent } from "@git_risk";
-import { GIT_RISK_MAP } from "@git_risk_map";
+import { GitIntent } from "@github/git_risk";
+import { GIT_RISK_MAP } from "@github/git_risk_map";
 
 export function buildGitIntent(
   action: string,
