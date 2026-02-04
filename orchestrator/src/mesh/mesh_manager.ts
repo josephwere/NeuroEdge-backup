@@ -1,6 +1,6 @@
 import WebSocket from "ws";
-import { Logger } from "../utils/logger";
-import { EventBus } from "../core/event_bus";
+import { Logger } from "@utils/logger";
+import { EventBus } from "@core/event_bus";
 
 export interface Node {
   id: string;
