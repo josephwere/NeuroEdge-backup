@@ -1,40 +1,34 @@
 {
   "compilerOptions": {
-    /* Language & Output */
     "target": "ES2022",
     "module": "ESNext",
     "moduleResolution": "node",
     "strict": true,
-
-    /* Paths */
     "rootDir": "src",
     "outDir": "dist",
     "baseUrl": "src",
-
-   "paths": {
-  "@core/*": ["core/*"],
-  "@agents/*": ["agents/*"],
-  "@mesh/*": ["mesh/*"],
-  "@swarm/*": ["swarm/*"],
-  "@floating/*": ["floating/*"],
-  "@floating-chat/*": ["floating_chat/*"],
-  "@ml/*": ["ml/*"],
-  "@bridge/*": ["bridge/*"],
-  "@handlers/*": ["handlers/*"],
-  "@security/*": ["security/*"],
-  "@utils/*": ["utils/*"],
-  "@contracts/*": ["contracts/*"],
-  "@config/*": ["config/*"],
-  "@services/*": ["services/*"],
-  "@github/*": ["github/*"],
-  "@context/*": ["context/*"],
-  "@federation/*": ["federation/*"],
-  "@stream/*": ["stream/*"],
-  "@types/*": ["types/*"]
-}
-
-
-    /* Interop & Quality */
+    "paths": {
+      "@core/*": ["core/*"],
+      "@agents/*": ["agents/*"],
+      "@mesh/*": ["mesh/*"],
+      "@swarm/*": ["swarm/*"],
+      "@floating/*": ["floating/*"],
+      "@floating-chat/*": ["floating_chat/*"],
+      "@ml/*": ["ml/*"],
+      "@bridge/*": ["bridge/*"],
+      "@handlers/*": ["handlers/*"],
+      "@security/*": ["security/*"],
+      "@utils/*": ["utils/*"],
+      "@contracts/*": ["contracts/*"],
+      "@config/*": ["config/*"],
+      "@services/*": ["services/*"],
+      "@github/*": ["github/*"],
+      "@context/*": ["context/*"],
+      "@federation/*": ["federation/*"],
+      "@stream/*": ["stream/*"],
+      "@types/*": ["types/*"],
+      "@server/*": ["server.ts"]
+    },
     "esModuleInterop": true,
     "resolveJsonModule": true,
     "skipLibCheck": true
