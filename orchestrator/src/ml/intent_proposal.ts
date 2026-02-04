@@ -1,5 +1,5 @@
-import { EventBus } from "../core/event_bus";
-import { ExecutionIntent } from "../core/intent";
+import { EventBus } from "@core/event_bus";
+import { ExecutionIntent } from "@core/intent";
 import { v4 as uuidv4 } from "uuid";
 
 export class MLIntentProposer {
