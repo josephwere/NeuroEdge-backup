@@ -1,9 +1,9 @@
 // orchestrator/agents/mesh_agent.ts
 
-import { OrchestratorAgent } from "../core/agent_manager";
-import { EventBus } from "../core/event_bus";
-import { Logger } from "../utils/logger";
-import { MeshManager } from "../mesh/mesh_manager";
+import { OrchestratorAgent } from "@core/agent_manager";
+import { EventBus } from "@core/event_bus";
+import { Logger } from "@utils/logger";
+import { MeshManager } from "@mesh/mesh_manager";
 
 export class MeshAgent implements OrchestratorAgent {
   private eventBus: EventBus;
