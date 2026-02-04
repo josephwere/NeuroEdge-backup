@@ -1,5 +1,5 @@
-import { EventBus } from "./event_bus";
-import { Logger } from "./logger";
+import { EventBus } from "@event_bus";
+import { Logger } from "@logger";
 
 export class MeshExecutor {
   private eventBus: EventBus;
