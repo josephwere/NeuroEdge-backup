@@ -1,5 +1,5 @@
-import { EventBus } from "./event_bus";
-import { ExecutionIntent } from "./intent";
+import { EventBus } from "@event_bus";
+import { ExecutionIntent } from "@intent";
 
 export class FloatingChat {
   constructor(private bus: EventBus) {}
