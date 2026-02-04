@@ -1,7 +1,7 @@
-import { EventBus } from "../core/event_bus";
-import { Logger } from "../utils/logger";
-import { DevExecutionAgent } from "../agents/dev_execution_agent";
-import { NodeRegistry } from "./node_registry";
+import { EventBus } from "@core/event_bus";
+import { Logger } from "@utils/logger";
+import { DevExecutionAgent } from "@agents/dev_execution_agent";
+import { NodeRegistry } from "@node_registry";
 
 export class RemoteExecutor {
   private eventBus: EventBus;
