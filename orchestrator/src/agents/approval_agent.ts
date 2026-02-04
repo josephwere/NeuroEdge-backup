@@ -1,5 +1,5 @@
-import { eventBus } from "../core/event_bus";
-import { MLProposal } from "../ml/ml_reasoner";
+import { eventBus } from "@core/event_bus";
+import { MLProposal } from "@ml/ml_reasoner";
 
 export class ApprovalAgent {
   constructor() {}
