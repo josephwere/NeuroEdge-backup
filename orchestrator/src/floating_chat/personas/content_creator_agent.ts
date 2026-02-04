@@ -1,7 +1,7 @@
 // floating_chat/personas/content_creator_agent.ts
-import { EventBus } from "../core/event_bus";
-import { Logger } from "../utils/logger";
-import { analyzeContent } from "../analytics/content_analysis";
+import { EventBus } from "@core/event_bus";
+import { Logger } from "@utils/logger";
+import { analyzeContent } from "@analytics/content_analysis";
 
 export class ContentCreatorAgent {
   constructor(private eventBus: EventBus, private logger: Logger) {}
