@@ -1,20 +1,21 @@
+// orchestrator/src/services/kernelManager.ts
 import { KernelClient, KernelCommand, KernelResponse, KernelInfo } from "@services/kernelComm";
 
 interface KernelStatus {
   client: KernelClient;
   consecutiveFailures: number;
   lastHealth: KernelInfo;
-  busy: boolean; // for load balancing
-  healthy: boolean; // soft health flag
+  busy: boolean;
+  healthy: boolean;
 }
 
 /**
  * Manages multiple KernelClient instances
- * Handles lifecycle, health, nodes, and load-balanced command routing
+ * Handles lifecycle, health, capabilities, and load-balanced command routing
  */
 export class KernelManager {
   private kernels: Map<string, KernelStatus> = new Map();
-  private healthCheckInterval = 10000;
+  private healthCheckInterval = 10000; // 10s
   private maxFailures = 3;
   private healthTimer: NodeJS.Timer | null = null;
   private roundRobinIndex = 0;
@@ -37,6 +38,13 @@ export class KernelManager {
     console.log(`[KernelManager] Added kernel "${id}" at ${baseUrl}`);
   }
 
+  /** -------------------- Remove a kernel -------------------- */
+  removeKernel(id: string) {
+    if (!this.kernels.has(id)) return;
+    this.kernels.delete(id);
+    console.log(`[KernelManager] Removed kernel "${id}"`);
+  }
+
   /** -------------------- List all kernels -------------------- */
   listKernels(): Record<string, KernelInfo> {
     const result: Record<string, KernelInfo> = {};
@@ -49,7 +57,7 @@ export class KernelManager {
   /** -------------------- Load-Balanced Command Dispatch -------------------- */
   private pickHealthyKernel(): KernelStatus | null {
     const healthyKernels = Array.from(this.kernels.values())
-      .filter(k => k.healthy && !k.busy);
+      .filter(k => k.lastHealth.status === "ready" && !k.busy);
 
     if (healthyKernels.length === 0) return null;
 
@@ -72,18 +80,26 @@ export class KernelManager {
 
     kernelStatus.busy = true;
     try {
-      return await kernelStatus.client.sendWithRetry(cmd);
-    } catch (err: any) {
-      console.warn(`[KernelManager] Command failed on kernel: ${err.message}`);
-      return {
-        id: cmd.id,
-        success: false,
-        stderr: err.message,
-        timestamp: new Date().toISOString(),
-      };
+      const response = await kernelStatus.client.sendWithRetry(cmd);
+      console.log(`[KernelManager] Command ${cmd.id} sent → success: ${response.success}`);
+      return response;
     } finally {
       kernelStatus.busy = false;
     }
+  }
+
+  /** Send a command to a specific kernel */
+  async sendCommand(kernelId: string, cmd: KernelCommand): Promise<KernelResponse> {
+    const status = this.kernels.get(kernelId);
+    if (!status) {
+      return {
+        id: cmd.id,
+        success: false,
+        stderr: `Kernel "${kernelId}" not found`,
+        timestamp: new Date().toISOString(),
+      };
+    }
+    return status.client.sendWithRetry(cmd);
   }
 
   /** -------------------- Health Monitoring -------------------- */
@@ -93,13 +109,17 @@ export class KernelManager {
     this.healthTimer = setInterval(async () => {
       for (const [id, status] of this.kernels.entries()) {
         try {
-          // Safe call to getInfo — may not exist
-          const info = (status.client.getInfo?.() || {
-            version: "unknown",
-            capabilities: [],
-            status: "offline",
-          }) as KernelInfo;
+          if (typeof status.client.getInfo !== "function") {
+            // mark offline safely
+            if (!status.healthy) {
+              console.warn(`[KernelManager] Kernel "${id}" client.getInfo() missing, marking unhealthy`);
+            }
+            status.lastHealth = { version: "unknown", capabilities: [], status: "offline" };
+            status.healthy = false;
+            continue;
+          }
 
+          const info: KernelInfo = await status.client.getInfo();
           status.lastHealth = info;
 
           if (info.status === "ready") {
@@ -108,18 +128,16 @@ export class KernelManager {
           } else {
             status.consecutiveFailures++;
             status.healthy = false;
-            console.warn(`[KernelManager] Kernel "${id}" not ready (${status.consecutiveFailures}/${this.maxFailures})`);
-          }
-
-          if (status.consecutiveFailures >= this.maxFailures) {
-            console.warn(`[KernelManager] Kernel "${id}" unhealthy, will keep retrying`);
-            // Do NOT delete — just mark unhealthy
-            status.healthy = false;
+            if (status.consecutiveFailures <= this.maxFailures) {
+              console.warn(`[KernelManager] Kernel "${id}" not ready (${status.consecutiveFailures}/${this.maxFailures})`);
+            }
           }
         } catch (err: any) {
           status.consecutiveFailures++;
           status.healthy = false;
-          console.warn(`[KernelManager] Kernel "${id}" health check error: ${err.message}`);
+          if (status.consecutiveFailures <= this.maxFailures) {
+            console.warn(`[KernelManager] Kernel "${id}" health check error: ${err.message}`);
+          }
         }
       }
     }, this.healthCheckInterval);
