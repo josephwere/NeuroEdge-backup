@@ -1,9 +1,9 @@
-import { OrchestratorAgent } from "../core/agent_manager";
-import { EventBus } from "../core/event_bus";
-import { Logger } from "../utils/logger";
-import { PermissionManager } from "../utils/permissions";
-import { runCommand } from "../utils/shell";
-import { ExecutionRequest, ExecutionResult } from "../types/execution";
+import { OrchestratorAgent } from "@core/agent_manager";
+import { EventBus } from "@core/event_bus";
+import { Logger } from "@utils/logger";
+import { PermissionManager } from "@utils/permissions";
+import { runCommand } from "@utils/shell";
+import { ExecutionRequest, ExecutionResult } from "@types/execution";
 
 export class DevExecutionAgent implements OrchestratorAgent {
   constructor(
