@@ -1,5 +1,5 @@
-import { verifyMessage } from "../protocol/auth";
-import { streamCommand } from "../../floating/stream";
+import { verifyMessage } from "@protocol/auth";
+import { streamCommand } from "@floating/stream";
 
 export class MeshNodeAgent {
   nodeId: string;
