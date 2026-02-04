@@ -1,5 +1,5 @@
 import crypto from "crypto";
-import { CapabilityToken } from "@capability";
+import { CapabilityToken } from "@security/capability";
 
 export class KernelVerifier {
   constructor(private publicKey: string) {}
