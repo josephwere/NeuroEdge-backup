@@ -1,4 +1,4 @@
-import { orchestratorBus } from "@eventBus";
+import { orchestratorBus } from "@core/event_bus";
 
 export class MLReasoningAgent {
   constructor() {
