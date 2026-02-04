@@ -1,4 +1,4 @@
-import { eventBus } from "../core/event_bus";
+import { eventBus } from "@core/event_bus";
 
 export interface MLProposal {
   id: string;
