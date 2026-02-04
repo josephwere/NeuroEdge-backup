@@ -1,6 +1,6 @@
-import { EventBus } from "./event_bus";
-import { ExecutionIntent } from "./intent";
-import { KernelCapability } from "./capability";
+import { EventBus } from "@core/event_bus";
+import { ExecutionIntent } from "@intent";
+import { KernelCapability } from "@capability";
 
 export class ControlPlane {
   constructor(private bus: EventBus) {}
