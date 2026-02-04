@@ -1,33 +1,41 @@
-// orchestrator/src/server/index.ts
-import express from "express";
-import { WebSocketServer } from "ws";
+// orchestrator/src/index.ts
+import { startServer } from "@server/index";
+import { loadConfig } from "@config/config";
 import { EventBus } from "@core/event_bus";
+import { AgentManager } from "@core/agent_manager";
+import { KernelBridge } from "@bridge/kernel_bridge";
+import { MLBridge } from "@bridge/ml_bridge";
 import { Logger } from "@utils/logger";
 
-export function startServer(port: number, eventBus: EventBus, logger: Logger) {
-  const app = express();
-  const wss = new WebSocketServer({ port: port + 1000 }); // separate WS port
+async function boot() {
+  console.log("🚀 Starting NeuroEdge Orchestrator v1.0");
 
-  // Middleware
-  app.use(express.json());
+  // Load config
+  const config = loadConfig();
+  const logger = new Logger(config.logLevel);
 
-  // REST API
-  app.get("/status", (_req, res) => {
-    res.json({ status: "ok", time: new Date().toISOString() });
-  });
+  // Initialize core systems
+  const eventBus = new EventBus(logger);
+  const agentManager = new AgentManager(eventBus, logger);
 
-  app.listen(port, () => {
-    console.log(`REST API running on http://localhost:${port}`);
-  });
+  // Initialize bridges
+  const kernelBridge = new KernelBridge(config.kernelUrl, eventBus, logger);
+  const mlBridge = new MLBridge(config.mlUrl, eventBus, logger);
 
-  // WebSocket server
-  wss.on("connection", (ws) => {
-    ws.on("message", (msg) => {
-      console.log("WS message:", msg.toString());
-      // For now just echo back
-      ws.send(`Received: ${msg.toString()}`);
-    });
-  });
+  await kernelBridge.connect();
+  await mlBridge.connect();
 
-  console.log(`WebSocket Server running on ws://localhost:${port + 1000}`);
+  // Start agents
+  agentManager.start();
+
+  // Start REST + WebSocket server and keep process alive
+  await startServer(config.port, eventBus, logger);
+
+  logger.info("SYSTEM", "NeuroEdge Orchestrator is live");
 }
+
+// Catch all errors
+boot().catch((err) => {
+  console.error("❌ Orchestrator failed to start:", err);
+  process.exit(1);
+});
