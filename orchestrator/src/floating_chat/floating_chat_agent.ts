@@ -1,13 +1,13 @@
 // floating_chat/floating_chat_agent.ts
-import { EventBus } from "../core/event_bus";
-import { Logger } from "../utils/logger";
-import { PermissionManager } from "./utils/permissions";
-import { MLBridge } from "./utils/ml_bridge";
+import { EventBus } from "@core/event_bus";
+import { Logger } from "@utils/logger";
+import { PermissionManager } from "@utils/permissions";
+import { MLBridge } from "@utils/ml_bridge";
 
 // Persona Agents
-import { ContentCreatorAgent } from "./personas/content_creator_agent";
-import { StudentAgent } from "./personas/student_agent";
-import { ResearcherAgent } from "./personas/researcher_agent";
+import { ContentCreatorAgent } from "@personas/content_creator_agent";
+import { StudentAgent } from "@personas/student_agent";
+import { ResearcherAgent } from "@personas/researcher_agent";
 
 export class FloatingChatAgent {
   private eventBus: EventBus;
