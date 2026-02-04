@@ -1,7 +1,7 @@
-import { GitHubAgent } from "./github_agent";
-import { buildGitIntent } from "./git_intent_builder";
-import { requireGitApproval } from "./git_approval";
-import { PermissionManager } from "../utils/permissions";
+import { GitHubAgent } from "@github_agent";
+import { buildGitIntent } from "@git_intent_builder";
+import { requireGitApproval } from "@git_approval";
+import { PermissionManager } from "@utils/permissions";
 
 export class SafeGitExecutor {
 
