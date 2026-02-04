@@ -1,4 +1,4 @@
-import { GitIntent } from "../github/git_risk";
+import { GitIntent } from "@github/git_risk";
 
 export function renderIntent(intent: GitIntent) {
   return {
