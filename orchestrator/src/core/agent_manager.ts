@@ -1,5 +1,5 @@
-import { EventBus } from "./event_bus";
-import { Logger } from "../utils/logger";
+import { EventBus } from "@event_bus";
+import { Logger } from "@utils/logger";
 
 export interface OrchestratorAgent {
   name(): string;
