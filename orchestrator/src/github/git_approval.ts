@@ -1,5 +1,5 @@
-import { GitIntent } from "./git_risk";
-import { PermissionManager } from "../utils/permissions";
+import { GitIntent } from "@git_risk";
+import { PermissionManager } from "@utils/permissions";
 
 export function requireGitApproval(
   intent: GitIntent,
