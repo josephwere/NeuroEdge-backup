@@ -1,15 +1,17 @@
+// kernel/agents/job_recruiter_agent.go
 package agents
 
 import (
 	"fmt"
-	"neuroedge/kernel/core"
+
+	"neuroedge/kernel/types" // use types instead of core
 )
 
 type JobRecruiterAgent struct {
-	EventBus *core.EventBus
+	EventBus *types.EventBus
 }
 
-func NewJobRecruiterAgent(bus *core.EventBus) *JobRecruiterAgent {
+func NewJobRecruiterAgent(bus *types.EventBus) *JobRecruiterAgent {
 	return &JobRecruiterAgent{
 		EventBus: bus,
 	}
