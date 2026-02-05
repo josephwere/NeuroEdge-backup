@@ -1,15 +1,17 @@
+// kernel/agents/travel_agent.go
 package agents
 
 import (
 	"fmt"
-	"neuroedge/kernel/core"
+
+	"neuroedge/kernel/types" // ✅ use types instead of core
 )
 
 type TravelAgent struct {
-	EventBus *core.EventBus
+	EventBus *types.EventBus
 }
 
-func NewTravelAgent(bus *core.EventBus) *TravelAgent {
+func NewTravelAgent(bus *types.EventBus) *TravelAgent {
 	return &TravelAgent{
 		EventBus: bus,
 	}
@@ -17,8 +19,10 @@ func NewTravelAgent(bus *core.EventBus) *TravelAgent {
 
 func (t *TravelAgent) Start() {
 	fmt.Println("🚀 TravelAgent started")
+
 	ch := make(chan map[string]interface{})
 	t.EventBus.Subscribe("travel:plan:update", ch)
+
 	go func() {
 		for event := range ch {
 			fmt.Println("[TravelAgent] Travel Event:", event)
