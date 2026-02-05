@@ -1,15 +1,17 @@
+// kernel/agents/therapist_agent.go
 package agents
 
 import (
 	"fmt"
-	"neuroedge/kernel/core"
+
+	"neuroedge/kernel/types" // ✅ use types instead of core
 )
 
 type TherapistAgent struct {
-	EventBus *core.EventBus
+	EventBus *types.EventBus
 }
 
-func NewTherapistAgent(bus *core.EventBus) *TherapistAgent {
+func NewTherapistAgent(bus *types.EventBus) *TherapistAgent {
 	return &TherapistAgent{
 		EventBus: bus,
 	}
@@ -17,8 +19,10 @@ func NewTherapistAgent(bus *core.EventBus) *TherapistAgent {
 
 func (t *TherapistAgent) Start() {
 	fmt.Println("🚀 TherapistAgent started")
+
 	ch := make(chan map[string]interface{})
 	t.EventBus.Subscribe("therapy:session", ch)
+
 	go func() {
 		for event := range ch {
 			fmt.Println("[TherapistAgent] Therapy Session Event:", event)
