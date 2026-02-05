@@ -3,43 +3,42 @@ package agents
 
 import (
 	"fmt"
-	"neuroedge/kernel/core"
+
+	"neuroedge/kernel/types"
 )
 
 // RobotAssistantAgent handles robot commands
 type RobotAssistantAgent struct {
-	EventBus *core.EventBus
-	Name     string
+	EventBus *types.EventBus
 }
 
-func NewRobotAssistantAgent(bus *core.EventBus) *RobotAssistantAgent {
+func NewRobotAssistantAgent(bus *types.EventBus) *RobotAssistantAgent {
 	return &RobotAssistantAgent{
 		EventBus: bus,
-		Name:     "RobotAssistantAgent",
 	}
 }
 
 func (r *RobotAssistantAgent) Start() {
-	fmt.Printf("🚀 %s started\n", r.Name)
+	fmt.Println("🚀 RobotAssistantAgent started")
 	ch := make(chan map[string]interface{})
 	r.EventBus.Subscribe("robot:command", ch)
 
 	go func() {
 		for event := range ch {
-			fmt.Printf("[%s] Robot Command: %v\n", r.Name, event)
+			fmt.Println("[RobotAssistantAgent] Robot Command:", event)
 			r.ControlRobot(event)
 		}
 	}()
 }
 
 func (r *RobotAssistantAgent) Stop() {
-	fmt.Printf("🛑 %s stopped\n", r.Name)
+	fmt.Println("🛑 RobotAssistantAgent stopped")
 }
 
-func (r *RobotAssistantAgent) NameFunc() string {
-	return r.Name
+func (r *RobotAssistantAgent) Name() string {
+	return "RobotAssistantAgent"
 }
 
 func (r *RobotAssistantAgent) ControlRobot(data map[string]interface{}) {
-	fmt.Printf("[%s] Robot action: %v\n", r.Name, data)
+	fmt.Println("[RobotAssistantAgent] Robot action:", data)
 }
