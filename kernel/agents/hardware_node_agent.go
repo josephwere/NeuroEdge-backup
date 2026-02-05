@@ -1,15 +1,17 @@
+// kernel/agents/hardware_node_agent.go
 package agents
 
 import (
 	"fmt"
-	"neuroedge/kernel/core"
+
+	"neuroedge/kernel/types" // use types instead of core
 )
 
 type HardwareNodeAgent struct {
-	EventBus *core.EventBus
+	EventBus *types.EventBus
 }
 
-func NewHardwareNodeAgent(bus *core.EventBus) *HardwareNodeAgent {
+func NewHardwareNodeAgent(bus *types.EventBus) *HardwareNodeAgent {
 	return &HardwareNodeAgent{
 		EventBus: bus,
 	}
