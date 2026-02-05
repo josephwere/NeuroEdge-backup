@@ -1,15 +1,17 @@
+// kernel/agents/banking_agent.go
 package agents
 
 import (
 	"fmt"
-	"neuroedge/kernel/core"
+
+	"neuroedge/kernel/types" // use types package instead of core
 )
 
 type BankingAgent struct {
-	EventBus *core.EventBus
+	EventBus *types.EventBus
 }
 
-func NewBankingAgent(bus *core.EventBus) *BankingAgent {
+func NewBankingAgent(bus *types.EventBus) *BankingAgent {
 	return &BankingAgent{
 		EventBus: bus,
 	}
