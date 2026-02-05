@@ -2,14 +2,15 @@ package agents
 
 import (
 	"fmt"
-	"neuroedge/kernel/core"
+
+	"neuroedge/kernel/types"
 )
 
 type SmartCityAgent struct {
-	EventBus *core.EventBus
+	EventBus *types.EventBus
 }
 
-func NewSmartCityAgent(bus *core.EventBus) *SmartCityAgent {
+func NewSmartCityAgent(bus *types.EventBus) *SmartCityAgent {
 	return &SmartCityAgent{
 		EventBus: bus,
 	}
@@ -17,12 +18,14 @@ func NewSmartCityAgent(bus *core.EventBus) *SmartCityAgent {
 
 func (s *SmartCityAgent) Start() {
 	fmt.Println("🚀 SmartCityAgent started")
-	ch := make(chan map[string]interface{})
+
+	ch := make(chan types.Event)
 	s.EventBus.Subscribe("city:infrastructure", ch)
+
 	go func() {
 		for event := range ch {
-			fmt.Println("[SmartCityAgent] Infrastructure Event:", event)
-			s.ManageInfrastructure(event)
+			fmt.Println("[SmartCityAgent] Infrastructure Event:", event.Payload)
+			s.ManageInfrastructure(event.Payload)
 		}
 	}()
 }
@@ -35,7 +38,17 @@ func (s *SmartCityAgent) Name() string {
 	return "SmartCityAgent"
 }
 
-// Example: Manage city infrastructure
-func (s *SmartCityAgent) ManageInfrastructure(event map[string]interface{}) {
-	fmt.Println("[SmartCityAgent] Managing infrastructure:", event)
+// Manage city infrastructure
+func (s *SmartCityAgent) ManageInfrastructure(payload map[string]interface{}) {
+	fmt.Println("[SmartCityAgent] Managing infrastructure:", payload)
+
+	// Example: emit decision or status update
+	s.EventBus.Publish(types.Event{
+		Type: "city:action",
+		Payload: map[string]interface{}{
+			"source": "SmartCityAgent",
+			"status": "processed",
+			"data":   payload,
+		},
+	})
 }
