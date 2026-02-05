@@ -1,15 +1,17 @@
+// kernel/agents/neurochain_validator_agent.go
 package agents
 
 import (
 	"fmt"
-	"neuroedge/kernel/core"
+
+	"neuroedge/kernel/types" // use types to break import cycle
 )
 
 type NeuroChainValidatorAgent struct {
-	EventBus *core.EventBus
+	EventBus *types.EventBus
 }
 
-func NewNeuroChainValidatorAgent(bus *core.EventBus) *NeuroChainValidatorAgent {
+func NewNeuroChainValidatorAgent(bus *types.EventBus) *NeuroChainValidatorAgent {
 	return &NeuroChainValidatorAgent{
 		EventBus: bus,
 	}
