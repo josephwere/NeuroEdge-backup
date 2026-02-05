@@ -1,15 +1,16 @@
+// kernel/agents/anti_theft_agent.go
 package agents
 
 import (
 	"fmt"
-	"neuroedge/kernel/core"
+	"neuroedge/kernel/types" // <- use types instead of core
 )
 
 type AntiTheftAgent struct {
-	EventBus *core.EventBus
+	EventBus types.EventBus
 }
 
-func NewAntiTheftAgent(bus *core.EventBus) *AntiTheftAgent {
+func NewAntiTheftAgent(bus types.EventBus) *AntiTheftAgent {
 	return &AntiTheftAgent{
 		EventBus: bus,
 	}
@@ -17,7 +18,7 @@ func NewAntiTheftAgent(bus *core.EventBus) *AntiTheftAgent {
 
 func (a *AntiTheftAgent) Start() {
 	fmt.Println("🚀 AntiTheftAgent started")
-	ch := make(chan map[string]interface{})
+	ch := make(chan types.Event) // <- use types.Event
 	a.EventBus.Subscribe("device:stolen", ch)
 	go func() {
 		for event := range ch {
