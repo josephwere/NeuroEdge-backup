@@ -1,15 +1,17 @@
+// kernel/agents/personal_wdc_assistant_agent.go
 package agents
 
 import (
 	"fmt"
-	"neuroedge/kernel/core"
+
+	"neuroedge/kernel/types" // use types instead of core to avoid cycles
 )
 
 type PersonalWDCAssistantAgent struct {
-	EventBus *core.EventBus
+	EventBus *types.EventBus
 }
 
-func NewPersonalWDCAssistantAgent(bus *core.EventBus) *PersonalWDCAssistantAgent {
+func NewPersonalWDCAssistantAgent(bus *types.EventBus) *PersonalWDCAssistantAgent {
 	return &PersonalWDCAssistantAgent{
 		EventBus: bus,
 	}
