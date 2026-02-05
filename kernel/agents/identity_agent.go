@@ -1,15 +1,17 @@
+// kernel/agents/identity_agent.go
 package agents
 
 import (
 	"fmt"
-	"neuroedge/kernel/core"
+
+	"neuroedge/kernel/types" // use types instead of core
 )
 
 type IdentityAgent struct {
-	EventBus *core.EventBus
+	EventBus *types.EventBus
 }
 
-func NewIdentityAgent(bus *core.EventBus) *IdentityAgent {
+func NewIdentityAgent(bus *types.EventBus) *IdentityAgent {
 	return &IdentityAgent{
 		EventBus: bus,
 	}
