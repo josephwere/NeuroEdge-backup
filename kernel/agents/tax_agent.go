@@ -1,15 +1,17 @@
+// kernel/agents/tax_agent.go
 package agents
 
 import (
 	"fmt"
-	"neuroedge/kernel/core"
+
+	"neuroedge/kernel/types" // ✅ use types instead of core
 )
 
 type TaxAgent struct {
-	EventBus *core.EventBus
+	EventBus *types.EventBus
 }
 
-func NewTaxAgent(bus *core.EventBus) *TaxAgent {
+func NewTaxAgent(bus *types.EventBus) *TaxAgent {
 	return &TaxAgent{
 		EventBus: bus,
 	}
@@ -17,8 +19,10 @@ func NewTaxAgent(bus *core.EventBus) *TaxAgent {
 
 func (t *TaxAgent) Start() {
 	fmt.Println("🚀 TaxAgent started")
+
 	ch := make(chan map[string]interface{})
 	t.EventBus.Subscribe("tax:calculate", ch)
+
 	go func() {
 		for event := range ch {
 			fmt.Println("[TaxAgent] Tax Calculation Event:", event)
