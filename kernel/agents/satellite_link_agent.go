@@ -3,43 +3,42 @@ package agents
 
 import (
 	"fmt"
-	"neuroedge/kernel/core"
+
+	"neuroedge/kernel/types"
 )
 
-// SatelliteLinkAgent manages satellite link events
-type SatelliteLinkAgent struct {
-	EventBus *core.EventBus
-	Name     string
+// RouterMeshAgent manages router mesh updates
+type RouterMeshAgent struct {
+	EventBus *types.EventBus
 }
 
-func NewSatelliteLinkAgent(bus *core.EventBus) *SatelliteLinkAgent {
-	return &SatelliteLinkAgent{
+func NewRouterMeshAgent(bus *types.EventBus) *RouterMeshAgent {
+	return &RouterMeshAgent{
 		EventBus: bus,
-		Name:     "SatelliteLinkAgent",
 	}
 }
 
-func (s *SatelliteLinkAgent) Start() {
-	fmt.Printf("🚀 %s started\n", s.Name)
+func (r *RouterMeshAgent) Start() {
+	fmt.Println("🚀 RouterMeshAgent started")
 	ch := make(chan map[string]interface{})
-	s.EventBus.Subscribe("satellite:link", ch)
+	r.EventBus.Subscribe("mesh:router:update", ch)
 
 	go func() {
 		for event := range ch {
-			fmt.Printf("[%s] Satellite Event: %v\n", s.Name, event)
-			s.ManageLink(event)
+			fmt.Println("[RouterMeshAgent] Router Mesh Event:", event)
+			r.UpdateMesh(event)
 		}
 	}()
 }
 
-func (s *SatelliteLinkAgent) Stop() {
-	fmt.Printf("🛑 %s stopped\n", s.Name)
+func (r *RouterMeshAgent) Stop() {
+	fmt.Println("🛑 RouterMeshAgent stopped")
 }
 
-func (s *SatelliteLinkAgent) NameFunc() string {
-	return s.Name
+func (r *RouterMeshAgent) Name() string {
+	return "RouterMeshAgent"
 }
 
-func (s *SatelliteLinkAgent) ManageLink(data map[string]interface{}) {
-	fmt.Printf("[%s] Satellite link managed: %v\n", s.Name, data)
+func (r *RouterMeshAgent) UpdateMesh(data map[string]interface{}) {
+	fmt.Println("[RouterMeshAgent] Mesh updated:", data)
 }
