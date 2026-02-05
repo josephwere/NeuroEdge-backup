@@ -1,15 +1,17 @@
+// kernel/agents/telecom_agent.go
 package agents
 
 import (
 	"fmt"
-	"neuroedge/kernel/core"
+
+	"neuroedge/kernel/types" // ✅ use types instead of core
 )
 
 type TelecomAgent struct {
-	EventBus *core.EventBus
+	EventBus *types.EventBus
 }
 
-func NewTelecomAgent(bus *core.EventBus) *TelecomAgent {
+func NewTelecomAgent(bus *types.EventBus) *TelecomAgent {
 	return &TelecomAgent{
 		EventBus: bus,
 	}
@@ -17,8 +19,10 @@ func NewTelecomAgent(bus *core.EventBus) *TelecomAgent {
 
 func (t *TelecomAgent) Start() {
 	fmt.Println("🚀 TelecomAgent started")
+
 	ch := make(chan map[string]interface{})
 	t.EventBus.Subscribe("telecom:update", ch)
+
 	go func() {
 		for event := range ch {
 			fmt.Println("[TelecomAgent] Telecom Event:", event)
