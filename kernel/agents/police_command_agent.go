@@ -1,15 +1,16 @@
+// kernel/agents/police_command_agent.go
 package agents
 
 import (
 	"fmt"
-	"neuroedge/kernel/core"
+	"neuroedge/kernel/types" // changed from core to types
 )
 
 type PoliceCommandAgent struct {
-	EventBus *core.EventBus
+	EventBus *types.EventBus
 }
 
-func NewPoliceCommandAgent(bus *core.EventBus) *PoliceCommandAgent {
+func NewPoliceCommandAgent(bus *types.EventBus) *PoliceCommandAgent {
 	return &PoliceCommandAgent{
 		EventBus: bus,
 	}
@@ -19,6 +20,7 @@ func (p *PoliceCommandAgent) Start() {
 	fmt.Println("🚀 PoliceCommandAgent started")
 	ch := make(chan map[string]interface{})
 	p.EventBus.Subscribe("police:command", ch)
+
 	go func() {
 		for event := range ch {
 			fmt.Println("[PoliceCommandAgent] Command Event:", event)
