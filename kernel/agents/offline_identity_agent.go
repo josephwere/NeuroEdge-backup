@@ -1,15 +1,17 @@
+// kernel/agents/offline_identity_agent.go
 package agents
 
 import (
 	"fmt"
-	"neuroedge/kernel/core"
+
+	"neuroedge/kernel/types" // use types instead of core to avoid import cycles
 )
 
 type OfflineIdentityAgent struct {
-	EventBus *core.EventBus
+	EventBus *types.EventBus
 }
 
-func NewOfflineIdentityAgent(bus *core.EventBus) *OfflineIdentityAgent {
+func NewOfflineIdentityAgent(bus *types.EventBus) *OfflineIdentityAgent {
 	return &OfflineIdentityAgent{
 		EventBus: bus,
 	}
