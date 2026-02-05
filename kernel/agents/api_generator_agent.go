@@ -1,15 +1,17 @@
+// kernel/agents/api_generator_agent.go
 package agents
 
 import (
 	"fmt"
-	"neuroedge/kernel/core"
+
+	"neuroedge/kernel/types" // use lightweight types package to avoid cycles
 )
 
 type APIGeneratorAgent struct {
-	EventBus *core.EventBus
+	EventBus *types.EventBus
 }
 
-func NewAPIGeneratorAgent(bus *core.EventBus) *APIGeneratorAgent {
+func NewAPIGeneratorAgent(bus *types.EventBus) *APIGeneratorAgent {
 	return &APIGeneratorAgent{
 		EventBus: bus,
 	}
