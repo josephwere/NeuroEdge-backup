@@ -2,39 +2,39 @@ package agents
 
 import (
 	"fmt"
-	"neuroedge/kernel/core"
+	"neuroedge/kernel/types"
 )
 
-type SocialMediaAgent struct {
-	EventBus *core.EventBus
+type SmartCityAgent struct {
+	EventBus types.EventBus
 }
 
-func NewSocialMediaAgent(bus *core.EventBus) *SocialMediaAgent {
-	return &SocialMediaAgent{
-		EventBus: bus,
-	}
+func NewSmartCityAgent(bus types.EventBus) *SmartCityAgent {
+	return &SmartCityAgent{EventBus: bus}
 }
 
-func (s *SocialMediaAgent) Start() {
-	fmt.Println("🚀 SocialMediaAgent started")
+func (s *SmartCityAgent) Start() {
+	fmt.Println("🚀 SmartCityAgent started")
+
 	ch := make(chan map[string]interface{})
-	s.EventBus.Subscribe("social:monitor", ch)
+	s.EventBus.Subscribe("city:infrastructure", ch)
+
 	go func() {
 		for event := range ch {
-			fmt.Println("[SocialMediaAgent] Social Event:", event)
-			s.MonitorSocial(event)
+			fmt.Println("[SmartCityAgent] Infrastructure Event:", event)
+			s.ManageInfrastructure(event)
 		}
 	}()
 }
 
-func (s *SocialMediaAgent) Stop() {
-	fmt.Println("🛑 SocialMediaAgent stopped")
+func (s *SmartCityAgent) Stop() {
+	fmt.Println("🛑 SmartCityAgent stopped")
 }
 
-func (s *SocialMediaAgent) Name() string {
-	return "SocialMediaAgent"
+func (s *SmartCityAgent) Name() string {
+	return "SmartCityAgent"
 }
 
-func (s *SocialMediaAgent) MonitorSocial(data map[string]interface{}) {
-	fmt.Println("[SocialMediaAgent] Monitoring social media:", data)
+func (s *SmartCityAgent) ManageInfrastructure(event map[string]interface{}) {
+	fmt.Println("[SmartCityAgent] Managing infrastructure:", event)
 }
