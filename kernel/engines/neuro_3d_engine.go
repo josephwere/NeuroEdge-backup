@@ -1,15 +1,17 @@
+// kernel/engines/neuro_3d_engine.go
 package engines
 
 import (
 	"fmt"
-	"neuroedge/kernel/core"
+
+	"neuroedge/kernel/types" // ✅ use types, not core
 )
 
 type Neuro3DEngine struct {
-	EventBus *core.EventBus
+	EventBus *types.EventBus
 }
 
-func NewNeuro3DEngine(bus *core.EventBus) *Neuro3DEngine {
+func NewNeuro3DEngine(bus *types.EventBus) *Neuro3DEngine {
 	return &Neuro3DEngine{
 		EventBus: bus,
 	}
@@ -17,14 +19,13 @@ func NewNeuro3DEngine(bus *core.EventBus) *Neuro3DEngine {
 
 func (n *Neuro3DEngine) Start() {
 	fmt.Println("🚀 Neuro3DEngine started")
-	ch := make(chan map[string]interface{})
-	n.EventBus.Subscribe("3d:render", ch)
-	go func() {
-		for event := range ch {
-			fmt.Println("[Neuro3DEngine] 3D Rendering Event:", event)
-			n.Render3D(event)
-		}
-	}()
+
+	ch := make(chan types.Event)
+
+	n.EventBus.Subscribe("3d:render", func(evt types.Event) {
+		fmt.Println("[Neuro3DEngine] 3D Rendering Event:", evt.Data)
+		n.Render3D(evt.Data)
+	})
 }
 
 func (n *Neuro3DEngine) Stop() {
@@ -35,6 +36,6 @@ func (n *Neuro3DEngine) Name() string {
 	return "Neuro3DEngine"
 }
 
-func (n *Neuro3DEngine) Render3D(data map[string]interface{}) {
+func (n *Neuro3DEngine) Render3D(data interface{}) {
 	fmt.Println("[Neuro3DEngine] 3D Model rendered:", data)
 }
