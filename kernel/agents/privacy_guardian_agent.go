@@ -1,40 +1,45 @@
+// kernel/agents/privacy_guardian_agent.go
 package agents
 
 import (
 	"fmt"
-	"neuroedge/kernel/core"
+	"neuroedge/kernel/types"
 )
 
 type PrivacyGuardianAgent struct {
-	EventBus *core.EventBus
+	EventBus *types.EventBus
+	Name     string
 }
 
-func NewPrivacyGuardianAgent(bus *core.EventBus) *PrivacyGuardianAgent {
+func NewPrivacyGuardianAgent(bus *types.EventBus) *PrivacyGuardianAgent {
 	return &PrivacyGuardianAgent{
 		EventBus: bus,
+		Name:     "PrivacyGuardianAgent",
 	}
 }
 
 func (p *PrivacyGuardianAgent) Start() {
-	fmt.Println("🚀 PrivacyGuardianAgent started")
-	ch := make(chan map[string]interface{})
-	p.EventBus.Subscribe("privacy:alert", ch)
-	go func() {
-		for event := range ch {
-			fmt.Println("[PrivacyGuardianAgent] Privacy Event:", event)
-			p.Protect(event)
-		}
-	}()
+	fmt.Printf("🚀 %s started\n", p.Name)
+	p.EventBus.Subscribe("privacy:alert", p.HandleEvent)
 }
 
 func (p *PrivacyGuardianAgent) Stop() {
-	fmt.Println("🛑 PrivacyGuardianAgent stopped")
+	fmt.Printf("🛑 %s stopped\n", p.Name)
 }
 
 func (p *PrivacyGuardianAgent) Name() string {
-	return "PrivacyGuardianAgent"
+	return p.Name
+}
+
+func (p *PrivacyGuardianAgent) HandleEvent(event string, payload interface{}) {
+	data, ok := payload.(map[string]interface{})
+	if !ok {
+		fmt.Printf("[%s] Invalid payload: %v\n", p.Name, payload)
+		return
+	}
+	p.Protect(data)
 }
 
 func (p *PrivacyGuardianAgent) Protect(data map[string]interface{}) {
-	fmt.Println("[PrivacyGuardianAgent] Protection action:", data)
+	fmt.Printf("[%s] Privacy protection action: %v\n", p.Name, data)
 }
