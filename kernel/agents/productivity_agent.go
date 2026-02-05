@@ -1,3 +1,4 @@
+// kernel/agents/productivity_agent.go
 package agents
 
 import (
@@ -7,34 +8,38 @@ import (
 
 type ProductivityAgent struct {
 	EventBus *core.EventBus
+	Name     string
 }
 
 func NewProductivityAgent(bus *core.EventBus) *ProductivityAgent {
 	return &ProductivityAgent{
 		EventBus: bus,
+		Name:     "ProductivityAgent",
 	}
 }
 
 func (p *ProductivityAgent) Start() {
-	fmt.Println("🚀 ProductivityAgent started")
-	ch := make(chan map[string]interface{})
-	p.EventBus.Subscribe("productivity:update", ch)
-	go func() {
-		for event := range ch {
-			fmt.Println("[ProductivityAgent] Productivity Event:", event)
-			p.OptimizeTasks(event)
-		}
-	}()
+	fmt.Printf("🚀 %s started\n", p.Name)
+	p.EventBus.Subscribe("productivity:update", p.HandleEvent)
 }
 
 func (p *ProductivityAgent) Stop() {
-	fmt.Println("🛑 ProductivityAgent stopped")
+	fmt.Printf("🛑 %s stopped\n", p.Name)
 }
 
 func (p *ProductivityAgent) Name() string {
-	return "ProductivityAgent"
+	return p.Name
+}
+
+func (p *ProductivityAgent) HandleEvent(event string, payload interface{}) {
+	data, ok := payload.(map[string]interface{})
+	if !ok {
+		fmt.Printf("[%s] Invalid payload: %v\n", p.Name, payload)
+		return
+	}
+	p.OptimizeTasks(data)
 }
 
 func (p *ProductivityAgent) OptimizeTasks(data map[string]interface{}) {
-	fmt.Println("[ProductivityAgent] Task optimization:", data)
+	fmt.Printf("[%s] Optimizing tasks: %v\n", p.Name, data)
 }
