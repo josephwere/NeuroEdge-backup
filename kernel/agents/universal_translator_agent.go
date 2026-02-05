@@ -1,15 +1,17 @@
+// kernel/agents/universal_translator_agent.go
 package agents
 
 import (
 	"fmt"
-	"neuroedge/kernel/core"
+
+	"neuroedge/kernel/types" // ✅ switched from core to types
 )
 
 type UniversalTranslatorAgent struct {
-	EventBus *core.EventBus
+	EventBus *types.EventBus
 }
 
-func NewUniversalTranslatorAgent(bus *core.EventBus) *UniversalTranslatorAgent {
+func NewUniversalTranslatorAgent(bus *types.EventBus) *UniversalTranslatorAgent {
 	return &UniversalTranslatorAgent{
 		EventBus: bus,
 	}
@@ -17,8 +19,10 @@ func NewUniversalTranslatorAgent(bus *core.EventBus) *UniversalTranslatorAgent {
 
 func (u *UniversalTranslatorAgent) Start() {
 	fmt.Println("🚀 UniversalTranslatorAgent started")
+
 	ch := make(chan map[string]interface{})
 	u.EventBus.Subscribe("translate:request", ch)
+
 	go func() {
 		for event := range ch {
 			fmt.Println("[UniversalTranslatorAgent] Translation Event:", event)
