@@ -1,15 +1,17 @@
+// kernel/agents/emergency_response_agent.go
 package agents
 
 import (
 	"fmt"
-	"neuroedge/kernel/core"
+
+	"neuroedge/kernel/types" // use types instead of core
 )
 
 type EmergencyResponseAgent struct {
-	EventBus *core.EventBus
+	EventBus *types.EventBus
 }
 
-func NewEmergencyResponseAgent(bus *core.EventBus) *EmergencyResponseAgent {
+func NewEmergencyResponseAgent(bus *types.EventBus) *EmergencyResponseAgent {
 	return &EmergencyResponseAgent{
 		EventBus: bus,
 	}
@@ -35,7 +37,7 @@ func (e *EmergencyResponseAgent) Name() string {
 	return "EmergencyResponseAgent"
 }
 
-// Example: Dispatch response team
+// Dispatch response team
 func (e *EmergencyResponseAgent) DispatchTeam(alert map[string]interface{}) {
 	fmt.Println("[EmergencyResponseAgent] Dispatching emergency team for:", alert)
 }
