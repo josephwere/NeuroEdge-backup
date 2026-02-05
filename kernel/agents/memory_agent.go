@@ -1,15 +1,17 @@
+// kernel/agents/memory_agent.go
 package agents
 
 import (
 	"fmt"
-	"neuroedge/kernel/core"
+
+	"neuroedge/kernel/types" // use types to break core dependency
 )
 
 type MemoryAgent struct {
-	EventBus *core.EventBus
+	EventBus *types.EventBus
 }
 
-func NewMemoryAgent(bus *core.EventBus) *MemoryAgent {
+func NewMemoryAgent(bus *types.EventBus) *MemoryAgent {
 	return &MemoryAgent{
 		EventBus: bus,
 	}
