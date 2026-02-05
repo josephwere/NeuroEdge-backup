@@ -6,13 +6,12 @@ import (
 	"neuroedge/kernel/core"
 )
 
-// RobotAssistantAgent handles robot control commands
+// RobotAssistantAgent handles robot commands
 type RobotAssistantAgent struct {
 	EventBus *core.EventBus
 	Name     string
 }
 
-// NewRobotAssistantAgent creates a new RobotAssistantAgent instance
 func NewRobotAssistantAgent(bus *core.EventBus) *RobotAssistantAgent {
 	return &RobotAssistantAgent{
 		EventBus: bus,
@@ -20,10 +19,8 @@ func NewRobotAssistantAgent(bus *core.EventBus) *RobotAssistantAgent {
 	}
 }
 
-// Start subscribes to robot command events
 func (r *RobotAssistantAgent) Start() {
 	fmt.Printf("🚀 %s started\n", r.Name)
-
 	ch := make(chan map[string]interface{})
 	r.EventBus.Subscribe("robot:command", ch)
 
@@ -35,17 +32,14 @@ func (r *RobotAssistantAgent) Start() {
 	}()
 }
 
-// Stop gracefully stops the agent
 func (r *RobotAssistantAgent) Stop() {
 	fmt.Printf("🛑 %s stopped\n", r.Name)
 }
 
-// NameFunc returns the agent's name
 func (r *RobotAssistantAgent) NameFunc() string {
 	return r.Name
 }
 
-// ControlRobot executes robot commands
 func (r *RobotAssistantAgent) ControlRobot(data map[string]interface{}) {
 	fmt.Printf("[%s] Robot action: %v\n", r.Name, data)
 }
