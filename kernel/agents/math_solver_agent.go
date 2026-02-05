@@ -1,16 +1,18 @@
+// kernel/agents/math_solver_agent.go
 package agents
 
 import (
 	"fmt"
-	"neuroedge/kernel/core"
 	"math"
+
+	"neuroedge/kernel/types" // Use types for EventBus to break cycles
 )
 
 type MathSolverAgent struct {
-	EventBus *core.EventBus
+	EventBus *types.EventBus
 }
 
-func NewMathSolverAgent(bus *core.EventBus) *MathSolverAgent {
+func NewMathSolverAgent(bus *types.EventBus) *MathSolverAgent {
 	return &MathSolverAgent{
 		EventBus: bus,
 	}
