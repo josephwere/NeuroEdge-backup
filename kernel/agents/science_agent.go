@@ -2,14 +2,15 @@ package agents
 
 import (
 	"fmt"
-	"neuroedge/kernel/core"
+
+	"neuroedge/kernel/types"
 )
 
 type ScienceAgent struct {
-	EventBus *core.EventBus
+	EventBus *types.EventBus
 }
 
-func NewScienceAgent(bus *core.EventBus) *ScienceAgent {
+func NewScienceAgent(bus *types.EventBus) *ScienceAgent {
 	return &ScienceAgent{
 		EventBus: bus,
 	}
@@ -17,12 +18,14 @@ func NewScienceAgent(bus *core.EventBus) *ScienceAgent {
 
 func (s *ScienceAgent) Start() {
 	fmt.Println("🚀 ScienceAgent started")
-	ch := make(chan map[string]interface{})
+
+	ch := make(chan types.Event)
 	s.EventBus.Subscribe("science:experiment", ch)
+
 	go func() {
 		for event := range ch {
-			fmt.Println("[ScienceAgent] Science Event:", event)
-			s.RunExperiment(event)
+			fmt.Println("[ScienceAgent] Science Event:", event.Payload)
+			s.RunExperiment(event.Payload)
 		}
 	}()
 }
