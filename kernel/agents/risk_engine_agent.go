@@ -1,45 +1,43 @@
-// kernel/agents/risk_engine_agent.go
 package agents
 
 import (
 	"fmt"
-	"neuroedge/kernel/core"
+
+	"neuroedge/kernel/types"
 )
 
-// ResearchAgent analyzes research data
-type ResearchAgent struct {
-	EventBus *core.EventBus
-	Name     string
+// RiskEngineAgent monitors and analyzes risk
+type RiskEngineAgent struct {
+	EventBus *types.EventBus
 }
 
-func NewResearchAgent(bus *core.EventBus) *ResearchAgent {
-	return &ResearchAgent{
+func NewRiskEngineAgent(bus *types.EventBus) *RiskEngineAgent {
+	return &RiskEngineAgent{
 		EventBus: bus,
-		Name:     "ResearchAgent",
 	}
 }
 
-func (r *ResearchAgent) Start() {
-	fmt.Printf("🚀 %s started\n", r.Name)
+func (r *RiskEngineAgent) Start() {
+	fmt.Println("🚀 RiskEngineAgent started")
 	ch := make(chan map[string]interface{})
-	r.EventBus.Subscribe("research:new", ch)
+	r.EventBus.Subscribe("risk:update", ch)
 
 	go func() {
 		for event := range ch {
-			fmt.Printf("[%s] Research Event: %v\n", r.Name, event)
-			r.AnalyzeResearch(event)
+			fmt.Println("[RiskEngineAgent] Risk Event:", event)
+			r.AnalyzeRisk(event)
 		}
 	}()
 }
 
-func (r *ResearchAgent) Stop() {
-	fmt.Printf("🛑 %s stopped\n", r.Name)
+func (r *RiskEngineAgent) Stop() {
+	fmt.Println("🛑 RiskEngineAgent stopped")
 }
 
-func (r *ResearchAgent) NameFunc() string {
-	return r.Name
+func (r *RiskEngineAgent) Name() string {
+	return "RiskEngineAgent"
 }
 
-func (r *ResearchAgent) AnalyzeResearch(data map[string]interface{}) {
-	fmt.Printf("[%s] Analyzing research data: %v\n", r.Name, data)
+func (r *RiskEngineAgent) AnalyzeRisk(data map[string]interface{}) {
+	fmt.Println("[RiskEngineAgent] Risk analysis executed:", data)
 }
