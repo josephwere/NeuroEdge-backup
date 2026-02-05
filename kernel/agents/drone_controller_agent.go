@@ -1,15 +1,17 @@
+// kernel/agents/drone_controller_agent.go
 package agents
 
 import (
 	"fmt"
-	"neuroedge/kernel/core"
+
+	"neuroedge/kernel/types" // use types instead of core
 )
 
 type DroneControllerAgent struct {
-	EventBus *core.EventBus
+	EventBus *types.EventBus
 }
 
-func NewDroneControllerAgent(bus *core.EventBus) *DroneControllerAgent {
+func NewDroneControllerAgent(bus *types.EventBus) *DroneControllerAgent {
 	return &DroneControllerAgent{
 		EventBus: bus,
 	}
@@ -35,7 +37,7 @@ func (d *DroneControllerAgent) Name() string {
 	return "DroneControllerAgent"
 }
 
-// Example: Execute drone commands
+// Execute drone commands
 func (d *DroneControllerAgent) ExecuteCommand(cmd map[string]interface{}) {
 	fmt.Println("[DroneControllerAgent] Executing drone command:", cmd)
 }
