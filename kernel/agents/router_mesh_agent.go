@@ -1,3 +1,4 @@
+// kernel/agents/router_mesh_agent.go
 package agents
 
 import (
@@ -5,36 +6,46 @@ import (
 	"neuroedge/kernel/core"
 )
 
+// RouterMeshAgent manages router mesh updates
 type RouterMeshAgent struct {
 	EventBus *core.EventBus
+	Name     string
 }
 
+// NewRouterMeshAgent creates a new RouterMeshAgent instance
 func NewRouterMeshAgent(bus *core.EventBus) *RouterMeshAgent {
 	return &RouterMeshAgent{
 		EventBus: bus,
+		Name:     "RouterMeshAgent",
 	}
 }
 
+// Start subscribes to router mesh update events
 func (r *RouterMeshAgent) Start() {
-	fmt.Println("🚀 RouterMeshAgent started")
+	fmt.Printf("🚀 %s started\n", r.Name)
+
 	ch := make(chan map[string]interface{})
 	r.EventBus.Subscribe("mesh:router:update", ch)
+
 	go func() {
 		for event := range ch {
-			fmt.Println("[RouterMeshAgent] Router Mesh Event:", event)
+			fmt.Printf("[%s] Router Mesh Event: %v\n", r.Name, event)
 			r.UpdateMesh(event)
 		}
 	}()
 }
 
+// Stop gracefully stops the agent
 func (r *RouterMeshAgent) Stop() {
-	fmt.Println("🛑 RouterMeshAgent stopped")
+	fmt.Printf("🛑 %s stopped\n", r.Name)
 }
 
-func (r *RouterMeshAgent) Name() string {
-	return "RouterMeshAgent"
+// NameFunc returns the agent's name
+func (r *RouterMeshAgent) NameFunc() string {
+	return r.Name
 }
 
+// UpdateMesh processes router mesh updates
 func (r *RouterMeshAgent) UpdateMesh(data map[string]interface{}) {
-	fmt.Println("[RouterMeshAgent] Mesh updated:", data)
+	fmt.Printf("[%s] Mesh updated: %v\n", r.Name, data)
 }
