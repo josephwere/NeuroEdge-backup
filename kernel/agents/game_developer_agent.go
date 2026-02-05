@@ -1,15 +1,17 @@
+// kernel/agents/game_developer_agent.go
 package agents
 
 import (
 	"fmt"
-	"neuroedge/kernel/core"
+
+	"neuroedge/kernel/types" // use types instead of core
 )
 
 type GameDeveloperAgent struct {
-	EventBus *core.EventBus
+	EventBus *types.EventBus
 }
 
-func NewGameDeveloperAgent(bus *core.EventBus) *GameDeveloperAgent {
+func NewGameDeveloperAgent(bus *types.EventBus) *GameDeveloperAgent {
 	return &GameDeveloperAgent{
 		EventBus: bus,
 	}
