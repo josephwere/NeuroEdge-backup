@@ -1,15 +1,17 @@
+// kernel/agents/hospital_workflow_agent.go
 package agents
 
 import (
 	"fmt"
-	"neuroedge/kernel/core"
+
+	"neuroedge/kernel/types" // use types instead of core
 )
 
 type HospitalWorkflowAgent struct {
-	EventBus *core.EventBus
+	EventBus *types.EventBus
 }
 
-func NewHospitalWorkflowAgent(bus *core.EventBus) *HospitalWorkflowAgent {
+func NewHospitalWorkflowAgent(bus *types.EventBus) *HospitalWorkflowAgent {
 	return &HospitalWorkflowAgent{
 		EventBus: bus,
 	}
