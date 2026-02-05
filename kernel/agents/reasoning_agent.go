@@ -1,52 +1,53 @@
+// kernel/agents/reasoning_agent.go
 package agents
 
 import (
 	"fmt"
 	"time"
 
-	"NeuroEdge/kernel/core"
+	"neuroedge/kernel/core"
 )
 
 // ReasoningAgent performs high-level decision-making
 type ReasoningAgent struct {
-	name string
+	EventBus *core.EventBus
+	Name     string
 }
 
 // NewReasoningAgent creates a new ReasoningAgent instance
-func NewReasoningAgent() *ReasoningAgent {
-	return &ReasoningAgent{name: "ReasoningAgent"}
+func NewReasoningAgent(bus *core.EventBus) *ReasoningAgent {
+	return &ReasoningAgent{
+		EventBus: bus,
+		Name:     "ReasoningAgent",
+	}
 }
 
-// Name returns the agent name
-func (a *ReasoningAgent) Name() string {
-	return a.name
-}
-
-// Start subscribes to events and begins reasoning
+// Start subscribes to TaskResult events and begins reasoning
 func (a *ReasoningAgent) Start() {
-	core.Info(a.Name() + " starting...")
+	fmt.Printf("🚀 %s started\n", a.Name)
 
-	// Subscribe to TaskResult events from TaskAgent
 	ch := make(chan core.Event)
-	core.GetKernel().EventBus.Subscribe("TaskResult", ch)
+	a.EventBus.Subscribe("TaskResult", ch)
 
 	go func() {
 		for evt := range ch {
-			core.Info(fmt.Sprintf("%s received task result: %v", a.Name(), evt.Data))
-			// Perform reasoning (mock logic)
-			time.Sleep(500 * time.Millisecond) // simulate decision process
+			fmt.Printf("[%s] received task result: %v\n", a.Name, evt.Data)
+			
+			// Simulate reasoning process
+			time.Sleep(500 * time.Millisecond)
 
-			// Emit reasoning result
-			core.GetKernel().EventBus.Publish(core.Event{
+			result := fmt.Sprintf("%s reasoning completed on: %v", a.Name, evt.Data)
+			a.EventBus.Publish(core.Event{
 				Name: "DecisionEvent",
-				Data: fmt.Sprintf("%s reasoning completed on: %v", a.Name(), evt.Data),
+				Data: result,
 			})
-			core.Info(fmt.Sprintf("%s published reasoning result.", a.Name()))
+
+			fmt.Printf("[%s] published reasoning result: %s\n", a.Name, result)
 		}
 	}()
 }
 
 // Stop gracefully stops the agent
 func (a *ReasoningAgent) Stop() {
-	core.Info(a.Name() + " stopped.")
+	fmt.Printf("🛑 %s stopped\n", a.Name)
 }
