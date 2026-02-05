@@ -1,15 +1,17 @@
+// kernel/agents/medical_doctor_agent.go
 package agents
 
 import (
 	"fmt"
-	"neuroedge/kernel/core"
+
+	"neuroedge/kernel/types" // use types to break core dependency
 )
 
 type MedicalDoctorAgent struct {
-	EventBus *core.EventBus
+	EventBus *types.EventBus
 }
 
-func NewMedicalDoctorAgent(bus *core.EventBus) *MedicalDoctorAgent {
+func NewMedicalDoctorAgent(bus *types.EventBus) *MedicalDoctorAgent {
 	return &MedicalDoctorAgent{
 		EventBus: bus,
 	}
