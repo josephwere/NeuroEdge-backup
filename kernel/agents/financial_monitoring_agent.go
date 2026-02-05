@@ -1,15 +1,17 @@
+// kernel/agents/financial_monitoring_agent.go
 package agents
 
 import (
 	"fmt"
-	"neuroedge/kernel/core"
+
+	"neuroedge/kernel/types" // use types instead of core
 )
 
 type FinancialMonitoringAgent struct {
-	EventBus *core.EventBus
+	EventBus *types.EventBus
 }
 
-func NewFinancialMonitoringAgent(bus *core.EventBus) *FinancialMonitoringAgent {
+func NewFinancialMonitoringAgent(bus *types.EventBus) *FinancialMonitoringAgent {
 	return &FinancialMonitoringAgent{
 		EventBus: bus,
 	}
