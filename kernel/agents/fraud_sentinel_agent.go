@@ -1,15 +1,17 @@
+// kernel/agents/fraud_sentinel_agent.go
 package agents
 
 import (
 	"fmt"
-	"neuroedge/kernel/core"
+
+	"neuroedge/kernel/types" // use types instead of core
 )
 
 type FraudSentinelAgent struct {
-	EventBus *core.EventBus
+	EventBus *types.EventBus
 }
 
-func NewFraudSentinelAgent(bus *core.EventBus) *FraudSentinelAgent {
+func NewFraudSentinelAgent(bus *types.EventBus) *FraudSentinelAgent {
 	return &FraudSentinelAgent{
 		EventBus: bus,
 	}
