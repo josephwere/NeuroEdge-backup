@@ -1,15 +1,17 @@
+// kernel/agents/verification_officer_agent.go
 package agents
 
 import (
 	"fmt"
-	"neuroedge/kernel/core"
+
+	"neuroedge/kernel/types" // ✅ switched from core to types
 )
 
 type VerificationOfficerAgent struct {
-	EventBus *core.EventBus
+	EventBus *types.EventBus
 }
 
-func NewVerificationOfficerAgent(bus *core.EventBus) *VerificationOfficerAgent {
+func NewVerificationOfficerAgent(bus *types.EventBus) *VerificationOfficerAgent {
 	return &VerificationOfficerAgent{
 		EventBus: bus,
 	}
@@ -17,8 +19,10 @@ func NewVerificationOfficerAgent(bus *core.EventBus) *VerificationOfficerAgent {
 
 func (v *VerificationOfficerAgent) Start() {
 	fmt.Println("🚀 VerificationOfficerAgent started")
+
 	ch := make(chan map[string]interface{})
 	v.EventBus.Subscribe("verification:update", ch)
+
 	go func() {
 		for event := range ch {
 			fmt.Println("[VerificationOfficerAgent] Verification Event:", event)
