@@ -1,15 +1,17 @@
+// kernel/agents/device_guardian_agent.go
 package agents
 
 import (
 	"fmt"
-	"neuroedge/kernel/core"
+
+	"neuroedge/kernel/types" // use types instead of core
 )
 
 type DeviceGuardianAgent struct {
-	EventBus *core.EventBus
+	EventBus *types.EventBus
 }
 
-func NewDeviceGuardianAgent(bus *core.EventBus) *DeviceGuardianAgent {
+func NewDeviceGuardianAgent(bus *types.EventBus) *DeviceGuardianAgent {
 	return &DeviceGuardianAgent{
 		EventBus: bus,
 	}
