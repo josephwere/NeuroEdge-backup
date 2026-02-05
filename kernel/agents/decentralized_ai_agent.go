@@ -1,15 +1,17 @@
+// kernel/agents/decentralized_ai_agent.go
 package agents
 
 import (
 	"fmt"
-	"neuroedge/kernel/core"
+
+	"neuroedge/kernel/types" // use types instead of core
 )
 
 type DecentralizedAIAgent struct {
-	EventBus *core.EventBus
+	EventBus *types.EventBus
 }
 
-func NewDecentralizedAIAgent(bus *core.EventBus) *DecentralizedAIAgent {
+func NewDecentralizedAIAgent(bus *types.EventBus) *DecentralizedAIAgent {
 	return &DecentralizedAIAgent{
 		EventBus: bus,
 	}
