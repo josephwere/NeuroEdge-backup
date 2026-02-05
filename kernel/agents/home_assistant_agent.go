@@ -1,15 +1,17 @@
+// kernel/agents/home_assistant_agent.go
 package agents
 
 import (
 	"fmt"
-	"neuroedge/kernel/core"
+
+	"neuroedge/kernel/types" // use types instead of core
 )
 
 type HomeAssistantAgent struct {
-	EventBus *core.EventBus
+	EventBus *types.EventBus
 }
 
-func NewHomeAssistantAgent(bus *core.EventBus) *HomeAssistantAgent {
+func NewHomeAssistantAgent(bus *types.EventBus) *HomeAssistantAgent {
 	return &HomeAssistantAgent{
 		EventBus: bus,
 	}
