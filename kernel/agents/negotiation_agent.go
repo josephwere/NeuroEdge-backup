@@ -1,15 +1,17 @@
+// kernel/agents/negotiation_agent.go
 package agents
 
 import (
 	"fmt"
-	"neuroedge/kernel/core"
+
+	"neuroedge/kernel/types" // use types instead of core to avoid cycle
 )
 
 type NegotiationAgent struct {
-	EventBus *core.EventBus
+	EventBus *types.EventBus
 }
 
-func NewNegotiationAgent(bus *core.EventBus) *NegotiationAgent {
+func NewNegotiationAgent(bus *types.EventBus) *NegotiationAgent {
 	return &NegotiationAgent{
 		EventBus: bus,
 	}
