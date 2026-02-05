@@ -1,15 +1,17 @@
+// kernel/agents/lawyer_agent.go
 package agents
 
 import (
 	"fmt"
-	"neuroedge/kernel/core"
+
+	"neuroedge/kernel/types" // use types instead of core
 )
 
 type LawyerAgent struct {
-	EventBus *core.EventBus
+	EventBus *types.EventBus
 }
 
-func NewLawyerAgent(bus *core.EventBus) *LawyerAgent {
+func NewLawyerAgent(bus *types.EventBus) *LawyerAgent {
 	return &LawyerAgent{
 		EventBus: bus,
 	}
