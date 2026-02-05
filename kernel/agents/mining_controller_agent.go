@@ -1,15 +1,17 @@
+// kernel/agents/mining_controller_agent.go
 package agents
 
 import (
 	"fmt"
-	"neuroedge/kernel/core"
+
+	"neuroedge/kernel/types" // use types to avoid core import cycle
 )
 
 type MiningControllerAgent struct {
-	EventBus *core.EventBus
+	EventBus *types.EventBus
 }
 
-func NewMiningControllerAgent(bus *core.EventBus) *MiningControllerAgent {
+func NewMiningControllerAgent(bus *types.EventBus) *MiningControllerAgent {
 	return &MiningControllerAgent{
 		EventBus: bus,
 	}
