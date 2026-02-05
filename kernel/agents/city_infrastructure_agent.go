@@ -1,15 +1,17 @@
+// kernel/agents/city_infrastructure_agent.go
 package agents
 
 import (
 	"fmt"
-	"neuroedge/kernel/core"
+
+	"neuroedge/kernel/types" // use types instead of core
 )
 
 type CityInfrastructureAgent struct {
-	EventBus *core.EventBus
+	EventBus *types.EventBus
 }
 
-func NewCityInfrastructureAgent(bus *core.EventBus) *CityInfrastructureAgent {
+func NewCityInfrastructureAgent(bus *types.EventBus) *CityInfrastructureAgent {
 	return &CityInfrastructureAgent{
 		EventBus: bus,
 	}
