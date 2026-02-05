@@ -1,15 +1,17 @@
+// kernel/agents/government_agent.go
 package agents
 
 import (
 	"fmt"
-	"neuroedge/kernel/core"
+
+	"neuroedge/kernel/types" // use types instead of core
 )
 
 type GovernmentAgent struct {
-	EventBus *core.EventBus
+	EventBus *types.EventBus
 }
 
-func NewGovernmentAgent(bus *core.EventBus) *GovernmentAgent {
+func NewGovernmentAgent(bus *types.EventBus) *GovernmentAgent {
 	return &GovernmentAgent{
 		EventBus: bus,
 	}
