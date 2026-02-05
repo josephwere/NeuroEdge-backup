@@ -1,17 +1,20 @@
+// kernel/agents/planning_agent.go
 package agents
 
 import (
 	"fmt"
-	"neuroedge/kernel/core"
+	"neuroedge/kernel/types" // use types instead of core
 )
 
 type PlanningAgent struct {
-	Name string
+	Name     string
+	EventBus *types.EventBus
 }
 
-func NewPlanningAgent() *PlanningAgent {
+func NewPlanningAgent(bus *types.EventBus) *PlanningAgent {
 	return &PlanningAgent{
-		Name: "PlanningAgent",
+		Name:     "PlanningAgent",
+		EventBus: bus,
 	}
 }
 
@@ -23,15 +26,21 @@ func (p *PlanningAgent) Plan(task string) string {
 
 func (p *PlanningAgent) Start() {
 	fmt.Printf("[%s] listening for tasks to plan...\n", p.Name)
-	core.EventBus.Subscribe("task:new", p.HandleEvent)
+	ch := make(chan map[string]interface{})
+	p.EventBus.Subscribe("task:new", ch)
+
+	go func() {
+		for event := range ch {
+			task := fmt.Sprintf("%v", event["task"])
+			p.HandleEvent(task)
+		}
+	}()
 }
 
-func (p *PlanningAgent) HandleEvent(event string, payload interface{}) {
-	task := fmt.Sprintf("%v", payload)
-	core.ExecuteWithGuard(p.Name, task, func(t string) {
-		p.Plan(t)
-		core.EventBus.Publish("task:execute", t)
-	})
+func (p *PlanningAgent) HandleEvent(task string) {
+	fmt.Printf("[%s] executing plan for task: %s\n", p.Name, task)
+	// Example: after planning, you can publish execution event
+	p.EventBus.Publish("task:execute", map[string]interface{}{"task": task})
 }
 
 func (p *PlanningAgent) GetName() string {
