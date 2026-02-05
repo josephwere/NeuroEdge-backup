@@ -1,15 +1,17 @@
+// kernel/agents/border_control_agent.go
 package agents
 
 import (
 	"fmt"
-	"neuroedge/kernel/core"
+
+	"neuroedge/kernel/types" // use types instead of core
 )
 
 type BorderControlAgent struct {
-	EventBus *core.EventBus
+	EventBus *types.EventBus
 }
 
-func NewBorderControlAgent(bus *core.EventBus) *BorderControlAgent {
+func NewBorderControlAgent(bus *types.EventBus) *BorderControlAgent {
 	return &BorderControlAgent{
 		EventBus: bus,
 	}
