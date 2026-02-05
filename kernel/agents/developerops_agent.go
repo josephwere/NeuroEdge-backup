@@ -1,15 +1,17 @@
+// kernel/agents/developerops_agent.go
 package agents
 
 import (
 	"fmt"
-	"neuroedge/kernel/core"
+
+	"neuroedge/kernel/types" // use types instead of core
 )
 
 type DeveloperOpsAgent struct {
-	EventBus *core.EventBus
+	EventBus *types.EventBus
 }
 
-func NewDeveloperOpsAgent(bus *core.EventBus) *DeveloperOpsAgent {
+func NewDeveloperOpsAgent(bus *types.EventBus) *DeveloperOpsAgent {
 	return &DeveloperOpsAgent{
 		EventBus: bus,
 	}
