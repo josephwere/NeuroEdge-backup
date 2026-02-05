@@ -1,15 +1,17 @@
+// kernel/agents/manufacturing_agent.go
 package agents
 
 import (
 	"fmt"
-	"neuroedge/kernel/core"
+
+	"neuroedge/kernel/types" // Use types for EventBus to break cycles
 )
 
 type ManufacturingAgent struct {
-	EventBus *core.EventBus
+	EventBus *types.EventBus
 }
 
-func NewManufacturingAgent(bus *core.EventBus) *ManufacturingAgent {
+func NewManufacturingAgent(bus *types.EventBus) *ManufacturingAgent {
 	return &ManufacturingAgent{
 		EventBus: bus,
 	}
