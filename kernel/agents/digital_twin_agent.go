@@ -1,15 +1,17 @@
+// kernel/agents/digital_twin_agent.go
 package agents
 
 import (
 	"fmt"
-	"neuroedge/kernel/core"
+
+	"neuroedge/kernel/types" // use types instead of core
 )
 
 type DigitalTwinAgent struct {
-	EventBus *core.EventBus
+	EventBus *types.EventBus
 }
 
-func NewDigitalTwinAgent(bus *core.EventBus) *DigitalTwinAgent {
+func NewDigitalTwinAgent(bus *types.EventBus) *DigitalTwinAgent {
 	return &DigitalTwinAgent{
 		EventBus: bus,
 	}
@@ -18,7 +20,7 @@ func NewDigitalTwinAgent(bus *core.EventBus) *DigitalTwinAgent {
 func (d *DigitalTwinAgent) Start() {
 	fmt.Println("🚀 DigitalTwinAgent started")
 	ch := make(chan map[string]interface{})
-	d.EventBus.Subscribe("digital:twin:update", ch)
+	d.EventBus.Subscribe("digitaltwin:update", ch)
 	go func() {
 		for event := range ch {
 			fmt.Println("[DigitalTwinAgent] Digital Twin Event:", event)
@@ -36,5 +38,5 @@ func (d *DigitalTwinAgent) Name() string {
 }
 
 func (d *DigitalTwinAgent) SyncTwin(data map[string]interface{}) {
-	fmt.Println("[DigitalTwinAgent] Digital twin synced:", data)
+	fmt.Println("[DigitalTwinAgent] Syncing digital twin:", data)
 }
