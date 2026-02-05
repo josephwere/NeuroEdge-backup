@@ -1,15 +1,17 @@
+// kernel/agents/app_builder_agent.go
 package agents
 
 import (
 	"fmt"
-	"neuroedge/kernel/core"
+
+	"neuroedge/kernel/types" // lightweight types package to break cycles
 )
 
 type AppBuilderAgent struct {
-	EventBus *core.EventBus
+	EventBus *types.EventBus
 }
 
-func NewAppBuilderAgent(bus *core.EventBus) *AppBuilderAgent {
+func NewAppBuilderAgent(bus *types.EventBus) *AppBuilderAgent {
 	return &AppBuilderAgent{
 		EventBus: bus,
 	}
