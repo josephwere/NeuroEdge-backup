@@ -1,15 +1,17 @@
+// kernel/agents/logistics_agent.go
 package agents
 
 import (
 	"fmt"
-	"neuroedge/kernel/core"
+
+	"neuroedge/kernel/types" // use types instead of core
 )
 
 type LogisticsAgent struct {
-	EventBus *core.EventBus
+	EventBus *types.EventBus
 }
 
-func NewLogisticsAgent(bus *core.EventBus) *LogisticsAgent {
+func NewLogisticsAgent(bus *types.EventBus) *LogisticsAgent {
 	return &LogisticsAgent{
 		EventBus: bus,
 	}
