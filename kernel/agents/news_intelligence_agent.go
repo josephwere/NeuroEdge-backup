@@ -1,15 +1,17 @@
+// kernel/agents/news_intelligence_agent.go
 package agents
 
 import (
 	"fmt"
-	"neuroedge/kernel/core"
+
+	"neuroedge/kernel/types" // use types to break import cycle
 )
 
 type NewsIntelligenceAgent struct {
-	EventBus *core.EventBus
+	EventBus *types.EventBus
 }
 
-func NewNewsIntelligenceAgent(bus *core.EventBus) *NewsIntelligenceAgent {
+func NewNewsIntelligenceAgent(bus *types.EventBus) *NewsIntelligenceAgent {
 	return &NewsIntelligenceAgent{
 		EventBus: bus,
 	}
