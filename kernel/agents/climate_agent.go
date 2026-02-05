@@ -1,15 +1,17 @@
+// kernel/agents/climate_agent.go
 package agents
 
 import (
 	"fmt"
-	"neuroedge/kernel/core"
+
+	"neuroedge/kernel/types" // use types instead of core
 )
 
 type ClimateAgent struct {
-	EventBus *core.EventBus
+	EventBus *types.EventBus
 }
 
-func NewClimateAgent(bus *core.EventBus) *ClimateAgent {
+func NewClimateAgent(bus *types.EventBus) *ClimateAgent {
 	return &ClimateAgent{
 		EventBus: bus,
 	}
