@@ -1,15 +1,17 @@
+// kernel/agents/code_quality_agent.go
 package agents
 
 import (
 	"fmt"
-	"neuroedge/kernel/core"
+
+	"neuroedge/kernel/types" // use types instead of core
 )
 
 type CodeQualityAgent struct {
-	EventBus *core.EventBus
+	EventBus *types.EventBus
 }
 
-func NewCodeQualityAgent(bus *core.EventBus) *CodeQualityAgent {
+func NewCodeQualityAgent(bus *types.EventBus) *CodeQualityAgent {
 	return &CodeQualityAgent{
 		EventBus: bus,
 	}
