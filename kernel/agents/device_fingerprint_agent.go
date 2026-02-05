@@ -1,15 +1,17 @@
+// kernel/agents/device_fingerprint_agent.go
 package agents
 
 import (
 	"fmt"
-	"neuroedge/kernel/core"
+
+	"neuroedge/kernel/types" // use types instead of core
 )
 
 type DeviceFingerprintAgent struct {
-	EventBus *core.EventBus
+	EventBus *types.EventBus
 }
 
-func NewDeviceFingerprintAgent(bus *core.EventBus) *DeviceFingerprintAgent {
+func NewDeviceFingerprintAgent(bus *types.EventBus) *DeviceFingerprintAgent {
 	return &DeviceFingerprintAgent{
 		EventBus: bus,
 	}
