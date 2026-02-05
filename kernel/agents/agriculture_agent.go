@@ -1,15 +1,16 @@
+// kernel/agents/agriculture_agent.go
 package agents
 
 import (
 	"fmt"
-	"neuroedge/kernel/core"
+	"neuroedge/kernel/types" // <-- changed
 )
 
 type AgricultureAgent struct {
-	EventBus *core.EventBus
+	EventBus types.EventBus
 }
 
-func NewAgricultureAgent(bus *core.EventBus) *AgricultureAgent {
+func NewAgricultureAgent(bus types.EventBus) *AgricultureAgent {
 	return &AgricultureAgent{
 		EventBus: bus,
 	}
@@ -17,7 +18,7 @@ func NewAgricultureAgent(bus *core.EventBus) *AgricultureAgent {
 
 func (a *AgricultureAgent) Start() {
 	fmt.Println("🚀 AgricultureAgent started")
-	ch := make(chan map[string]interface{})
+	ch := make(chan types.Event)
 	a.EventBus.Subscribe("agriculture:update", ch)
 	go func() {
 		for event := range ch {
@@ -35,6 +36,6 @@ func (a *AgricultureAgent) Name() string {
 	return "AgricultureAgent"
 }
 
-func (a *AgricultureAgent) OptimizeFarm(data map[string]interface{}) {
+func (a *AgricultureAgent) OptimizeFarm(data types.Event) {
 	fmt.Println("[AgricultureAgent] Optimizing farm:", data)
 }
