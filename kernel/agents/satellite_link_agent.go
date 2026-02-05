@@ -12,7 +12,6 @@ type SatelliteLinkAgent struct {
 	Name     string
 }
 
-// NewSatelliteLinkAgent creates a new SatelliteLinkAgent instance
 func NewSatelliteLinkAgent(bus *core.EventBus) *SatelliteLinkAgent {
 	return &SatelliteLinkAgent{
 		EventBus: bus,
@@ -20,10 +19,8 @@ func NewSatelliteLinkAgent(bus *core.EventBus) *SatelliteLinkAgent {
 	}
 }
 
-// Start subscribes to satellite link events
 func (s *SatelliteLinkAgent) Start() {
 	fmt.Printf("🚀 %s started\n", s.Name)
-
 	ch := make(chan map[string]interface{})
 	s.EventBus.Subscribe("satellite:link", ch)
 
@@ -35,17 +32,14 @@ func (s *SatelliteLinkAgent) Start() {
 	}()
 }
 
-// Stop gracefully stops the agent
 func (s *SatelliteLinkAgent) Stop() {
 	fmt.Printf("🛑 %s stopped\n", s.Name)
 }
 
-// NameFunc returns the agent's name
 func (s *SatelliteLinkAgent) NameFunc() string {
 	return s.Name
 }
 
-// ManageLink processes satellite link updates
 func (s *SatelliteLinkAgent) ManageLink(data map[string]interface{}) {
 	fmt.Printf("[%s] Satellite link managed: %v\n", s.Name, data)
 }
