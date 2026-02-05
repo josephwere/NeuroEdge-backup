@@ -1,23 +1,26 @@
+// kernel/agents/policy_ethics_agent.go
 package agents
 
 import (
 	"fmt"
-	"neuroedge/kernel/core"
+	"neuroedge/kernel/types" // switched from core to types
 )
 
 type PolicyEthicsAgent struct {
-	Name string
+	Name     string
+	EventBus *types.EventBus
 }
 
-func NewPolicyEthicsAgent() *PolicyEthicsAgent {
+func NewPolicyEthicsAgent(bus *types.EventBus) *PolicyEthicsAgent {
 	return &PolicyEthicsAgent{
-		Name: "PolicyEthicsAgent",
+		Name:     "PolicyEthicsAgent",
+		EventBus: bus,
 	}
 }
 
 func (p *PolicyEthicsAgent) Start() {
 	fmt.Printf("[%s] monitoring tasks for policy and ethics...\n", p.Name)
-	core.EventBus.Subscribe("task:new", p.HandleEvent)
+	p.EventBus.Subscribe("task:new", p.HandleEvent)
 }
 
 func (p *PolicyEthicsAgent) HandleEvent(event string, payload interface{}) {
