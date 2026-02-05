@@ -2,7 +2,7 @@ package agents
 
 import (
 	"fmt"
-	"NeuroEdge/kernel/core"
+	"neuroedge/kernel/core"
 )
 
 type PolicyEthicsAgent struct {
