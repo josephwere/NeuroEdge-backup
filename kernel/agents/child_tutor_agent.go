@@ -1,15 +1,17 @@
+// kernel/agents/child_tutor_agent.go
 package agents
 
 import (
 	"fmt"
-	"neuroedge/kernel/core"
+
+	"neuroedge/kernel/types" // use types instead of core
 )
 
 type ChildTutorAgent struct {
-	EventBus *core.EventBus
+	EventBus *types.EventBus
 }
 
-func NewChildTutorAgent(bus *core.EventBus) *ChildTutorAgent {
+func NewChildTutorAgent(bus *types.EventBus) *ChildTutorAgent {
 	return &ChildTutorAgent{
 		EventBus: bus,
 	}
