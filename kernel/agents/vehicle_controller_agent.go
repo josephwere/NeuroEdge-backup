@@ -1,15 +1,17 @@
+// kernel/agents/vehicle_controller_agent.go
 package agents
 
 import (
 	"fmt"
-	"neuroedge/kernel/core"
+
+	"neuroedge/kernel/types" // ✅ switched from core to types
 )
 
 type VehicleControllerAgent struct {
-	EventBus *core.EventBus
+	EventBus *types.EventBus
 }
 
-func NewVehicleControllerAgent(bus *core.EventBus) *VehicleControllerAgent {
+func NewVehicleControllerAgent(bus *types.EventBus) *VehicleControllerAgent {
 	return &VehicleControllerAgent{
 		EventBus: bus,
 	}
@@ -17,8 +19,10 @@ func NewVehicleControllerAgent(bus *core.EventBus) *VehicleControllerAgent {
 
 func (v *VehicleControllerAgent) Start() {
 	fmt.Println("🚀 VehicleControllerAgent started")
+
 	ch := make(chan map[string]interface{})
 	v.EventBus.Subscribe("vehicle:control:update", ch)
+
 	go func() {
 		for event := range ch {
 			fmt.Println("[VehicleControllerAgent] Vehicle Event:", event)
