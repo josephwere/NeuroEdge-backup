@@ -12,7 +12,6 @@ type RouterMeshAgent struct {
 	Name     string
 }
 
-// NewRouterMeshAgent creates a new RouterMeshAgent instance
 func NewRouterMeshAgent(bus *core.EventBus) *RouterMeshAgent {
 	return &RouterMeshAgent{
 		EventBus: bus,
@@ -20,10 +19,8 @@ func NewRouterMeshAgent(bus *core.EventBus) *RouterMeshAgent {
 	}
 }
 
-// Start subscribes to router mesh update events
 func (r *RouterMeshAgent) Start() {
 	fmt.Printf("🚀 %s started\n", r.Name)
-
 	ch := make(chan map[string]interface{})
 	r.EventBus.Subscribe("mesh:router:update", ch)
 
@@ -35,17 +32,14 @@ func (r *RouterMeshAgent) Start() {
 	}()
 }
 
-// Stop gracefully stops the agent
 func (r *RouterMeshAgent) Stop() {
 	fmt.Printf("🛑 %s stopped\n", r.Name)
 }
 
-// NameFunc returns the agent's name
 func (r *RouterMeshAgent) NameFunc() string {
 	return r.Name
 }
 
-// UpdateMesh processes router mesh updates
 func (r *RouterMeshAgent) UpdateMesh(data map[string]interface{}) {
 	fmt.Printf("[%s] Mesh updated: %v\n", r.Name, data)
 }
