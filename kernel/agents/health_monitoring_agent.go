@@ -1,15 +1,17 @@
+// kernel/agents/health_monitoring_agent.go
 package agents
 
 import (
 	"fmt"
-	"neuroedge/kernel/core"
+
+	"neuroedge/kernel/types" // use types instead of core
 )
 
 type HealthMonitoringAgent struct {
-	EventBus *core.EventBus
+	EventBus *types.EventBus
 }
 
-func NewHealthMonitoringAgent(bus *core.EventBus) *HealthMonitoringAgent {
+func NewHealthMonitoringAgent(bus *types.EventBus) *HealthMonitoringAgent {
 	return &HealthMonitoringAgent{
 		EventBus: bus,
 	}
