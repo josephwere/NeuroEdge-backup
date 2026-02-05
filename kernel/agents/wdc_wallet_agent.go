@@ -1,15 +1,17 @@
+// kernel/agents/wdc_wallet_agent.go
 package agents
 
 import (
 	"fmt"
-	"neuroedge/kernel/core"
+
+	"neuroedge/kernel/types" // ✅ switched from core to types
 )
 
 type WDCWalletAgent struct {
-	EventBus *core.EventBus
+	EventBus *types.EventBus
 }
 
-func NewWDCWalletAgent(bus *core.EventBus) *WDCWalletAgent {
+func NewWDCWalletAgent(bus *types.EventBus) *WDCWalletAgent {
 	return &WDCWalletAgent{
 		EventBus: bus,
 	}
@@ -17,8 +19,10 @@ func NewWDCWalletAgent(bus *core.EventBus) *WDCWalletAgent {
 
 func (w *WDCWalletAgent) Start() {
 	fmt.Println("🚀 WDCWalletAgent started")
+
 	ch := make(chan map[string]interface{})
 	w.EventBus.Subscribe("wallet:transaction", ch)
+
 	go func() {
 		for event := range ch {
 			fmt.Println("[WDCWalletAgent] Transaction Event:", event)
@@ -35,7 +39,7 @@ func (w *WDCWalletAgent) Name() string {
 	return "WDCWalletAgent"
 }
 
-// Example: Process a transaction
+// ProcessTransaction handles wallet transactions
 func (w *WDCWalletAgent) ProcessTransaction(tx map[string]interface{}) {
 	fmt.Println("[WDCWalletAgent] Processing WDC transaction:", tx)
 }
