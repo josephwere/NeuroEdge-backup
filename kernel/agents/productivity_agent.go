@@ -2,43 +2,42 @@ package agents
 
 import (
 	"fmt"
-	"neuroedge/kernel/core"
+
+	"neuroedge/kernel/types"
 )
 
 // ProductivityAgent monitors and optimizes productivity
 type ProductivityAgent struct {
-	EventBus *core.EventBus
-	Name     string
+	EventBus *types.EventBus
 }
 
-func NewProductivityAgent(bus *core.EventBus) *ProductivityAgent {
+func NewProductivityAgent(bus *types.EventBus) *ProductivityAgent {
 	return &ProductivityAgent{
 		EventBus: bus,
-		Name:     "ProductivityAgent",
 	}
 }
 
 func (p *ProductivityAgent) Start() {
-	fmt.Printf("🚀 %s started\n", p.Name)
+	fmt.Println("🚀 ProductivityAgent started")
 	ch := make(chan map[string]interface{})
 	p.EventBus.Subscribe("productivity:update", ch)
 
 	go func() {
 		for event := range ch {
-			fmt.Printf("[%s] Productivity Event: %v\n", p.Name, event)
+			fmt.Println("[ProductivityAgent] Productivity Event:", event)
 			p.OptimizeTasks(event)
 		}
 	}()
 }
 
 func (p *ProductivityAgent) Stop() {
-	fmt.Printf("🛑 %s stopped\n", p.Name)
+	fmt.Println("🛑 ProductivityAgent stopped")
 }
 
-func (p *ProductivityAgent) NameFunc() string {
-	return p.Name
+func (p *ProductivityAgent) Name() string {
+	return "ProductivityAgent"
 }
 
 func (p *ProductivityAgent) OptimizeTasks(data map[string]interface{}) {
-	fmt.Printf("[%s] Task optimization: %v\n", p.Name, data)
+	fmt.Println("[ProductivityAgent] Task optimization:", data)
 }
