@@ -1,15 +1,17 @@
+// kernel/agents/global_mesh_agent.go
 package agents
 
 import (
 	"fmt"
-	"neuroedge/kernel/core"
+
+	"neuroedge/kernel/types" // use types instead of core
 )
 
 type GlobalMeshAgent struct {
-	EventBus *core.EventBus
+	EventBus *types.EventBus
 }
 
-func NewGlobalMeshAgent(bus *core.EventBus) *GlobalMeshAgent {
+func NewGlobalMeshAgent(bus *types.EventBus) *GlobalMeshAgent {
 	agent := &GlobalMeshAgent{
 		EventBus: bus,
 	}
@@ -18,7 +20,6 @@ func NewGlobalMeshAgent(bus *core.EventBus) *GlobalMeshAgent {
 
 func (g *GlobalMeshAgent) Start() {
 	fmt.Println("🚀 GlobalMeshAgent started")
-	// Example: Subscribe to mesh events
 	ch := make(chan map[string]interface{})
 	g.EventBus.Subscribe("mesh:update", ch)
 	go func() {
@@ -36,7 +37,7 @@ func (g *GlobalMeshAgent) Name() string {
 	return "GlobalMeshAgent"
 }
 
-// Example: Function to route messages
+// Route messages to nodes
 func (g *GlobalMeshAgent) RouteMessage(nodeID string, payload map[string]interface{}) {
 	fmt.Printf("[GlobalMeshAgent] Routing to node %s: %v\n", nodeID, payload)
 }
