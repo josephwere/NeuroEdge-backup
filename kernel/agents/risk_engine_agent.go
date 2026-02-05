@@ -6,46 +6,40 @@ import (
 	"neuroedge/kernel/core"
 )
 
-// RiskEngineAgent monitors and analyzes risk events
-type RiskEngineAgent struct {
+// ResearchAgent analyzes research data
+type ResearchAgent struct {
 	EventBus *core.EventBus
 	Name     string
 }
 
-// NewRiskEngineAgent creates a new RiskEngineAgent instance
-func NewRiskEngineAgent(bus *core.EventBus) *RiskEngineAgent {
-	return &RiskEngineAgent{
+func NewResearchAgent(bus *core.EventBus) *ResearchAgent {
+	return &ResearchAgent{
 		EventBus: bus,
-		Name:     "RiskEngineAgent",
+		Name:     "ResearchAgent",
 	}
 }
 
-// Start subscribes to risk events and begins processing
-func (r *RiskEngineAgent) Start() {
+func (r *ResearchAgent) Start() {
 	fmt.Printf("🚀 %s started\n", r.Name)
-
 	ch := make(chan map[string]interface{})
-	r.EventBus.Subscribe("risk:update", ch)
+	r.EventBus.Subscribe("research:new", ch)
 
 	go func() {
 		for event := range ch {
-			fmt.Printf("[%s] Risk Event: %v\n", r.Name, event)
-			r.AnalyzeRisk(event)
+			fmt.Printf("[%s] Research Event: %v\n", r.Name, event)
+			r.AnalyzeResearch(event)
 		}
 	}()
 }
 
-// Stop gracefully stops the agent
-func (r *RiskEngineAgent) Stop() {
+func (r *ResearchAgent) Stop() {
 	fmt.Printf("🛑 %s stopped\n", r.Name)
 }
 
-// NameFunc returns the agent name
-func (r *RiskEngineAgent) NameFunc() string {
+func (r *ResearchAgent) NameFunc() string {
 	return r.Name
 }
 
-// AnalyzeRisk executes the risk analysis logic
-func (r *RiskEngineAgent) AnalyzeRisk(data map[string]interface{}) {
-	fmt.Printf("[%s] Risk analysis executed: %v\n", r.Name, data)
+func (r *ResearchAgent) AnalyzeResearch(data map[string]interface{}) {
+	fmt.Printf("[%s] Analyzing research data: %v\n", r.Name, data)
 }
