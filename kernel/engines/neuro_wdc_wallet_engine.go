@@ -2,14 +2,15 @@ package engines
 
 import (
 	"fmt"
-	"neuroedge/kernel/core"
+
+	"neuroedge/kernel/types"
 )
 
 type NeuroWDCWalletEngine struct {
-	EventBus *core.EventBus
+	EventBus *types.EventBus
 }
 
-func NewNeuroWDCWalletEngine(bus *core.EventBus) *NeuroWDCWalletEngine {
+func NewNeuroWDCWalletEngine(bus *types.EventBus) *NeuroWDCWalletEngine {
 	return &NeuroWDCWalletEngine{
 		EventBus: bus,
 	}
@@ -17,14 +18,12 @@ func NewNeuroWDCWalletEngine(bus *core.EventBus) *NeuroWDCWalletEngine {
 
 func (n *NeuroWDCWalletEngine) Start() {
 	fmt.Println("🚀 NeuroWDCWalletEngine started")
-	ch := make(chan map[string]interface{})
-	n.EventBus.Subscribe("wallet:request", ch)
-	go func() {
-		for event := range ch {
-			fmt.Println("[NeuroWDCWalletEngine] Wallet Event:", event)
-			n.ManageWallet(event)
-		}
-	}()
+
+	// Subscribe using callback instead of channels
+	n.EventBus.Subscribe("wallet:request", func(evt types.Event) {
+		fmt.Println("[NeuroWDCWalletEngine] Wallet Event:", evt.Data)
+		n.ManageWallet(evt.Data)
+	})
 }
 
 func (n *NeuroWDCWalletEngine) Stop() {
@@ -35,6 +34,7 @@ func (n *NeuroWDCWalletEngine) Name() string {
 	return "NeuroWDCWalletEngine"
 }
 
-func (n *NeuroWDCWalletEngine) ManageWallet(data map[string]interface{}) {
+// ManageWallet now accepts interface{} for flexible data handling
+func (n *NeuroWDCWalletEngine) ManageWallet(data interface{}) {
 	fmt.Println("[NeuroWDCWalletEngine] Wallet processed:", data)
 }
