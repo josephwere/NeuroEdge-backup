@@ -1,15 +1,17 @@
+// kernel/engines/neuro_ceo_engine.go
 package engines
 
 import (
 	"fmt"
-	"neuroedge/kernel/core"
+
+	"neuroedge/kernel/types"
 )
 
 type NeuroCEOEngine struct {
-	EventBus *core.EventBus
+	EventBus *types.EventBus
 }
 
-func NewNeuroCEOEngine(bus *core.EventBus) *NeuroCEOEngine {
+func NewNeuroCEOEngine(bus *types.EventBus) *NeuroCEOEngine {
 	return &NeuroCEOEngine{
 		EventBus: bus,
 	}
@@ -17,14 +19,11 @@ func NewNeuroCEOEngine(bus *core.EventBus) *NeuroCEOEngine {
 
 func (n *NeuroCEOEngine) Start() {
 	fmt.Println("🚀 NeuroCEOEngine started")
-	ch := make(chan map[string]interface{})
-	n.EventBus.Subscribe("business:strategy", ch)
-	go func() {
-		for event := range ch {
-			fmt.Println("[NeuroCEOEngine] Business Event:", event)
-			n.AdviseCEO(event)
-		}
-	}()
+
+	n.EventBus.Subscribe("business:strategy", func(evt types.Event) {
+		fmt.Println("[NeuroCEOEngine] Business Event:", evt.Data)
+		n.AdviseCEO(evt.Data)
+	})
 }
 
 func (n *NeuroCEOEngine) Stop() {
@@ -35,6 +34,6 @@ func (n *NeuroCEOEngine) Name() string {
 	return "NeuroCEOEngine"
 }
 
-func (n *NeuroCEOEngine) AdviseCEO(data map[string]interface{}) {
+func (n *NeuroCEOEngine) AdviseCEO(data interface{}) {
 	fmt.Println("[NeuroCEOEngine] Business strategy processed:", data)
 }
