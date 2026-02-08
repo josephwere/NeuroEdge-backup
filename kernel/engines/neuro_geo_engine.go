@@ -2,14 +2,15 @@ package engines
 
 import (
 	"fmt"
-	"neuroedge/kernel/core"
+
+	"neuroedge/kernel/types"
 )
 
 type NeuroGeoEngine struct {
-	EventBus *core.EventBus
+	EventBus *types.EventBus
 }
 
-func NewNeuroGeoEngine(bus *core.EventBus) *NeuroGeoEngine {
+func NewNeuroGeoEngine(bus *types.EventBus) *NeuroGeoEngine {
 	return &NeuroGeoEngine{
 		EventBus: bus,
 	}
@@ -17,14 +18,11 @@ func NewNeuroGeoEngine(bus *core.EventBus) *NeuroGeoEngine {
 
 func (n *NeuroGeoEngine) Start() {
 	fmt.Println("🚀 NeuroGeoEngine started")
-	ch := make(chan map[string]interface{})
-	n.EventBus.Subscribe("geo:analyze", ch)
-	go func() {
-		for event := range ch {
-			fmt.Println("[NeuroGeoEngine] Geo Event:", event)
-			n.AnalyzeGeo(event)
-		}
-	}()
+
+	n.EventBus.Subscribe("geo:analyze", func(evt types.Event) {
+		fmt.Println("[NeuroGeoEngine] Geo Event:", evt.Data)
+		n.AnalyzeGeo(evt.Data)
+	})
 }
 
 func (n *NeuroGeoEngine) Stop() {
@@ -35,6 +33,6 @@ func (n *NeuroGeoEngine) Name() string {
 	return "NeuroGeoEngine"
 }
 
-func (n *NeuroGeoEngine) AnalyzeGeo(data map[string]interface{}) {
+func (n *NeuroGeoEngine) AnalyzeGeo(data interface{}) {
 	fmt.Println("[NeuroGeoEngine] Geo data analyzed:", data)
 }
