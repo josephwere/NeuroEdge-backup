@@ -2,14 +2,15 @@ package engines
 
 import (
 	"fmt"
-	"neuroedge/kernel/core"
+
+	"neuroedge/kernel/types"
 )
 
 type NeuroTradeEngine struct {
-	EventBus *core.EventBus
+	EventBus *types.EventBus
 }
 
-func NewNeuroTradeEngine(bus *core.EventBus) *NeuroTradeEngine {
+func NewNeuroTradeEngine(bus *types.EventBus) *NeuroTradeEngine {
 	return &NeuroTradeEngine{
 		EventBus: bus,
 	}
@@ -17,14 +18,11 @@ func NewNeuroTradeEngine(bus *core.EventBus) *NeuroTradeEngine {
 
 func (n *NeuroTradeEngine) Start() {
 	fmt.Println("🚀 NeuroTradeEngine started")
-	ch := make(chan map[string]interface{})
-	n.EventBus.Subscribe("trade:execute", ch)
-	go func() {
-		for event := range ch {
-			fmt.Println("[NeuroTradeEngine] Trade Event:", event)
-			n.ManageTrade(event)
-		}
-	}()
+
+	n.EventBus.Subscribe("trade:execute", func(evt types.Event) {
+		fmt.Println("[NeuroTradeEngine] Trade Event:", evt.Data)
+		n.ManageTrade(evt.Data)
+	})
 }
 
 func (n *NeuroTradeEngine) Stop() {
@@ -35,6 +33,6 @@ func (n *NeuroTradeEngine) Name() string {
 	return "NeuroTradeEngine"
 }
 
-func (n *NeuroTradeEngine) ManageTrade(data map[string]interface{}) {
+func (n *NeuroTradeEngine) ManageTrade(data interface{}) {
 	fmt.Println("[NeuroTradeEngine] Trade executed:", data)
 }
