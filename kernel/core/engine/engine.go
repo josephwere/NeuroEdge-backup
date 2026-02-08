@@ -1,36 +1,71 @@
-package engine
+package engines
 
 import (
-    "fmt"
-    "neuroedge/kernel/core/cognition"
-    "neuroedge/kernel/core/ethics"
-    "neuroedge/kernel/core/memory"
-    "neuroedge/kernel/core/scheduler"
-    "neuroedge/kernel/events"
+	"neuroedge/kernel/core"
 )
 
-type Engine struct {
-    EventBus   *events.EventBus
-    Memory     *memory.Memory
-    Ethics     *ethics.Ethics
-    Cognition  *cognition.Cognition
-    Scheduler  *scheduler.Scheduler
-}
+// Import all individual engines
+import (
+	"neuroedge/kernel/engines"
+)
 
-func NewEngine(eventBus *events.EventBus, mem *memory.Memory, ethics *ethics.Ethics, cog *cognition.Cognition, sched *scheduler.Scheduler) *Engine {
-    return &Engine{
-        EventBus:  eventBus,
-        Memory:    mem,
-        Ethics:    ethics,
-        Cognition: cog,
-        Scheduler: sched,
-    }
-}
+// Loader initializes all NeuroEdge engines
+func InitAllEngines(eventBus *core.EventBus) []interface{} {
+	var allEngines []interface{}
 
-func (e *Engine) Start() {
-    fmt.Println("🧠 Core engine starting...")
-    // Initialize tasks or periodic processes
-    e.Scheduler.ScheduleRecurring("heartbeat", func() {
-        fmt.Println("💓 NeuroEdge heartbeat tick")
-    }, 5) // every 5 seconds
+	// Core engines
+	allEngines = append(allEngines,
+		engines.NewNeuroAgentsCoreEngine(eventBus),
+		engines.NewNeuroAPIEngine(eventBus),
+		engines.NewNeuroAudioEngine(eventBus),
+		engines.NewNeuroCEOEngine(eventBus),
+		engines.NewNeuroChainValidatorEngine(eventBus),
+		engines.NewNeuroCloudEngine(eventBus),
+		engines.NewNeuroCodeEngine(eventBus),
+		engines.NewNeuroComputeEngine(eventBus),
+		engines.NewNeuroComputeOptimizer(eventBus),
+		engines.NewNeuroCreatorEngine(eventBus),
+		engines.NewNeuroDataEngine(eventBus),
+		engines.NewNeuroDefenseEngine(eventBus),
+		engines.NewNeuroEdgeAntiTheftEngine(eventBus),
+		engines.NewNeuroEdgeMeshEngine(eventBus),
+		engines.NewNeuroEmotionsEngine(eventBus),
+		engines.NewNeuroFinanceEngine(eventBus),
+		engines.NewNeuroFusionEngine(eventBus),
+		engines.NewNeuroGeoEngine(eventBus),
+		engines.NewNeuroGovEngine(eventBus),
+		engines.NewNeuroGPTEngine(eventBus),
+		engines.NewNeuroHREngine(eventBus),
+		engines.NewNeuroHumanEngine(eventBus),
+		engines.NewNeuroIdentityEngine(eventBus),
+		engines.NewNeuroLegalEngine(eventBus),
+		engines.NewNeuroLogicEngine(eventBus),
+		engines.NewNeuroMathEngine(eventBus),
+		engines.NewNeuroMedicalEngine(eventBus),
+		engines.NewNeuroMemoryEngine(eventBus),
+		engines.NewNeuroOfflineEngine(eventBus),
+		engines.NewNeuroOpsEngine(eventBus),
+		engines.NewNeuroQuantumEngine(eventBus),
+		engines.NewNeuroResearchEngine(eventBus),
+		engines.NewNeuroRobotEngine(eventBus),
+		engines.NewNeuroSearchEngine(eventBus),
+		engines.NewNeuroSecurityEngine(eventBus),
+		engines.NewNeuroSensorsEngine(eventBus),
+		engines.NewNeuroTeacherEngine(eventBus),
+		engines.NewNeuroTradeEngine(eventBus),
+		engines.NewNeuroTranslateEngine(eventBus),
+		engines.NewNeuroVisionEngine(eventBus),
+		engines.NewNeuroWDCWalletEngine(eventBus),
+		engines.NewTaskEmissionEngine(eventBus), // finalized last engine
+	)
+
+	// Start all engines
+	for _, eng := range allEngines {
+		switch e := eng.(type) {
+		case interface{ Start() }:
+			e.Start()
+		}
+	}
+
+	return allEngines
 }
