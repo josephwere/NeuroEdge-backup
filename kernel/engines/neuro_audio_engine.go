@@ -1,15 +1,17 @@
+// kernel/engines/neuro_audio_engine.go
 package engines
 
 import (
 	"fmt"
-	"neuroedge/kernel/core"
+
+	"neuroedge/kernel/types"
 )
 
 type NeuroAudioEngine struct {
-	EventBus *core.EventBus
+	EventBus *types.EventBus
 }
 
-func NewNeuroAudioEngine(bus *core.EventBus) *NeuroAudioEngine {
+func NewNeuroAudioEngine(bus *types.EventBus) *NeuroAudioEngine {
 	return &NeuroAudioEngine{
 		EventBus: bus,
 	}
@@ -17,14 +19,11 @@ func NewNeuroAudioEngine(bus *core.EventBus) *NeuroAudioEngine {
 
 func (n *NeuroAudioEngine) Start() {
 	fmt.Println("🚀 NeuroAudioEngine started")
-	ch := make(chan map[string]interface{})
-	n.EventBus.Subscribe("audio:request", ch)
-	go func() {
-		for event := range ch {
-			fmt.Println("[NeuroAudioEngine] Audio Event:", event)
-			n.ProcessAudio(event)
-		}
-	}()
+
+	n.EventBus.Subscribe("audio:request", func(evt types.Event) {
+		fmt.Println("[NeuroAudioEngine] Audio Event:", evt.Data)
+		n.ProcessAudio(evt.Data)
+	})
 }
 
 func (n *NeuroAudioEngine) Stop() {
@@ -35,6 +34,6 @@ func (n *NeuroAudioEngine) Name() string {
 	return "NeuroAudioEngine"
 }
 
-func (n *NeuroAudioEngine) ProcessAudio(data map[string]interface{}) {
+func (n *NeuroAudioEngine) ProcessAudio(data interface{}) {
 	fmt.Println("[NeuroAudioEngine] Audio processed:", data)
 }
