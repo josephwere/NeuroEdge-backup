@@ -2,14 +2,15 @@ package engines
 
 import (
 	"fmt"
-	"neuroedge/kernel/core"
+
+	"neuroedge/kernel/types"
 )
 
 type NeuroFinanceEngine struct {
-	EventBus *core.EventBus
+	EventBus *types.EventBus
 }
 
-func NewNeuroFinanceEngine(bus *core.EventBus) *NeuroFinanceEngine {
+func NewNeuroFinanceEngine(bus *types.EventBus) *NeuroFinanceEngine {
 	return &NeuroFinanceEngine{
 		EventBus: bus,
 	}
@@ -17,14 +18,11 @@ func NewNeuroFinanceEngine(bus *core.EventBus) *NeuroFinanceEngine {
 
 func (n *NeuroFinanceEngine) Start() {
 	fmt.Println("🚀 NeuroFinanceEngine started")
-	ch := make(chan map[string]interface{})
-	n.EventBus.Subscribe("finance:request", ch)
-	go func() {
-		for event := range ch {
-			fmt.Println("[NeuroFinanceEngine] Finance Event:", event)
-			n.ProcessFinance(event)
-		}
-	}()
+
+	n.EventBus.Subscribe("finance:request", func(evt types.Event) {
+		fmt.Println("[NeuroFinanceEngine] Finance Event:", evt.Data)
+		n.ProcessFinance(evt.Data)
+	})
 }
 
 func (n *NeuroFinanceEngine) Stop() {
@@ -35,6 +33,6 @@ func (n *NeuroFinanceEngine) Name() string {
 	return "NeuroFinanceEngine"
 }
 
-func (n *NeuroFinanceEngine) ProcessFinance(data map[string]interface{}) {
+func (n *NeuroFinanceEngine) ProcessFinance(data interface{}) {
 	fmt.Println("[NeuroFinanceEngine] Finance processed:", data)
 }
