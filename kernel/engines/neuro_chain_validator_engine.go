@@ -2,14 +2,15 @@ package engines
 
 import (
 	"fmt"
-	"neuroedge/kernel/core"
+
+	"neuroedge/kernel/types"
 )
 
 type NeuroChainValidatorEngine struct {
-	EventBus *core.EventBus
+	EventBus *types.EventBus
 }
 
-func NewNeuroChainValidatorEngine(bus *core.EventBus) *NeuroChainValidatorEngine {
+func NewNeuroChainValidatorEngine(bus *types.EventBus) *NeuroChainValidatorEngine {
 	return &NeuroChainValidatorEngine{
 		EventBus: bus,
 	}
@@ -17,14 +18,11 @@ func NewNeuroChainValidatorEngine(bus *core.EventBus) *NeuroChainValidatorEngine
 
 func (n *NeuroChainValidatorEngine) Start() {
 	fmt.Println("🚀 NeuroChainValidatorEngine started")
-	ch := make(chan map[string]interface{})
-	n.EventBus.Subscribe("chain:validate", ch)
-	go func() {
-		for event := range ch {
-			fmt.Println("[NeuroChainValidatorEngine] Validator Event:", event)
-			n.ValidateBlock(event)
-		}
-	}()
+
+	n.EventBus.Subscribe("chain:validate", func(evt types.Event) {
+		fmt.Println("[NeuroChainValidatorEngine] Validator Event:", evt.Data)
+		n.ValidateBlock(evt.Data)
+	})
 }
 
 func (n *NeuroChainValidatorEngine) Stop() {
@@ -35,6 +33,6 @@ func (n *NeuroChainValidatorEngine) Name() string {
 	return "NeuroChainValidatorEngine"
 }
 
-func (n *NeuroChainValidatorEngine) ValidateBlock(data map[string]interface{}) {
+func (n *NeuroChainValidatorEngine) ValidateBlock(data interface{}) {
 	fmt.Println("[NeuroChainValidatorEngine] Block validated:", data)
 }
