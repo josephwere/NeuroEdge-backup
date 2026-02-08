@@ -2,14 +2,15 @@ package engines
 
 import (
 	"fmt"
-	"neuroedge/kernel/core"
+
+	"neuroedge/kernel/types"
 )
 
 type NeuroFusionEngine struct {
-	EventBus *core.EventBus
+	EventBus *types.EventBus
 }
 
-func NewNeuroFusionEngine(bus *core.EventBus) *NeuroFusionEngine {
+func NewNeuroFusionEngine(bus *types.EventBus) *NeuroFusionEngine {
 	return &NeuroFusionEngine{
 		EventBus: bus,
 	}
@@ -17,14 +18,11 @@ func NewNeuroFusionEngine(bus *core.EventBus) *NeuroFusionEngine {
 
 func (n *NeuroFusionEngine) Start() {
 	fmt.Println("🚀 NeuroFusionEngine started")
-	ch := make(chan map[string]interface{})
-	n.EventBus.Subscribe("fusion:orchestrate", ch)
-	go func() {
-		for event := range ch {
-			fmt.Println("[NeuroFusionEngine] Orchestration Event:", event)
-			n.FuseEngines(event)
-		}
-	}()
+
+	n.EventBus.Subscribe("fusion:orchestrate", func(evt types.Event) {
+		fmt.Println("[NeuroFusionEngine] Orchestration Event:", evt.Data)
+		n.FuseEngines(evt.Data)
+	})
 }
 
 func (n *NeuroFusionEngine) Stop() {
@@ -35,11 +33,13 @@ func (n *NeuroFusionEngine) Name() string {
 	return "NeuroFusionEngine"
 }
 
-func (n *NeuroFusionEngine) FuseEngines(data map[string]interface{}) {
+func (n *NeuroFusionEngine) FuseEngines(data interface{}) {
 	fmt.Println("[NeuroFusionEngine] Multi-AI orchestration executed:", data)
+
 	// Example: trigger multiple engines based on fusion logic
-	n.EventBus.Publish("neuro:task", map[string]interface{}{
-		"task":  "orchestrated",
-		"input": data,
+	n.EventBus.Publish(types.Event{
+		Name:   "neuro:task",
+		Data:   map[string]interface{}{"task": "orchestrated", "input": data},
+		Source: "NeuroFusionEngine",
 	})
 }
