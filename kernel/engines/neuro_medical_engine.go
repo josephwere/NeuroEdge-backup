@@ -2,14 +2,15 @@ package engines
 
 import (
 	"fmt"
-	"neuroedge/kernel/core"
+
+	"neuroedge/kernel/types"
 )
 
 type NeuroMedicalEngine struct {
-	EventBus *core.EventBus
+	EventBus *types.EventBus
 }
 
-func NewNeuroMedicalEngine(bus *core.EventBus) *NeuroMedicalEngine {
+func NewNeuroMedicalEngine(bus *types.EventBus) *NeuroMedicalEngine {
 	return &NeuroMedicalEngine{
 		EventBus: bus,
 	}
@@ -17,14 +18,12 @@ func NewNeuroMedicalEngine(bus *core.EventBus) *NeuroMedicalEngine {
 
 func (n *NeuroMedicalEngine) Start() {
 	fmt.Println("🚀 NeuroMedicalEngine started")
-	ch := make(chan map[string]interface{})
-	n.EventBus.Subscribe("medical:request", ch)
-	go func() {
-		for event := range ch {
-			fmt.Println("[NeuroMedicalEngine] Medical Event:", event)
-			n.AnalyzeMedical(event)
-		}
-	}()
+
+	// Subscribe to medical requests
+	n.EventBus.Subscribe("medical:request", func(evt types.Event) {
+		fmt.Println("[NeuroMedicalEngine] Medical Event:", evt.Data)
+		n.AnalyzeMedical(evt.Data)
+	})
 }
 
 func (n *NeuroMedicalEngine) Stop() {
@@ -35,6 +34,6 @@ func (n *NeuroMedicalEngine) Name() string {
 	return "NeuroMedicalEngine"
 }
 
-func (n *NeuroMedicalEngine) AnalyzeMedical(data map[string]interface{}) {
+func (n *NeuroMedicalEngine) AnalyzeMedical(data interface{}) {
 	fmt.Println("[NeuroMedicalEngine] Medical analysis completed:", data)
 }
