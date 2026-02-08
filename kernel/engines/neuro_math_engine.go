@@ -2,14 +2,15 @@ package engines
 
 import (
 	"fmt"
-	"neuroedge/kernel/core"
+
+	"neuroedge/kernel/types"
 )
 
 type NeuroMathEngine struct {
-	EventBus *core.EventBus
+	EventBus *types.EventBus
 }
 
-func NewNeuroMathEngine(bus *core.EventBus) *NeuroMathEngine {
+func NewNeuroMathEngine(bus *types.EventBus) *NeuroMathEngine {
 	return &NeuroMathEngine{
 		EventBus: bus,
 	}
@@ -17,14 +18,11 @@ func NewNeuroMathEngine(bus *core.EventBus) *NeuroMathEngine {
 
 func (n *NeuroMathEngine) Start() {
 	fmt.Println("🚀 NeuroMathEngine started")
-	ch := make(chan map[string]interface{})
-	n.EventBus.Subscribe("math:compute", ch)
-	go func() {
-		for event := range ch {
-			fmt.Println("[NeuroMathEngine] Math Event:", event)
-			n.Compute(event)
-		}
-	}()
+
+	n.EventBus.Subscribe("math:compute", func(evt types.Event) {
+		fmt.Println("[NeuroMathEngine] Math Event:", evt.Data)
+		n.Compute(evt.Data)
+	})
 }
 
 func (n *NeuroMathEngine) Stop() {
@@ -35,6 +33,6 @@ func (n *NeuroMathEngine) Name() string {
 	return "NeuroMathEngine"
 }
 
-func (n *NeuroMathEngine) Compute(data map[string]interface{}) {
+func (n *NeuroMathEngine) Compute(data interface{}) {
 	fmt.Println("[NeuroMathEngine] Computation result:", data)
 }
