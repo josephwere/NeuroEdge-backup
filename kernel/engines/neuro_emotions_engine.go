@@ -2,14 +2,15 @@ package engines
 
 import (
 	"fmt"
-	"neuroedge/kernel/core"
+
+	"neuroedge/kernel/types"
 )
 
 type NeuroEmotionsEngine struct {
-	EventBus *core.EventBus
+	EventBus *types.EventBus
 }
 
-func NewNeuroEmotionsEngine(bus *core.EventBus) *NeuroEmotionsEngine {
+func NewNeuroEmotionsEngine(bus *types.EventBus) *NeuroEmotionsEngine {
 	return &NeuroEmotionsEngine{
 		EventBus: bus,
 	}
@@ -17,14 +18,11 @@ func NewNeuroEmotionsEngine(bus *core.EventBus) *NeuroEmotionsEngine {
 
 func (n *NeuroEmotionsEngine) Start() {
 	fmt.Println("🚀 NeuroEmotionsEngine started")
-	ch := make(chan map[string]interface{})
-	n.EventBus.Subscribe("emotion:analyze", ch)
-	go func() {
-		for event := range ch {
-			fmt.Println("[NeuroEmotionsEngine] Emotion Event:", event)
-			n.AnalyzeEmotion(event)
-		}
-	}()
+
+	n.EventBus.Subscribe("emotion:analyze", func(evt types.Event) {
+		fmt.Println("[NeuroEmotionsEngine] Emotion Event:", evt.Data)
+		n.AnalyzeEmotion(evt.Data)
+	})
 }
 
 func (n *NeuroEmotionsEngine) Stop() {
@@ -35,6 +33,6 @@ func (n *NeuroEmotionsEngine) Name() string {
 	return "NeuroEmotionsEngine"
 }
 
-func (n *NeuroEmotionsEngine) AnalyzeEmotion(data map[string]interface{}) {
+func (n *NeuroEmotionsEngine) AnalyzeEmotion(data interface{}) {
 	fmt.Println("[NeuroEmotionsEngine] Emotion analysis completed:", data)
 }
