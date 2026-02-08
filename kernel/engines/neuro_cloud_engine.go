@@ -2,14 +2,15 @@ package engines
 
 import (
 	"fmt"
-	"neuroedge/kernel/core"
+
+	"neuroedge/kernel/types"
 )
 
 type NeuroCloudEngine struct {
-	EventBus *core.EventBus
+	EventBus *types.EventBus
 }
 
-func NewNeuroCloudEngine(bus *core.EventBus) *NeuroCloudEngine {
+func NewNeuroCloudEngine(bus *types.EventBus) *NeuroCloudEngine {
 	return &NeuroCloudEngine{
 		EventBus: bus,
 	}
@@ -17,14 +18,11 @@ func NewNeuroCloudEngine(bus *core.EventBus) *NeuroCloudEngine {
 
 func (n *NeuroCloudEngine) Start() {
 	fmt.Println("🚀 NeuroCloudEngine started")
-	ch := make(chan map[string]interface{})
-	n.EventBus.Subscribe("cloud:task", ch)
-	go func() {
-		for event := range ch {
-			fmt.Println("[NeuroCloudEngine] Cloud Task Event:", event)
-			n.HandleCloudTask(event)
-		}
-	}()
+
+	n.EventBus.Subscribe("cloud:task", func(evt types.Event) {
+		fmt.Println("[NeuroCloudEngine] Cloud Task Event:", evt.Data)
+		n.HandleCloudTask(evt.Data)
+	})
 }
 
 func (n *NeuroCloudEngine) Stop() {
@@ -35,6 +33,6 @@ func (n *NeuroCloudEngine) Name() string {
 	return "NeuroCloudEngine"
 }
 
-func (n *NeuroCloudEngine) HandleCloudTask(data map[string]interface{}) {
+func (n *NeuroCloudEngine) HandleCloudTask(data interface{}) {
 	fmt.Println("[NeuroCloudEngine] Cloud task executed:", data)
 }
