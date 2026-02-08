@@ -2,14 +2,15 @@ package engines
 
 import (
 	"fmt"
-	"neuroedge/kernel/core"
+
+	"neuroedge/kernel/types"
 )
 
 type NeuroMemoryEngine struct {
-	EventBus *core.EventBus
+	EventBus *types.EventBus
 }
 
-func NewNeuroMemoryEngine(bus *core.EventBus) *NeuroMemoryEngine {
+func NewNeuroMemoryEngine(bus *types.EventBus) *NeuroMemoryEngine {
 	return &NeuroMemoryEngine{
 		EventBus: bus,
 	}
@@ -17,14 +18,11 @@ func NewNeuroMemoryEngine(bus *core.EventBus) *NeuroMemoryEngine {
 
 func (n *NeuroMemoryEngine) Start() {
 	fmt.Println("🚀 NeuroMemoryEngine started")
-	ch := make(chan map[string]interface{})
-	n.EventBus.Subscribe("memory:request", ch)
-	go func() {
-		for event := range ch {
-			fmt.Println("[NeuroMemoryEngine] Memory Event:", event)
-			n.HandleMemory(event)
-		}
-	}()
+
+	n.EventBus.Subscribe("memory:request", func(evt types.Event) {
+		fmt.Println("[NeuroMemoryEngine] Memory Event:", evt.Data)
+		n.HandleMemory(evt.Data)
+	})
 }
 
 func (n *NeuroMemoryEngine) Stop() {
@@ -35,6 +33,6 @@ func (n *NeuroMemoryEngine) Name() string {
 	return "NeuroMemoryEngine"
 }
 
-func (n *NeuroMemoryEngine) HandleMemory(data map[string]interface{}) {
+func (n *NeuroMemoryEngine) HandleMemory(data interface{}) {
 	fmt.Println("[NeuroMemoryEngine] Memory stored/retrieved:", data)
 }
