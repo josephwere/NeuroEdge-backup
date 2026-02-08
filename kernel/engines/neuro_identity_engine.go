@@ -2,14 +2,15 @@ package engines
 
 import (
 	"fmt"
-	"neuroedge/kernel/core"
+
+	"neuroedge/kernel/types"
 )
 
 type NeuroIdentityEngine struct {
-	EventBus *core.EventBus
+	EventBus *types.EventBus
 }
 
-func NewNeuroIdentityEngine(bus *core.EventBus) *NeuroIdentityEngine {
+func NewNeuroIdentityEngine(bus *types.EventBus) *NeuroIdentityEngine {
 	return &NeuroIdentityEngine{
 		EventBus: bus,
 	}
@@ -17,14 +18,11 @@ func NewNeuroIdentityEngine(bus *core.EventBus) *NeuroIdentityEngine {
 
 func (n *NeuroIdentityEngine) Start() {
 	fmt.Println("🚀 NeuroIdentityEngine started")
-	ch := make(chan map[string]interface{})
-	n.EventBus.Subscribe("identity:request", ch)
-	go func() {
-		for event := range ch {
-			fmt.Println("[NeuroIdentityEngine] Identity Event:", event)
-			n.VerifyIdentity(event)
-		}
-	}()
+
+	n.EventBus.Subscribe("identity:request", func(evt types.Event) {
+		fmt.Println("[NeuroIdentityEngine] Identity Event:", evt.Data)
+		n.VerifyIdentity(evt.Data)
+	})
 }
 
 func (n *NeuroIdentityEngine) Stop() {
@@ -35,6 +33,6 @@ func (n *NeuroIdentityEngine) Name() string {
 	return "NeuroIdentityEngine"
 }
 
-func (n *NeuroIdentityEngine) VerifyIdentity(data map[string]interface{}) {
+func (n *NeuroIdentityEngine) VerifyIdentity(data interface{}) {
 	fmt.Println("[NeuroIdentityEngine] Identity verified:", data)
 }
