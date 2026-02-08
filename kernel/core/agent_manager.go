@@ -2,7 +2,7 @@ package core
 
 import (
 	"fmt"
-	"NeuroEdge/kernel/agents"
+	"neuroedge/kernel/agents"
 )
 
 // AgentManager coordinates all agents
