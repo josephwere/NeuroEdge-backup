@@ -2,14 +2,15 @@ package engines
 
 import (
 	"fmt"
-	"neuroedge/kernel/core"
+
+	"neuroedge/kernel/types"
 )
 
 type NeuroSensorsEngine struct {
-	EventBus *core.EventBus
+	EventBus *types.EventBus
 }
 
-func NewNeuroSensorsEngine(bus *core.EventBus) *NeuroSensorsEngine {
+func NewNeuroSensorsEngine(bus *types.EventBus) *NeuroSensorsEngine {
 	return &NeuroSensorsEngine{
 		EventBus: bus,
 	}
@@ -17,14 +18,11 @@ func NewNeuroSensorsEngine(bus *core.EventBus) *NeuroSensorsEngine {
 
 func (n *NeuroSensorsEngine) Start() {
 	fmt.Println("🚀 NeuroSensorsEngine started")
-	ch := make(chan map[string]interface{})
-	n.EventBus.Subscribe("sensor:data", ch)
-	go func() {
-		for event := range ch {
-			fmt.Println("[NeuroSensorsEngine] Sensor Data Event:", event)
-			n.ProcessSensorData(event)
-		}
-	}()
+
+	n.EventBus.Subscribe("sensor:data", func(evt types.Event) {
+		fmt.Println("[NeuroSensorsEngine] Sensor Data Event:", evt.Data)
+		n.ProcessSensorData(evt.Data)
+	})
 }
 
 func (n *NeuroSensorsEngine) Stop() {
@@ -35,6 +33,6 @@ func (n *NeuroSensorsEngine) Name() string {
 	return "NeuroSensorsEngine"
 }
 
-func (n *NeuroSensorsEngine) ProcessSensorData(data map[string]interface{}) {
+func (n *NeuroSensorsEngine) ProcessSensorData(data interface{}) {
 	fmt.Println("[NeuroSensorsEngine] Sensor data processed:", data)
 }
