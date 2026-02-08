@@ -2,14 +2,15 @@ package engines
 
 import (
 	"fmt"
-	"neuroedge/kernel/core"
+
+	"neuroedge/kernel/types"
 )
 
 type NeuroCreatorEngine struct {
-	EventBus *core.EventBus
+	EventBus *types.EventBus
 }
 
-func NewNeuroCreatorEngine(bus *core.EventBus) *NeuroCreatorEngine {
+func NewNeuroCreatorEngine(bus *types.EventBus) *NeuroCreatorEngine {
 	return &NeuroCreatorEngine{
 		EventBus: bus,
 	}
@@ -17,14 +18,11 @@ func NewNeuroCreatorEngine(bus *core.EventBus) *NeuroCreatorEngine {
 
 func (n *NeuroCreatorEngine) Start() {
 	fmt.Println("🚀 NeuroCreatorEngine started")
-	ch := make(chan map[string]interface{})
-	n.EventBus.Subscribe("create:content", ch)
-	go func() {
-		for event := range ch {
-			fmt.Println("[NeuroCreatorEngine] Content Creation Event:", event)
-			n.GenerateContent(event)
-		}
-	}()
+
+	n.EventBus.Subscribe("create:content", func(evt types.Event) {
+		fmt.Println("[NeuroCreatorEngine] Content Creation Event:", evt.Data)
+		n.GenerateContent(evt.Data)
+	})
 }
 
 func (n *NeuroCreatorEngine) Stop() {
@@ -35,6 +33,6 @@ func (n *NeuroCreatorEngine) Name() string {
 	return "NeuroCreatorEngine"
 }
 
-func (n *NeuroCreatorEngine) GenerateContent(data map[string]interface{}) {
+func (n *NeuroCreatorEngine) GenerateContent(data interface{}) {
 	fmt.Println("[NeuroCreatorEngine] Content generated:", data)
 }
