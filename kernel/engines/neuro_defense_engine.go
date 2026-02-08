@@ -2,14 +2,15 @@ package engines
 
 import (
 	"fmt"
-	"neuroedge/kernel/core"
+
+	"neuroedge/kernel/types"
 )
 
 type NeuroDefenseEngine struct {
-	EventBus *core.EventBus
+	EventBus *types.EventBus
 }
 
-func NewNeuroDefenseEngine(bus *core.EventBus) *NeuroDefenseEngine {
+func NewNeuroDefenseEngine(bus *types.EventBus) *NeuroDefenseEngine {
 	return &NeuroDefenseEngine{
 		EventBus: bus,
 	}
@@ -17,14 +18,11 @@ func NewNeuroDefenseEngine(bus *core.EventBus) *NeuroDefenseEngine {
 
 func (n *NeuroDefenseEngine) Start() {
 	fmt.Println("🚀 NeuroDefenseEngine started")
-	ch := make(chan map[string]interface{})
-	n.EventBus.Subscribe("defense:alert", ch)
-	go func() {
-		for event := range ch {
-			fmt.Println("[NeuroDefenseEngine] Defense Event:", event)
-			n.ActivateDefense(event)
-		}
-	}()
+
+	n.EventBus.Subscribe("defense:alert", func(evt types.Event) {
+		fmt.Println("[NeuroDefenseEngine] Defense Event:", evt.Data)
+		n.ActivateDefense(evt.Data)
+	})
 }
 
 func (n *NeuroDefenseEngine) Stop() {
@@ -35,6 +33,6 @@ func (n *NeuroDefenseEngine) Name() string {
 	return "NeuroDefenseEngine"
 }
 
-func (n *NeuroDefenseEngine) ActivateDefense(data map[string]interface{}) {
+func (n *NeuroDefenseEngine) ActivateDefense(data interface{}) {
 	fmt.Println("[NeuroDefenseEngine] Defense action executed:", data)
 }
