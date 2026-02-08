@@ -2,14 +2,15 @@ package engines
 
 import (
 	"fmt"
-	"neuroedge/kernel/core"
+
+	"neuroedge/kernel/types"
 )
 
 type NeuroGovEngine struct {
-	EventBus *core.EventBus
+	EventBus *types.EventBus
 }
 
-func NewNeuroGovEngine(bus *core.EventBus) *NeuroGovEngine {
+func NewNeuroGovEngine(bus *types.EventBus) *NeuroGovEngine {
 	return &NeuroGovEngine{
 		EventBus: bus,
 	}
@@ -17,14 +18,11 @@ func NewNeuroGovEngine(bus *core.EventBus) *NeuroGovEngine {
 
 func (n *NeuroGovEngine) Start() {
 	fmt.Println("🚀 NeuroGovEngine started")
-	ch := make(chan map[string]interface{})
-	n.EventBus.Subscribe("gov:request", ch)
-	go func() {
-		for event := range ch {
-			fmt.Println("[NeuroGovEngine] Governance Event:", event)
-			n.ProcessGov(event)
-		}
-	}()
+
+	n.EventBus.Subscribe("gov:request", func(evt types.Event) {
+		fmt.Println("[NeuroGovEngine] Governance Event:", evt.Data)
+		n.ProcessGov(evt.Data)
+	})
 }
 
 func (n *NeuroGovEngine) Stop() {
@@ -35,6 +33,6 @@ func (n *NeuroGovEngine) Name() string {
 	return "NeuroGovEngine"
 }
 
-func (n *NeuroGovEngine) ProcessGov(data map[string]interface{}) {
+func (n *NeuroGovEngine) ProcessGov(data interface{}) {
 	fmt.Println("[NeuroGovEngine] Governance processed:", data)
 }
