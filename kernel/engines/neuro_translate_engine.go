@@ -2,14 +2,15 @@ package engines
 
 import (
 	"fmt"
-	"neuroedge/kernel/core"
+
+	"neuroedge/kernel/types"
 )
 
 type NeuroTranslateEngine struct {
-	EventBus *core.EventBus
+	EventBus *types.EventBus
 }
 
-func NewNeuroTranslateEngine(bus *core.EventBus) *NeuroTranslateEngine {
+func NewNeuroTranslateEngine(bus *types.EventBus) *NeuroTranslateEngine {
 	return &NeuroTranslateEngine{
 		EventBus: bus,
 	}
@@ -17,14 +18,11 @@ func NewNeuroTranslateEngine(bus *core.EventBus) *NeuroTranslateEngine {
 
 func (n *NeuroTranslateEngine) Start() {
 	fmt.Println("🚀 NeuroTranslateEngine started")
-	ch := make(chan map[string]interface{})
-	n.EventBus.Subscribe("translate:request", ch)
-	go func() {
-		for event := range ch {
-			fmt.Println("[NeuroTranslateEngine] Translate Event:", event)
-			n.Translate(event)
-		}
-	}()
+
+	n.EventBus.Subscribe("translate:request", func(evt types.Event) {
+		fmt.Println("[NeuroTranslateEngine] Translate Event:", evt.Data)
+		n.Translate(evt.Data)
+	})
 }
 
 func (n *NeuroTranslateEngine) Stop() {
@@ -35,6 +33,6 @@ func (n *NeuroTranslateEngine) Name() string {
 	return "NeuroTranslateEngine"
 }
 
-func (n *NeuroTranslateEngine) Translate(data map[string]interface{}) {
+func (n *NeuroTranslateEngine) Translate(data interface{}) {
 	fmt.Println("[NeuroTranslateEngine] Translation completed:", data)
 }
