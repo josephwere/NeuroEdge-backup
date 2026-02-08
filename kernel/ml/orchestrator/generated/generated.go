@@ -1,7 +1,5 @@
 package generated
 
-// This is a stub package for orchestrator code generation
-
 type OrchestratorClient struct{}
 
 func NewOrchestratorClient() *OrchestratorClient {
@@ -9,6 +7,6 @@ func NewOrchestratorClient() *OrchestratorClient {
 }
 
 func (o *OrchestratorClient) ExecuteTask(task string, data map[string]interface{}) error {
-	// stub function
+	// stub implementation
 	return nil
 }
