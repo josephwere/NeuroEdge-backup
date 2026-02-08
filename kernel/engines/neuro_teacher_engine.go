@@ -2,14 +2,15 @@ package engines
 
 import (
 	"fmt"
-	"neuroedge/kernel/core"
+
+	"neuroedge/kernel/types"
 )
 
 type NeuroTeacherEngine struct {
-	EventBus *core.EventBus
+	EventBus *types.EventBus
 }
 
-func NewNeuroTeacherEngine(bus *core.EventBus) *NeuroTeacherEngine {
+func NewNeuroTeacherEngine(bus *types.EventBus) *NeuroTeacherEngine {
 	return &NeuroTeacherEngine{
 		EventBus: bus,
 	}
@@ -17,14 +18,11 @@ func NewNeuroTeacherEngine(bus *core.EventBus) *NeuroTeacherEngine {
 
 func (n *NeuroTeacherEngine) Start() {
 	fmt.Println("🚀 NeuroTeacherEngine started")
-	ch := make(chan map[string]interface{})
-	n.EventBus.Subscribe("teach:lesson", ch)
-	go func() {
-		for event := range ch {
-			fmt.Println("[NeuroTeacherEngine] Teaching Event:", event)
-			n.LearnAndTeach(event)
-		}
-	}()
+
+	n.EventBus.Subscribe("teach:lesson", func(evt types.Event) {
+		fmt.Println("[NeuroTeacherEngine] Teaching Event:", evt.Data)
+		n.LearnAndTeach(evt.Data)
+	})
 }
 
 func (n *NeuroTeacherEngine) Stop() {
@@ -35,6 +33,6 @@ func (n *NeuroTeacherEngine) Name() string {
 	return "NeuroTeacherEngine"
 }
 
-func (n *NeuroTeacherEngine) LearnAndTeach(data map[string]interface{}) {
+func (n *NeuroTeacherEngine) LearnAndTeach(data interface{}) {
 	fmt.Println("[NeuroTeacherEngine] Lesson processed:", data)
 }
