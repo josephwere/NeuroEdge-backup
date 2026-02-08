@@ -1,5 +1,7 @@
 package generated
 
+import "fmt"
+
 type OrchestratorClient struct{}
 
 func NewOrchestratorClient() *OrchestratorClient {
@@ -7,6 +9,6 @@ func NewOrchestratorClient() *OrchestratorClient {
 }
 
 func (o *OrchestratorClient) ExecuteTask(task string, data map[string]interface{}) error {
-	// stub implementation
+	fmt.Println("[OrchestratorClient] Executing task:", task, "with data:", data)
 	return nil
 }
