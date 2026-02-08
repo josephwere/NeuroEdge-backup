@@ -2,14 +2,15 @@ package engines
 
 import (
 	"fmt"
-	"neuroedge/kernel/core"
+
+	"neuroedge/kernel/types"
 )
 
 type NeuroLegalEngine struct {
-	EventBus *core.EventBus
+	EventBus *types.EventBus
 }
 
-func NewNeuroLegalEngine(bus *core.EventBus) *NeuroLegalEngine {
+func NewNeuroLegalEngine(bus *types.EventBus) *NeuroLegalEngine {
 	return &NeuroLegalEngine{
 		EventBus: bus,
 	}
@@ -17,14 +18,11 @@ func NewNeuroLegalEngine(bus *core.EventBus) *NeuroLegalEngine {
 
 func (n *NeuroLegalEngine) Start() {
 	fmt.Println("🚀 NeuroLegalEngine started")
-	ch := make(chan map[string]interface{})
-	n.EventBus.Subscribe("legal:request", ch)
-	go func() {
-		for event := range ch {
-			fmt.Println("[NeuroLegalEngine] Legal Event:", event)
-			n.AnalyzeLegal(event)
-		}
-	}()
+
+	n.EventBus.Subscribe("legal:request", func(evt types.Event) {
+		fmt.Println("[NeuroLegalEngine] Legal Event:", evt.Data)
+		n.AnalyzeLegal(evt.Data)
+	})
 }
 
 func (n *NeuroLegalEngine) Stop() {
@@ -35,6 +33,6 @@ func (n *NeuroLegalEngine) Name() string {
 	return "NeuroLegalEngine"
 }
 
-func (n *NeuroLegalEngine) AnalyzeLegal(data map[string]interface{}) {
+func (n *NeuroLegalEngine) AnalyzeLegal(data interface{}) {
 	fmt.Println("[NeuroLegalEngine] Legal analysis completed:", data)
 }
