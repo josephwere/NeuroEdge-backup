@@ -2,14 +2,15 @@ package engines
 
 import (
 	"fmt"
-	"neuroedge/kernel/core"
+
+	"neuroedge/kernel/types"
 )
 
 type NeuroSearchEngine struct {
-	EventBus *core.EventBus
+	EventBus *types.EventBus
 }
 
-func NewNeuroSearchEngine(bus *core.EventBus) *NeuroSearchEngine {
+func NewNeuroSearchEngine(bus *types.EventBus) *NeuroSearchEngine {
 	return &NeuroSearchEngine{
 		EventBus: bus,
 	}
@@ -17,14 +18,11 @@ func NewNeuroSearchEngine(bus *core.EventBus) *NeuroSearchEngine {
 
 func (n *NeuroSearchEngine) Start() {
 	fmt.Println("🚀 NeuroSearchEngine started")
-	ch := make(chan map[string]interface{})
-	n.EventBus.Subscribe("search:request", ch)
-	go func() {
-		for event := range ch {
-			fmt.Println("[NeuroSearchEngine] Search Event:", event)
-			n.ExecuteSearch(event)
-		}
-	}()
+
+	n.EventBus.Subscribe("search:request", func(evt types.Event) {
+		fmt.Println("[NeuroSearchEngine] Search Event:", evt.Data)
+		n.ExecuteSearch(evt.Data)
+	})
 }
 
 func (n *NeuroSearchEngine) Stop() {
@@ -35,6 +33,6 @@ func (n *NeuroSearchEngine) Name() string {
 	return "NeuroSearchEngine"
 }
 
-func (n *NeuroSearchEngine) ExecuteSearch(data map[string]interface{}) {
+func (n *NeuroSearchEngine) ExecuteSearch(data interface{}) {
 	fmt.Println("[NeuroSearchEngine] Search executed:", data)
 }
