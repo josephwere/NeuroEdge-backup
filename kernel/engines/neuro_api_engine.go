@@ -1,15 +1,17 @@
+// kernel/engines/neuro_api_engine.go
 package engines
 
 import (
 	"fmt"
-	"neuroedge/kernel/core"
+
+	"neuroedge/kernel/types"
 )
 
 type NeuroAPIEngine struct {
-	EventBus *core.EventBus
+	EventBus *types.EventBus
 }
 
-func NewNeuroAPIEngine(bus *core.EventBus) *NeuroAPIEngine {
+func NewNeuroAPIEngine(bus *types.EventBus) *NeuroAPIEngine {
 	return &NeuroAPIEngine{
 		EventBus: bus,
 	}
@@ -17,14 +19,11 @@ func NewNeuroAPIEngine(bus *core.EventBus) *NeuroAPIEngine {
 
 func (n *NeuroAPIEngine) Start() {
 	fmt.Println("🚀 NeuroAPIEngine started")
-	ch := make(chan map[string]interface{})
-	n.EventBus.Subscribe("api:request", ch)
-	go func() {
-		for event := range ch {
-			fmt.Println("[NeuroAPIEngine] API Event:", event)
-			n.ProcessAPI(event)
-		}
-	}()
+
+	n.EventBus.Subscribe("api:request", func(evt types.Event) {
+		fmt.Println("[NeuroAPIEngine] API Event:", evt.Data)
+		n.ProcessAPI(evt.Data)
+	})
 }
 
 func (n *NeuroAPIEngine) Stop() {
@@ -35,6 +34,6 @@ func (n *NeuroAPIEngine) Name() string {
 	return "NeuroAPIEngine"
 }
 
-func (n *NeuroAPIEngine) ProcessAPI(data map[string]interface{}) {
+func (n *NeuroAPIEngine) ProcessAPI(data interface{}) {
 	fmt.Println("[NeuroAPIEngine] API processed:", data)
 }
