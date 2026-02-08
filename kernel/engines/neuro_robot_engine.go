@@ -2,14 +2,15 @@ package engines
 
 import (
 	"fmt"
-	"neuroedge/kernel/core"
+
+	"neuroedge/kernel/types"
 )
 
 type NeuroRobotEngine struct {
-	EventBus *core.EventBus
+	EventBus *types.EventBus
 }
 
-func NewNeuroRobotEngine(bus *core.EventBus) *NeuroRobotEngine {
+func NewNeuroRobotEngine(bus *types.EventBus) *NeuroRobotEngine {
 	return &NeuroRobotEngine{
 		EventBus: bus,
 	}
@@ -17,14 +18,11 @@ func NewNeuroRobotEngine(bus *core.EventBus) *NeuroRobotEngine {
 
 func (n *NeuroRobotEngine) Start() {
 	fmt.Println("🚀 NeuroRobotEngine started")
-	ch := make(chan map[string]interface{})
-	n.EventBus.Subscribe("robot:control", ch)
-	go func() {
-		for event := range ch {
-			fmt.Println("[NeuroRobotEngine] Robot Control Event:", event)
-			n.ControlRobot(event)
-		}
-	}()
+
+	n.EventBus.Subscribe("robot:control", func(evt types.Event) {
+		fmt.Println("[NeuroRobotEngine] Robot Control Event:", evt.Data)
+		n.ControlRobot(evt.Data)
+	})
 }
 
 func (n *NeuroRobotEngine) Stop() {
@@ -35,6 +33,6 @@ func (n *NeuroRobotEngine) Name() string {
 	return "NeuroRobotEngine"
 }
 
-func (n *NeuroRobotEngine) ControlRobot(data map[string]interface{}) {
+func (n *NeuroRobotEngine) ControlRobot(data interface{}) {
 	fmt.Println("[NeuroRobotEngine] Robot action executed:", data)
 }
