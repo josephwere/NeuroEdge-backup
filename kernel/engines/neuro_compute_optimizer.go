@@ -2,15 +2,16 @@ package engines
 
 import (
 	"fmt"
-	"neuroedge/kernel/core"
 	"time"
+
+	"neuroedge/kernel/types"
 )
 
 type NeuroComputeOptimizer struct {
-	EventBus *core.EventBus
+	EventBus *types.EventBus
 }
 
-func NewNeuroComputeOptimizer(bus *core.EventBus) *NeuroComputeOptimizer {
+func NewNeuroComputeOptimizer(bus *types.EventBus) *NeuroComputeOptimizer {
 	return &NeuroComputeOptimizer{
 		EventBus: bus,
 	}
@@ -18,14 +19,11 @@ func NewNeuroComputeOptimizer(bus *core.EventBus) *NeuroComputeOptimizer {
 
 func (n *NeuroComputeOptimizer) Start() {
 	fmt.Println("🚀 NeuroComputeOptimizer started")
-	ch := make(chan map[string]interface{})
-	n.EventBus.Subscribe("compute:optimize", ch)
-	go func() {
-		for event := range ch {
-			fmt.Println("[NeuroComputeOptimizer] Optimization Event:", event)
-			n.OptimizeCompute(event)
-		}
-	}()
+
+	n.EventBus.Subscribe("compute:optimize", func(evt types.Event) {
+		fmt.Println("[NeuroComputeOptimizer] Optimization Event:", evt.Data)
+		n.OptimizeCompute(evt.Data)
+	})
 }
 
 func (n *NeuroComputeOptimizer) Stop() {
@@ -36,7 +34,7 @@ func (n *NeuroComputeOptimizer) Name() string {
 	return "NeuroComputeOptimizer"
 }
 
-func (n *NeuroComputeOptimizer) OptimizeCompute(data map[string]interface{}) {
+func (n *NeuroComputeOptimizer) OptimizeCompute(data interface{}) {
 	fmt.Println("[NeuroComputeOptimizer] Running compute optimization...")
 	// Simulate heavy computation optimization
 	time.Sleep(500 * time.Millisecond)
