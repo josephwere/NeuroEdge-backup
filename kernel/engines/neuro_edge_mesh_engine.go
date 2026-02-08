@@ -2,14 +2,15 @@ package engines
 
 import (
 	"fmt"
-	"neuroedge/kernel/core"
+
+	"neuroedge/kernel/types"
 )
 
 type NeuroEdgeMeshEngine struct {
-	EventBus *core.EventBus
+	EventBus *types.EventBus
 }
 
-func NewNeuroEdgeMeshEngine(bus *core.EventBus) *NeuroEdgeMeshEngine {
+func NewNeuroEdgeMeshEngine(bus *types.EventBus) *NeuroEdgeMeshEngine {
 	return &NeuroEdgeMeshEngine{
 		EventBus: bus,
 	}
@@ -17,14 +18,11 @@ func NewNeuroEdgeMeshEngine(bus *core.EventBus) *NeuroEdgeMeshEngine {
 
 func (n *NeuroEdgeMeshEngine) Start() {
 	fmt.Println("🚀 NeuroEdgeMeshEngine started")
-	ch := make(chan map[string]interface{})
-	n.EventBus.Subscribe("mesh:request", ch)
-	go func() {
-		for event := range ch {
-			fmt.Println("[NeuroEdgeMeshEngine] Mesh Event:", event)
-			n.ManageMesh(event)
-		}
-	}()
+
+	n.EventBus.Subscribe("mesh:request", func(evt types.Event) {
+		fmt.Println("[NeuroEdgeMeshEngine] Mesh Event:", evt.Data)
+		n.ManageMesh(evt.Data)
+	})
 }
 
 func (n *NeuroEdgeMeshEngine) Stop() {
@@ -35,6 +33,6 @@ func (n *NeuroEdgeMeshEngine) Name() string {
 	return "NeuroEdgeMeshEngine"
 }
 
-func (n *NeuroEdgeMeshEngine) ManageMesh(data map[string]interface{}) {
+func (n *NeuroEdgeMeshEngine) ManageMesh(data interface{}) {
 	fmt.Println("[NeuroEdgeMeshEngine] Mesh managed:", data)
 }
