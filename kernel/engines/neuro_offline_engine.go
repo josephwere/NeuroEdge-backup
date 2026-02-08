@@ -2,14 +2,15 @@ package engines
 
 import (
 	"fmt"
-	"neuroedge/kernel/core"
+
+	"neuroedge/kernel/types"
 )
 
 type NeuroOfflineEngine struct {
-	EventBus *core.EventBus
+	EventBus *types.EventBus
 }
 
-func NewNeuroOfflineEngine(bus *core.EventBus) *NeuroOfflineEngine {
+func NewNeuroOfflineEngine(bus *types.EventBus) *NeuroOfflineEngine {
 	return &NeuroOfflineEngine{
 		EventBus: bus,
 	}
@@ -17,14 +18,11 @@ func NewNeuroOfflineEngine(bus *core.EventBus) *NeuroOfflineEngine {
 
 func (n *NeuroOfflineEngine) Start() {
 	fmt.Println("🚀 NeuroOfflineEngine started")
-	ch := make(chan map[string]interface{})
-	n.EventBus.Subscribe("offline:sync", ch)
-	go func() {
-		for event := range ch {
-			fmt.Println("[NeuroOfflineEngine] Offline Sync Event:", event)
-			n.HandleOffline(event)
-		}
-	}()
+
+	n.EventBus.Subscribe("offline:sync", func(evt types.Event) {
+		fmt.Println("[NeuroOfflineEngine] Offline Sync Event:", evt.Data)
+		n.HandleOffline(evt.Data)
+	})
 }
 
 func (n *NeuroOfflineEngine) Stop() {
@@ -35,6 +33,6 @@ func (n *NeuroOfflineEngine) Name() string {
 	return "NeuroOfflineEngine"
 }
 
-func (n *NeuroOfflineEngine) HandleOffline(data map[string]interface{}) {
+func (n *NeuroOfflineEngine) HandleOffline(data interface{}) {
 	fmt.Println("[NeuroOfflineEngine] Offline processing executed:", data)
 }
