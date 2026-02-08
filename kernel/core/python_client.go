@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"google.golang.org/grpc"
-	pb "neuroedge/ml/orchestrator/generated"
+	pb "neuroedge/kernel/ml/orchestrator/generated"
 )
 
 type PythonClient struct {
