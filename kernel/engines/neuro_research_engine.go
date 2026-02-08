@@ -2,14 +2,15 @@ package engines
 
 import (
 	"fmt"
-	"neuroedge/kernel/core"
+
+	"neuroedge/kernel/types"
 )
 
 type NeuroResearchEngine struct {
-	EventBus *core.EventBus
+	EventBus *types.EventBus
 }
 
-func NewNeuroResearchEngine(bus *core.EventBus) *NeuroResearchEngine {
+func NewNeuroResearchEngine(bus *types.EventBus) *NeuroResearchEngine {
 	return &NeuroResearchEngine{
 		EventBus: bus,
 	}
@@ -17,14 +18,11 @@ func NewNeuroResearchEngine(bus *core.EventBus) *NeuroResearchEngine {
 
 func (n *NeuroResearchEngine) Start() {
 	fmt.Println("🚀 NeuroResearchEngine started")
-	ch := make(chan map[string]interface{})
-	n.EventBus.Subscribe("research:analyze", ch)
-	go func() {
-		for event := range ch {
-			fmt.Println("[NeuroResearchEngine] Research Event:", event)
-			n.PerformResearch(event)
-		}
-	}()
+
+	n.EventBus.Subscribe("research:analyze", func(evt types.Event) {
+		fmt.Println("[NeuroResearchEngine] Research Event:", evt.Data)
+		n.PerformResearch(evt.Data)
+	})
 }
 
 func (n *NeuroResearchEngine) Stop() {
@@ -35,6 +33,6 @@ func (n *NeuroResearchEngine) Name() string {
 	return "NeuroResearchEngine"
 }
 
-func (n *NeuroResearchEngine) PerformResearch(data map[string]interface{}) {
+func (n *NeuroResearchEngine) PerformResearch(data interface{}) {
 	fmt.Println("[NeuroResearchEngine] Research completed:", data)
 }
