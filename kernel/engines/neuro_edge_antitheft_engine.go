@@ -2,14 +2,15 @@ package engines
 
 import (
 	"fmt"
-	"neuroedge/kernel/core"
+
+	"neuroedge/kernel/types"
 )
 
 type NeuroEdgeAntiTheftEngine struct {
-	EventBus *core.EventBus
+	EventBus *types.EventBus
 }
 
-func NewNeuroEdgeAntiTheftEngine(bus *core.EventBus) *NeuroEdgeAntiTheftEngine {
+func NewNeuroEdgeAntiTheftEngine(bus *types.EventBus) *NeuroEdgeAntiTheftEngine {
 	return &NeuroEdgeAntiTheftEngine{
 		EventBus: bus,
 	}
@@ -17,14 +18,11 @@ func NewNeuroEdgeAntiTheftEngine(bus *core.EventBus) *NeuroEdgeAntiTheftEngine {
 
 func (n *NeuroEdgeAntiTheftEngine) Start() {
 	fmt.Println("🚀 NeuroEdgeAntiTheftEngine started")
-	ch := make(chan map[string]interface{})
-	n.EventBus.Subscribe("device:theft-alert", ch)
-	go func() {
-		for event := range ch {
-			fmt.Println("[NeuroEdgeAntiTheftEngine] Theft Alert:", event)
-			n.ProtectDevice(event)
-		}
-	}()
+
+	n.EventBus.Subscribe("device:theft-alert", func(evt types.Event) {
+		fmt.Println("[NeuroEdgeAntiTheftEngine] Theft Alert:", evt.Data)
+		n.ProtectDevice(evt.Data)
+	})
 }
 
 func (n *NeuroEdgeAntiTheftEngine) Stop() {
@@ -35,6 +33,6 @@ func (n *NeuroEdgeAntiTheftEngine) Name() string {
 	return "NeuroEdgeAntiTheftEngine"
 }
 
-func (n *NeuroEdgeAntiTheftEngine) ProtectDevice(data map[string]interface{}) {
+func (n *NeuroEdgeAntiTheftEngine) ProtectDevice(data interface{}) {
 	fmt.Println("[NeuroEdgeAntiTheftEngine] Device protection executed:", data)
 }
