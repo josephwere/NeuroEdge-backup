@@ -2,7 +2,9 @@ package core
 
 import (
 	"fmt"
+
 	"neuroedge/kernel/engines"
+	"neuroedge/kernel/types" // <-- import EventBus from types
 )
 
 // EngineInterface ensures all engines implement these methods
@@ -17,11 +19,11 @@ type EngineInterface interface {
 // EngineRegistry keeps track of all engines
 type EngineRegistry struct {
 	Engines  map[string]EngineInterface
-	EventBus *EventBus
+	EventBus *types.EventBus // <-- updated type reference
 }
 
 // NewEngineRegistry creates a new registry
-func NewEngineRegistry(bus *EventBus) *EngineRegistry {
+func NewEngineRegistry(bus *types.EventBus) *EngineRegistry {
 	return &EngineRegistry{
 		Engines:  make(map[string]EngineInterface),
 		EventBus: bus,
