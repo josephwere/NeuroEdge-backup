@@ -20,10 +20,18 @@ func NewBankingAgent(bus *types.EventBus) *BankingAgent {
 func (b *BankingAgent) Start() {
 	fmt.Println("🚀 BankingAgent started")
 
-	// Subscribe using a function, not a channel
+	// Subscribe using a function
 	b.EventBus.Subscribe("bank:transaction", func(event types.Event) {
 		fmt.Println("[BankingAgent] Transaction Event:", event.Data)
-		b.ProcessTransaction(event.Data)
+
+		// ✅ Type assertion
+		tx, ok := event.Data.(map[string]interface{})
+		if !ok {
+			fmt.Println("[BankingAgent] Warning: event.Data is not a map:", event.Data)
+			return
+		}
+
+		b.ProcessTransaction(tx)
 	})
 }
 
