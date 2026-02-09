@@ -4,7 +4,7 @@ package agents
 import (
 	"fmt"
 
-	"neuroedge/kernel/types" // use types instead of core
+	"neuroedge/kernel/types"
 )
 
 type BorderControlAgent struct {
@@ -19,14 +19,20 @@ func NewBorderControlAgent(bus *types.EventBus) *BorderControlAgent {
 
 func (b *BorderControlAgent) Start() {
 	fmt.Println("🚀 BorderControlAgent started")
-	ch := make(chan map[string]interface{})
-	b.EventBus.Subscribe("border:check", ch)
-	go func() {
-		for event := range ch {
-			fmt.Println("[BorderControlAgent] Border Check Event:", event)
-			b.VerifyTraveler(event)
+
+	// ✅ Subscribe using a function
+	b.EventBus.Subscribe("border:check", func(event types.Event) {
+		fmt.Println("[BorderControlAgent] Border Check Event:", event.Data)
+
+		// ✅ Type assertion
+		data, ok := event.Data.(map[string]interface{})
+		if !ok {
+			fmt.Println("[BorderControlAgent] Warning: event.Data is not a map:", event.Data)
+			return
 		}
-	}()
+
+		b.VerifyTraveler(data)
+	})
 }
 
 func (b *BorderControlAgent) Stop() {
