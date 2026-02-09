@@ -4,7 +4,7 @@ package agents
 import (
 	"fmt"
 
-	"neuroedge/kernel/types" // lightweight types package to break cycles
+	"neuroedge/kernel/types"
 )
 
 type AppBuilderAgent struct {
@@ -19,14 +19,12 @@ func NewAppBuilderAgent(bus *types.EventBus) *AppBuilderAgent {
 
 func (a *AppBuilderAgent) Start() {
 	fmt.Println("🚀 AppBuilderAgent started")
-	ch := make(chan map[string]interface{})
-	a.EventBus.Subscribe("app:build", ch)
-	go func() {
-		for event := range ch {
-			fmt.Println("[AppBuilderAgent] Build Event:", event)
-			a.BuildApp(event)
-		}
-	}()
+
+	// Subscribe directly with a function
+	a.EventBus.Subscribe("app:build", func(event types.Event) {
+		fmt.Println("[AppBuilderAgent] Build Event:", event.Data)
+		a.BuildApp(event.Data)
+	})
 }
 
 func (a *AppBuilderAgent) Stop() {
