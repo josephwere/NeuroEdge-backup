@@ -4,7 +4,7 @@ package agents
 import (
 	"fmt"
 
-	"neuroedge/kernel/types" // use types instead of core
+	"neuroedge/kernel/types"
 )
 
 type CityInfrastructureAgent struct {
@@ -19,14 +19,20 @@ func NewCityInfrastructureAgent(bus *types.EventBus) *CityInfrastructureAgent {
 
 func (c *CityInfrastructureAgent) Start() {
 	fmt.Println("🚀 CityInfrastructureAgent started")
-	ch := make(chan map[string]interface{})
-	c.EventBus.Subscribe("city:infrastructure:update", ch)
-	go func() {
-		for event := range ch {
-			fmt.Println("[CityInfrastructureAgent] City Event:", event)
-			c.ManageInfrastructure(event)
+
+	// ✅ Subscribe directly with a function
+	c.EventBus.Subscribe("city:infrastructure:update", func(event types.Event) {
+		fmt.Println("[CityInfrastructureAgent] City Event:", event.Data)
+
+		// ✅ Type assertion
+		data, ok := event.Data.(map[string]interface{})
+		if !ok {
+			fmt.Println("[CityInfrastructureAgent] Warning: event.Data is not a map:", event.Data)
+			return
 		}
-	}()
+
+		c.ManageInfrastructure(data)
+	})
 }
 
 func (c *CityInfrastructureAgent) Stop() {
