@@ -4,7 +4,7 @@ package agents
 import (
 	"fmt"
 
-	"neuroedge/kernel/types" // use lightweight types package to avoid cycles
+	"neuroedge/kernel/types"
 )
 
 type APIGeneratorAgent struct {
@@ -19,14 +19,12 @@ func NewAPIGeneratorAgent(bus *types.EventBus) *APIGeneratorAgent {
 
 func (a *APIGeneratorAgent) Start() {
 	fmt.Println("🚀 APIGeneratorAgent started")
-	ch := make(chan map[string]interface{})
-	a.EventBus.Subscribe("api:generate", ch)
-	go func() {
-		for event := range ch {
-			fmt.Println("[APIGeneratorAgent] API Generation Event:", event)
-			a.GenerateAPI(event)
-		}
-	}()
+
+	// Use a subscriber function directly
+	a.EventBus.Subscribe("api:generate", func(event types.Event) {
+		fmt.Println("[APIGeneratorAgent] API Generation Event:", event.Data)
+		a.GenerateAPI(event.Data)
+	})
 }
 
 func (a *APIGeneratorAgent) Stop() {
