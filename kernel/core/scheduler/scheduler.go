@@ -26,7 +26,8 @@ func (s *Scheduler) ScheduleRecurring(name string, task func(), intervalSeconds 
             case <-ticker.C:
                 fmt.Printf("⏱ Running scheduled task: %s\n", name)
                 task()
-                s.EventBus.Publish(name, map[string]string{"status": "ok"})
+                // ✅ Correct map type
+                s.EventBus.Publish(name, map[string]interface{}{"status": "ok"})
             }
         }
     }()
