@@ -7,7 +7,7 @@ import (
 	"sync"
 	"time"
 
-	"neuroedge/kernel/core/contracts"
+	"neuroedge/kernel/contracts"
 )
 
 // HealthStatus represents the health state of a component
@@ -33,7 +33,7 @@ func NewHealthManager() *HealthManager {
 	return &HealthManager{
 		components: make([]contracts.HealthCheck, 0),
 		statuses:   make(map[string]*HealthStatus),
-		ticker:     time.NewTicker(10 * time.Second), // default check interval
+		ticker:     time.NewTicker(10 * time.Second),
 		stopChan:   make(chan bool),
 	}
 }
@@ -42,13 +42,19 @@ func NewHealthManager() *HealthManager {
 func (hm *HealthManager) RegisterComponent(c contracts.HealthCheck) {
 	hm.mu.Lock()
 	defer hm.mu.Unlock()
+
 	hm.components = append(hm.components, c)
-	hm.statuses[c.Name()] = &HealthStatus{Name: c.Name(), Healthy: false, LastCheck: time.Now()}
+	hm.statuses[c.Name()] = &HealthStatus{
+		Name:      c.Name(),
+		Healthy:   false,
+		LastCheck: time.Now(),
+	}
 }
 
 // StartMonitoring begins periodic health checks
 func (hm *HealthManager) StartMonitoring() {
 	fmt.Println("🩺 Health Monitoring Started")
+
 	go func() {
 		for {
 			select {
@@ -67,17 +73,18 @@ func (hm *HealthManager) StopMonitoring() {
 	hm.stopChan <- true
 	hm.ticker.Stop()
 }
+
 // StatusesSnapshot returns a thread-safe copy of all statuses
 func (hm *HealthManager) StatusesSnapshot() map[string]*HealthStatus {
 	hm.mu.Lock()
 	defer hm.mu.Unlock()
 
-	copy := make(map[string]*HealthStatus)
+	copyMap := make(map[string]*HealthStatus)
 	for k, v := range hm.statuses {
-		tmp := *v // copy struct
-		copy[k] = &tmp
+		tmp := *v
+		copyMap[k] = &tmp
 	}
-	return copy
+	return copyMap
 }
 
 // Global instance for API
@@ -101,6 +108,7 @@ func (hm *HealthManager) runChecks() {
 			err := c.CheckHealth()
 			status := hm.statuses[c.Name()]
 			status.LastCheck = time.Now()
+
 			if err != nil {
 				status.Healthy = false
 				status.LastError = err
@@ -118,12 +126,19 @@ func (hm *HealthManager) runChecks() {
 // printSummary outputs a structured health report
 func (hm *HealthManager) printSummary() {
 	fmt.Println("📊 Kernel Health Summary:")
+
 	for _, status := range hm.statuses {
 		healthStr := "✅ Healthy"
 		if !status.Healthy {
 			healthStr = fmt.Sprintf("⚠️ Unhealthy (last error: %v)", status.LastError)
 		}
-		fmt.Printf("[%s] %s (Last checked: %s)\n", status.Name, healthStr, status.LastCheck.Format(time.RFC3339))
+
+		fmt.Printf(
+			"[%s] %s (Last checked: %s)\n",
+			status.Name,
+			healthStr,
+			status.LastCheck.Format(time.RFC3339),
+		)
 	}
 }
 
@@ -131,6 +146,12 @@ func (hm *HealthManager) printSummary() {
 func CheckKernelResources() {
 	var m runtime.MemStats
 	runtime.ReadMemStats(&m)
-	fmt.Printf("💾 Memory Usage: Alloc=%vKB TotalAlloc=%vKB Sys=%vKB NumGC=%v\n",
-		m.Alloc/1024, m.TotalAlloc/1024, m.Sys/1024, m.NumGC)
+
+	fmt.Printf(
+		"💾 Memory Usage: Alloc=%vKB TotalAlloc=%vKB Sys=%vKB NumGC=%v\n",
+		m.Alloc/1024,
+		m.TotalAlloc/1024,
+		m.Sys/1024,
+		m.NumGC,
+	)
 }
