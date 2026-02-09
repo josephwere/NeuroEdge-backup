@@ -19,10 +19,19 @@ func NewAntiTheftAgent(bus *types.EventBus) *AntiTheftAgent {
 func (a *AntiTheftAgent) Start() {
 	fmt.Println("🚀 AntiTheftAgent started")
 
-	// Use subscriber function directly
+	// Subscribe with function
 	a.EventBus.Subscribe("device:stolen", func(event types.Event) {
 		fmt.Println("[AntiTheftAgent] Device Stolen Alert:", event)
-		if deviceID, ok := event.Data["deviceID"].(string); ok {
+
+		// ✅ Safely assert event.Data to map
+		data, ok := event.Data.(map[string]interface{})
+		if !ok {
+			fmt.Println("[AntiTheftAgent] Warning: event.Data is not a map:", event.Data)
+			return
+		}
+
+		// ✅ Safely extract deviceID
+		if deviceID, ok := data["deviceID"].(string); ok {
 			a.LockDevice(deviceID)
 		} else {
 			fmt.Println("[AntiTheftAgent] Warning: deviceID not found or invalid type")
@@ -34,6 +43,7 @@ func (a *AntiTheftAgent) Stop() {
 	fmt.Println("🛑 AntiTheftAgent stopped")
 }
 
+// Only method — no Name field
 func (a *AntiTheftAgent) Name() string {
 	return "AntiTheftAgent"
 }
