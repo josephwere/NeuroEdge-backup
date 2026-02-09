@@ -1,4 +1,3 @@
-// kernel/engines/neuro_3d_engine.go
 package engines
 
 import (
@@ -20,7 +19,7 @@ func NewNeuro3DEngine(bus *types.EventBus) *Neuro3DEngine {
 func (n *Neuro3DEngine) Start() {
 	fmt.Println("🚀 Neuro3DEngine started")
 
-	ch := make(chan types.Event)
+	// Removed unused variable 'ch'
 
 	n.EventBus.Subscribe("3d:render", func(evt types.Event) {
 		fmt.Println("[Neuro3DEngine] 3D Rendering Event:", evt.Data)
