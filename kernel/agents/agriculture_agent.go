@@ -3,14 +3,14 @@ package agents
 
 import (
 	"fmt"
-	"neuroedge/kernel/types" // <-- changed
+	"neuroedge/kernel/types"
 )
 
 type AgricultureAgent struct {
-	EventBus types.EventBus
+	EventBus *types.EventBus
 }
 
-func NewAgricultureAgent(bus types.EventBus) *AgricultureAgent {
+func NewAgricultureAgent(bus *types.EventBus) *AgricultureAgent {
 	return &AgricultureAgent{
 		EventBus: bus,
 	}
@@ -18,14 +18,12 @@ func NewAgricultureAgent(bus types.EventBus) *AgricultureAgent {
 
 func (a *AgricultureAgent) Start() {
 	fmt.Println("🚀 AgricultureAgent started")
-	ch := make(chan types.Event)
-	a.EventBus.Subscribe("agriculture:update", ch)
-	go func() {
-		for event := range ch {
-			fmt.Println("[AgricultureAgent] Agriculture Event:", event)
-			a.OptimizeFarm(event)
-		}
-	}()
+
+	// Use a subscriber function instead of a channel
+	a.EventBus.Subscribe("agriculture:update", func(event types.Event) {
+		fmt.Println("[AgricultureAgent] Agriculture Event:", event)
+		a.OptimizeFarm(event)
+	})
 }
 
 func (a *AgricultureAgent) Stop() {
