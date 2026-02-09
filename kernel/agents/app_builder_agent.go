@@ -23,7 +23,15 @@ func (a *AppBuilderAgent) Start() {
 	// Subscribe directly with a function
 	a.EventBus.Subscribe("app:build", func(event types.Event) {
 		fmt.Println("[AppBuilderAgent] Build Event:", event.Data)
-		a.BuildApp(event.Data)
+
+		// ✅ Type assertion to map[string]interface{}
+		data, ok := event.Data.(map[string]interface{})
+		if !ok {
+			fmt.Println("[AppBuilderAgent] Warning: event.Data is not a map:", event.Data)
+			return
+		}
+
+		a.BuildApp(data)
 	})
 }
 
