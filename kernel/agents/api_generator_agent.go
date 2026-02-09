@@ -20,10 +20,18 @@ func NewAPIGeneratorAgent(bus *types.EventBus) *APIGeneratorAgent {
 func (a *APIGeneratorAgent) Start() {
 	fmt.Println("🚀 APIGeneratorAgent started")
 
-	// Use a subscriber function directly
+	// Subscribe with function
 	a.EventBus.Subscribe("api:generate", func(event types.Event) {
 		fmt.Println("[APIGeneratorAgent] API Generation Event:", event.Data)
-		a.GenerateAPI(event.Data)
+
+		// ✅ Type assertion to map[string]interface{}
+		data, ok := event.Data.(map[string]interface{})
+		if !ok {
+			fmt.Println("[APIGeneratorAgent] Warning: event.Data is not a map:", event.Data)
+			return
+		}
+
+		a.GenerateAPI(data)
 	})
 }
 
