@@ -4,7 +4,7 @@ package agents
 import (
 	"fmt"
 
-	"neuroedge/kernel/types" // use types instead of core
+	"neuroedge/kernel/types"
 )
 
 type ChildTutorAgent struct {
@@ -19,14 +19,20 @@ func NewChildTutorAgent(bus *types.EventBus) *ChildTutorAgent {
 
 func (c *ChildTutorAgent) Start() {
 	fmt.Println("🚀 ChildTutorAgent started")
-	ch := make(chan map[string]interface{})
-	c.EventBus.Subscribe("tutor:session", ch)
-	go func() {
-		for event := range ch {
-			fmt.Println("[ChildTutorAgent] Tutoring Event:", event)
-			c.TutorChild(event)
+
+	// ✅ Subscribe directly with a function
+	c.EventBus.Subscribe("tutor:session", func(event types.Event) {
+		fmt.Println("[ChildTutorAgent] Tutoring Event:", event.Data)
+
+		// ✅ Type assertion
+		data, ok := event.Data.(map[string]interface{})
+		if !ok {
+			fmt.Println("[ChildTutorAgent] Warning: event.Data is not a map:", event.Data)
+			return
 		}
-	}()
+
+		c.TutorChild(data)
+	})
 }
 
 func (c *ChildTutorAgent) Stop() {
