@@ -4,7 +4,7 @@ package agents
 import (
 	"fmt"
 
-	"neuroedge/kernel/types" // use types package instead of core
+	"neuroedge/kernel/types"
 )
 
 type BankingAgent struct {
@@ -19,14 +19,12 @@ func NewBankingAgent(bus *types.EventBus) *BankingAgent {
 
 func (b *BankingAgent) Start() {
 	fmt.Println("🚀 BankingAgent started")
-	ch := make(chan map[string]interface{})
-	b.EventBus.Subscribe("bank:transaction", ch)
-	go func() {
-		for event := range ch {
-			fmt.Println("[BankingAgent] Transaction Event:", event)
-			b.ProcessTransaction(event)
-		}
-	}()
+
+	// Subscribe using a function, not a channel
+	b.EventBus.Subscribe("bank:transaction", func(event types.Event) {
+		fmt.Println("[BankingAgent] Transaction Event:", event.Data)
+		b.ProcessTransaction(event.Data)
+	})
 }
 
 func (b *BankingAgent) Stop() {
