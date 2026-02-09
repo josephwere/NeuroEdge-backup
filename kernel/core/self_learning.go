@@ -7,27 +7,43 @@ import (
 	"time"
 
 	"neuroedge/kernel/agents"
-	"neuroedge/kernel/engines"
 )
+
+// ---- Interfaces (decoupled, testable) ----
+
+// AgentProvider exposes agents for evaluation
+type AgentProvider interface {
+	GetAllAgents() []agents.Agent
+}
+
+// EngineProvider exposes engines for evaluation
+type EngineProvider interface {
+	GetAllEngines() []EngineInterface
+}
 
 // SelfLearningLoop manages continuous improvement for NeuroEdge
 type SelfLearningLoop struct {
-	interval    time.Duration
-	stopChan    chan bool
-	mu          sync.Mutex
-	active      bool
-	agentMgr    *agents.Manager
-	engineMgr   *engines.EngineManager
+	interval time.Duration
+	stopChan chan bool
+	mu       sync.Mutex
+	active   bool
+
+	agents  AgentProvider
+	engines EngineProvider
 }
 
 // NewSelfLearningLoop creates a new self-learning loop
-func NewSelfLearningLoop(agentMgr *agents.Manager, engineMgr *engines.EngineManager, interval time.Duration) *SelfLearningLoop {
+func NewSelfLearningLoop(
+	agentProvider AgentProvider,
+	engineProvider EngineProvider,
+	interval time.Duration,
+) *SelfLearningLoop {
 	return &SelfLearningLoop{
-		interval:  interval,
-		stopChan:  make(chan bool),
-		active:    false,
-		agentMgr:  agentMgr,
-		engineMgr: engineMgr,
+		interval: interval,
+		stopChan: make(chan bool),
+		active:   false,
+		agents:   agentProvider,
+		engines:  engineProvider,
 	}
 }
 
@@ -35,6 +51,7 @@ func NewSelfLearningLoop(agentMgr *agents.Manager, engineMgr *engines.EngineMana
 func (s *SelfLearningLoop) Start() {
 	s.mu.Lock()
 	defer s.mu.Unlock()
+
 	if s.active {
 		return
 	}
@@ -62,6 +79,7 @@ func (s *SelfLearningLoop) Start() {
 func (s *SelfLearningLoop) Stop() {
 	s.mu.Lock()
 	defer s.mu.Unlock()
+
 	if !s.active {
 		return
 	}
@@ -74,20 +92,20 @@ func (s *SelfLearningLoop) runIteration() {
 	fmt.Println("🔄 Self-Learning Iteration started")
 
 	// 1️⃣ Evaluate agents
-	for _, ag := range s.agentMgr.GetAllAgents() {
-		success := ag.EvaluatePerformance()
-		if !success {
+	for _, ag := range s.agents.GetAllAgents() {
+		ok := ag.EvaluatePerformance()
+		if !ok {
 			log.Printf("⚠️ Agent %s requires improvement\n", ag.Name())
-			ag.Learn() // retrain or adapt
+			ag.Learn()
 		}
 	}
 
 	// 2️⃣ Evaluate engines
-	for _, eng := range s.engineMgr.GetAllEngines() {
-		stable := eng.EvaluatePerformance()
-		if !stable {
+	for _, eng := range s.engines.GetAllEngines() {
+		ok := eng.EvaluatePerformance()
+		if !ok {
 			log.Printf("⚠️ Engine %s requires optimization\n", eng.Name())
-			eng.Optimize() // improve reasoning, caching, or compute
+			eng.Optimize()
 		}
 	}
 
@@ -99,6 +117,5 @@ func (s *SelfLearningLoop) runIteration() {
 
 // aggregateFeedback collects metrics from mesh, users, and tasks
 func (s *SelfLearningLoop) aggregateFeedback() {
-	// Placeholder: in future, pull metrics from mesh nodes & task results
 	fmt.Println("📊 Aggregating feedback from agents, engines, and mesh nodes...")
 }
