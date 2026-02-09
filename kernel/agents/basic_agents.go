@@ -1,6 +1,8 @@
 package agents
 
-import "kernel/types"
+
+import "neuroedge/kernel/types"
+
 
 // ---- Base agent ----
 
