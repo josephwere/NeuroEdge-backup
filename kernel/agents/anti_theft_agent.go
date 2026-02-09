@@ -3,14 +3,14 @@ package agents
 
 import (
 	"fmt"
-	"neuroedge/kernel/types" // <- use types instead of core
+	"neuroedge/kernel/types"
 )
 
 type AntiTheftAgent struct {
-	EventBus types.EventBus
+	EventBus *types.EventBus
 }
 
-func NewAntiTheftAgent(bus types.EventBus) *AntiTheftAgent {
+func NewAntiTheftAgent(bus *types.EventBus) *AntiTheftAgent {
 	return &AntiTheftAgent{
 		EventBus: bus,
 	}
@@ -18,14 +18,16 @@ func NewAntiTheftAgent(bus types.EventBus) *AntiTheftAgent {
 
 func (a *AntiTheftAgent) Start() {
 	fmt.Println("🚀 AntiTheftAgent started")
-	ch := make(chan types.Event) // <- use types.Event
-	a.EventBus.Subscribe("device:stolen", ch)
-	go func() {
-		for event := range ch {
-			fmt.Println("[AntiTheftAgent] Device Stolen Alert:", event)
-			a.LockDevice(event["deviceID"].(string))
+
+	// Use subscriber function directly
+	a.EventBus.Subscribe("device:stolen", func(event types.Event) {
+		fmt.Println("[AntiTheftAgent] Device Stolen Alert:", event)
+		if deviceID, ok := event.Data["deviceID"].(string); ok {
+			a.LockDevice(deviceID)
+		} else {
+			fmt.Println("[AntiTheftAgent] Warning: deviceID not found or invalid type")
 		}
-	}()
+	})
 }
 
 func (a *AntiTheftAgent) Stop() {
@@ -36,7 +38,7 @@ func (a *AntiTheftAgent) Name() string {
 	return "AntiTheftAgent"
 }
 
-// Example: Lock a stolen device
+// Lock a stolen device
 func (a *AntiTheftAgent) LockDevice(deviceID string) {
 	fmt.Printf("[AntiTheftAgent] Locking device %s remotely\n", deviceID)
 }
