@@ -1,8 +1,7 @@
+//kernel/agents/basic_agents.go
 package agents
 
-
 import "neuroedge/kernel/types"
-
 
 // ---- Base agent ----
 
