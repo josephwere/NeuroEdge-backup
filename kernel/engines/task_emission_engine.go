@@ -1,8 +1,9 @@
-//kernel/engines/task_emission_engine.go
+// kernel/engines/task_emission_engine.go
 package engines
 
 import (
 	"fmt"
+	"sync"
 	"time"
 
 	"neuroedge/kernel/types"
@@ -12,6 +13,7 @@ type TaskEmissionEngine struct {
 	engineName string
 	EventBus   *types.EventBus
 	stopCh     chan struct{}
+	stopOnce   sync.Once
 }
 
 func NewTaskEmissionEngine(bus *types.EventBus) *TaskEmissionEngine {
@@ -30,7 +32,7 @@ func (e *TaskEmissionEngine) Start() {
 	fmt.Println(e.Name(), "initializing...")
 
 	go func() {
-		ticker := time.NewTicker(10 * time.Second) // less noisy
+		ticker := time.NewTicker(10 * time.Second)
 		defer ticker.Stop()
 
 		for {
@@ -51,6 +53,8 @@ func (e *TaskEmissionEngine) Start() {
 }
 
 func (e *TaskEmissionEngine) Stop() {
-	close(e.stopCh)
+	e.stopOnce.Do(func() {
+		close(e.stopCh)
+	})
 	fmt.Println(e.Name(), "shutting down.")
 }
