@@ -1,3 +1,4 @@
+//kernel/mesh/node.go
 package mesh
 
 import (
@@ -8,12 +9,12 @@ import (
 
 // Node represents a single device/node in the mesh
 type Node struct {
-	ID        string
-	Address   string
-	LastSeen  time.Time
-	IsActive  bool
-	Metadata  map[string]string
-	mu        sync.Mutex
+	ID       string
+	Address  string
+	LastSeen time.Time
+	IsActive bool
+	Metadata map[string]string
+	mu       sync.Mutex
 }
 
 // NewNode creates a new mesh node
@@ -40,6 +41,11 @@ func (n *Node) MarkInactive() {
 	n.mu.Lock()
 	defer n.mu.Unlock()
 	n.IsActive = false
+}
+
+// SetOffline marks the node as inactive for compatibility with discovery logic.
+func (n *Node) SetOffline() {
+	n.MarkInactive()
 }
 
 // String returns a formatted node description
