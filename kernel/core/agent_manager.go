@@ -1,19 +1,23 @@
+//kernel/core/agent_manager.go
 package core
 
 import (
 	"fmt"
 	"neuroedge/kernel/agents"
+	"neuroedge/kernel/events"
 )
 
 // AgentManager coordinates all agents
 type AgentManager struct {
-	agents map[string]interface{}
+	agents   map[string]interface{}
+	eventBus *events.EventBus
 }
 
 // NewAgentManager creates a new manager
 func NewAgentManager() *AgentManager {
 	return &AgentManager{
-		agents: make(map[string]interface{}),
+		agents:   make(map[string]interface{}),
+		eventBus: events.NewEventBus(),
 	}
 }
 
@@ -46,5 +50,5 @@ func (m *AgentManager) StartAllAgents() {
 // TriggerTask sends a task to the PlanningAgent
 func (m *AgentManager) TriggerTask(task string) {
 	fmt.Printf("[AgentManager] Triggering task: %s\n", task)
-	EventBus.Publish("task:new", task)
+	m.eventBus.Publish("task:new", map[string]interface{}{"task": task})
 }
