@@ -1,8 +1,9 @@
+//kernel/swarm/swarm_manager.go
 package swarm
 
 import (
-	"kernel/swarm/coordinator"
-	"kernel/swarm/agent_factory"
+	"neuroedge/kernel/swarm/agent_factory"
+	"neuroedge/kernel/swarm/coordinator"
 )
 
 type SwarmManager struct {
