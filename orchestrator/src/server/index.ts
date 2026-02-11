@@ -21,13 +21,21 @@ export function startServer(
   eventBus: EventBus,
   logger: Logger
 ) {
-  const WS_PORT = restPort + 1; // ✅ predictable, low-collision
+  const WS_PORT = restPort + 1; // predictable, low-collision
 
   /* ---------------- REST API ---------------- */
   const app = express();
   app.use(express.json());
 
   app.get("/status", (_req: Request, res: Response) => {
+    res.json({
+      status: "ok",
+      service: "orchestrator",
+      time: new Date().toISOString(),
+    });
+  });
+
+  app.get("/health", (_req: Request, res: Response) => {
     res.json({
       status: "ok",
       service: "orchestrator",
