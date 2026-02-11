@@ -1,7 +1,8 @@
+//kernel/core/engine/engine.go
 package engines
 
 import (
-	"neuroedge/kernel/core"
+	"neuroedge/kernel/types"
 )
 
 // Import all individual engines
@@ -10,7 +11,7 @@ import (
 )
 
 // Loader initializes all NeuroEdge engines
-func InitAllEngines(eventBus *core.EventBus) []interface{} {
+func InitAllEngines(eventBus *types.EventBus) []interface{} {
 	var allEngines []interface{}
 
 	// Core engines
