@@ -144,5 +144,5 @@ func InitializeAllAgents() {
 	RegisterAgent(agents.NewPoliticalStabilityAgent(bus))
 	RegisterAgent(agents.NewSocialMediaAgent(bus))
 
-	fmt.Println("[AgentRegistry] All agents initialized and started")
+	fmt.Println("[AgentRegistry] All agents initialized and started ✅")
 }
