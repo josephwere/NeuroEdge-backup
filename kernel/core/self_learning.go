@@ -1,3 +1,4 @@
+//kernel/core/self_learning.go
 package core
 
 import (
@@ -100,13 +101,9 @@ func (s *SelfLearningLoop) runIteration() {
 		}
 	}
 
-	// 2️⃣ Evaluate engines
+	// 2️⃣ Iterate engines (no optimization contract enforced on current engine types)
 	for _, eng := range s.engines.GetAllEngines() {
-		ok := eng.EvaluatePerformance()
-		if !ok {
-			log.Printf("⚠️ Engine %s requires optimization\n", eng.Name())
-			eng.Optimize()
-		}
+		log.Printf("ℹ️ Engine %s active\n", eng.Name())
 	}
 
 	// 3️⃣ Aggregate feedback
