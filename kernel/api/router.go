@@ -1,4 +1,4 @@
-//kernel/api/router.go
+// kernel/api/router.go
 package handlers
 
 import (
@@ -38,6 +38,12 @@ func NewRouter() *mux.Router {
 
 	// Public health/liveness
 	r.HandleFunc("/healthz", publicHandler(func(w http.ResponseWriter, _ *http.Request) {
+		w.WriteHeader(http.StatusOK)
+		_, _ = w.Write([]byte("ok"))
+	})).Methods("GET")
+
+	// /health alias (keep /healthz)
+	r.HandleFunc("/health", publicHandler(func(w http.ResponseWriter, _ *http.Request) {
 		w.WriteHeader(http.StatusOK)
 		_, _ = w.Write([]byte("ok"))
 	})).Methods("GET")
