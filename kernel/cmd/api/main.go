@@ -1,7 +1,7 @@
-//kernel/cmd/api/main.go
 package main
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"net/http"
@@ -38,9 +38,12 @@ func main() {
 	<-stop
 	fmt.Println("Shutting down API...")
 
-	shutdownCtx, cancel := time.WithTimeout(time.Now().Add(5*time.Second))
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	_ = server.Shutdown(shutdownCtx)
+	if err := server.Shutdown(ctx); err != nil {
+		log.Printf("shutdown error: %v", err)
+	}
+
 	fmt.Println("API stopped")
 }
