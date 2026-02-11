@@ -9,7 +9,6 @@ import (
 	"neuroedge/kernel/types"
 )
 
-// AgentInterface matches the currently implemented agent contract.
 type AgentInterface interface {
 	Name() string
 	Start()
@@ -18,7 +17,6 @@ type AgentInterface interface {
 	Learn()
 }
 
-// Global agent registry (thread-safe)
 var AgentRegistry = struct {
 	sync.RWMutex
 	agents map[string]AgentInterface
@@ -26,7 +24,6 @@ var AgentRegistry = struct {
 	agents: make(map[string]AgentInterface),
 }
 
-// RegisterAgent adds an agent to the global registry
 func RegisterAgent(agent AgentInterface) {
 	AgentRegistry.Lock()
 	defer AgentRegistry.Unlock()
@@ -42,7 +39,6 @@ func RegisterAgent(agent AgentInterface) {
 	agent.Start()
 }
 
-// GetAgent retrieves an agent by name
 func GetAgent(name string) (AgentInterface, bool) {
 	AgentRegistry.RLock()
 	defer AgentRegistry.RUnlock()
@@ -50,7 +46,6 @@ func GetAgent(name string) (AgentInterface, bool) {
 	return agent, exists
 }
 
-// StopAllAgents stops all registered agents
 func StopAllAgents() {
 	AgentRegistry.Lock()
 	defer AgentRegistry.Unlock()
@@ -61,7 +56,6 @@ func StopAllAgents() {
 	}
 }
 
-// GetAllAgents returns all registered agents
 func GetAllAgents() []AgentInterface {
 	AgentRegistry.RLock()
 	defer AgentRegistry.RUnlock()
@@ -72,119 +66,83 @@ func GetAllAgents() []AgentInterface {
 	return all
 }
 
-// registerIfAvailable registers by key if constructor exists.
-// This lets you grow agent coverage incrementally without breaking builds.
-func registerIfAvailable(
-	key string,
-	bus *types.EventBus,
-	factories map[string]func(*types.EventBus) agents.Agent,
-) bool {
-	f, ok := factories[key]
-	if !ok {
-		fmt.Printf("[AgentRegistry] Skipped %s (constructor not exported yet)\n", key)
-		return false
-	}
-	RegisterAgent(f(bus))
-	return true
-}
-
-// InitializeAllAgents keeps your long desired list and safely registers
-// only constructors currently exposed from the agents package.
 func InitializeAllAgents() {
 	bus := types.NewEventBus()
 
-	// Add new mappings here as you expose constructors in package agents.
-	factories := map[string]func(*types.EventBus) agents.Agent{
-		"GlobalMeshAgent":   agents.NewGlobalMeshAgent,
-		"ReasoningAgent":    agents.NewReasoningAgent,
-		"TaskAgent":         agents.NewTaskAgent,
-		"SecurityAgent":     agents.NewSecurityAgent,
-		"PolicyEthicsAgent": agents.NewPolicyEthicsAgent,
-		"PlanningAgent":     agents.NewPlanningAgent,
-	}
+	RegisterAgent(agents.NewGlobalMeshAgent(bus))
+	RegisterAgent(agents.NewReasoningAgent(bus))
+	RegisterAgent(agents.NewTaskAgent(bus))
+	RegisterAgent(agents.NewSecurityAgent(bus))
+	RegisterAgent(agents.NewPolicyEthicsAgent(bus))
+	RegisterAgent(agents.NewAntiTheftSentinelAgent(bus))
+	RegisterAgent(agents.NewGovernmentAdvisorAgent(bus))
+	RegisterAgent(agents.NewMedicalDoctorAgent(bus))
+	RegisterAgent(agents.NewLawEnforcementAgent(bus))
+	RegisterAgent(agents.NewCyberSecurityShieldAgent(bus))
+	RegisterAgent(agents.NewEducationMentorAgent(bus))
+	RegisterAgent(agents.NewBusinessConsultantAgent(bus))
+	RegisterAgent(agents.NewCodingPartnerAgent(bus))
+	RegisterAgent(agents.NewIdentityAgent(bus))
+	RegisterAgent(agents.NewWDCWalletAgent(bus))
+	RegisterAgent(agents.NewNeuroChainValidatorAgent(bus))
+	RegisterAgent(agents.NewEmergencyResponseAgent(bus))
+	RegisterAgent(agents.NewDroneControllerAgent(bus))
+	RegisterAgent(agents.NewSmartCityAgent(bus))
+	RegisterAgent(agents.NewBankingAgent(bus))
+	RegisterAgent(agents.NewTaxAgent(bus))
+	RegisterAgent(agents.NewAgricultureAgent(bus))
+	RegisterAgent(agents.NewLogisticsAgent(bus))
+	RegisterAgent(agents.NewBorderControlAgent(bus))
+	RegisterAgent(agents.NewClimateAgent(bus))
+	RegisterAgent(agents.NewManufacturingAgent(bus))
+	RegisterAgent(agents.NewLawyerAgent(bus))
+	RegisterAgent(agents.NewJobRecruiterAgent(bus))
+	RegisterAgent(agents.NewTherapistAgent(bus))
+	RegisterAgent(agents.NewChildTutorAgent(bus))
+	RegisterAgent(agents.NewResearchAgent(bus))
+	RegisterAgent(agents.NewMathSolverAgent(bus))
+	RegisterAgent(agents.NewScienceAgent(bus))
+	RegisterAgent(agents.NewMedicalImagingAgent(bus))
+	RegisterAgent(agents.NewHospitalWorkflowAgent(bus))
+	RegisterAgent(agents.NewPoliceCommandAgent(bus))
+	RegisterAgent(agents.NewFraudDetectionAgent(bus))
+	RegisterAgent(agents.NewDeviceFingerprintAgent(bus))
+	RegisterAgent(agents.NewWDCTraderAgent(bus))
+	RegisterAgent(agents.NewDeveloperOpsAgent(bus))
+	RegisterAgent(agents.NewAPIGeneratorAgent(bus))
+	RegisterAgent(agents.NewAppBuilderAgent(bus))
+	RegisterAgent(agents.NewMemoryAgent(bus))
+	RegisterAgent(agents.NewPlanningAgent(bus))
+	RegisterAgent(agents.NewDigitalTwinAgent(bus))
+	RegisterAgent(agents.NewSatelliteLinkAgent(bus))
+	RegisterAgent(agents.NewRouterMeshAgent(bus))
+	RegisterAgent(agents.NewTelecomAgent(bus))
+	RegisterAgent(agents.NewHardwareNodeAgent(bus))
+	RegisterAgent(agents.NewOfflineIdentityAgent(bus))
+	RegisterAgent(agents.NewDecentralizedAIAgent(bus))
+	RegisterAgent(agents.NewHomeAssistantAgent(bus))
+	RegisterAgent(agents.NewVehicleControllerAgent(bus))
+	RegisterAgent(agents.NewCityInfrastructureAgent(bus))
+	RegisterAgent(agents.NewFraudSentinelAgent(bus))
+	RegisterAgent(agents.NewTravelAgent(bus))
+	RegisterAgent(agents.NewVotingAgent(bus))
+	RegisterAgent(agents.NewVerificationOfficerAgent(bus))
+	RegisterAgent(agents.NewPersonalWDCAssistantAgent(bus))
+	RegisterAgent(agents.NewProductivityAgent(bus))
+	RegisterAgent(agents.NewHealthMonitoringAgent(bus))
+	RegisterAgent(agents.NewPrivacyGuardianAgent(bus))
+	RegisterAgent(agents.NewMiningControllerAgent(bus))
+	RegisterAgent(agents.NewDeviceGuardianAgent(bus))
+	RegisterAgent(agents.NewRobotAssistantAgent(bus))
+	RegisterAgent(agents.NewFinancialMonitoringAgent(bus))
+	RegisterAgent(agents.NewCodeQualityAgent(bus))
+	RegisterAgent(agents.NewGameDeveloperAgent(bus))
+	RegisterAgent(agents.NewWorldKnowledgeAgent(bus))
+	RegisterAgent(agents.NewUniversalTranslatorAgent(bus))
+	RegisterAgent(agents.NewNegotiationAgent(bus))
+	RegisterAgent(agents.NewNewsIntelligenceAgent(bus))
+	RegisterAgent(agents.NewPoliticalStabilityAgent(bus))
+	RegisterAgent(agents.NewSocialMediaAgent(bus))
 
-	desiredOrder := []string{
-		"GlobalMeshAgent",
-		"ReasoningAgent",
-		"TaskAgent",
-		"SecurityAgent",
-		"PolicyEthicsAgent",
-		"AntiTheftSentinelAgent",
-		"GovernmentAdvisorAgent",
-		"MedicalDoctorAgent",
-		"LawEnforcementAgent",
-		"CyberSecurityShieldAgent",
-		"EducationMentorAgent",
-		"BusinessConsultantAgent",
-		"CodingPartnerAgent",
-		"IdentityAgent",
-		"WDCWalletAgent",
-		"NeuroChainValidatorAgent",
-		"EmergencyResponseAgent",
-		"DroneControllerAgent",
-		"SmartCityAgent",
-		"BankingAgent",
-		"TaxAgent",
-		"AgricultureAgent",
-		"LogisticsAgent",
-		"BorderControlAgent",
-		"ClimateAgent",
-		"ManufacturingAgent",
-		"LawyerAgent",
-		"JobRecruiterAgent",
-		"TherapistAgent",
-		"ChildTutorAgent",
-		"ResearchAgent",
-		"MathSolverAgent",
-		"ScienceAgent",
-		"MedicalImagingAgent",
-		"HospitalWorkflowAgent",
-		"PoliceCommandAgent",
-		"FraudDetectionAgent",
-		"DeviceFingerprintAgent",
-		"WDCTraderAgent",
-		"DeveloperOpsAgent",
-		"APIGeneratorAgent",
-		"AppBuilderAgent",
-		"MemoryAgent",
-		"PlanningAgent",
-		"DigitalTwinAgent",
-		"SatelliteLinkAgent",
-		"RouterMeshAgent",
-		"TelecomAgent",
-		"HardwareNodeAgent",
-		"OfflineIdentityAgent",
-		"DecentralizedAIAgent",
-		"HomeAssistantAgent",
-		"VehicleControllerAgent",
-		"CityInfrastructureAgent",
-		"FraudSentinelAgent",
-		"TravelAgent",
-		"VotingAgent",
-		"VerificationOfficerAgent",
-		"PersonalWDCAssistantAgent",
-		"ProductivityAgent",
-		"HealthMonitoringAgent",
-		"PrivacyGuardianAgent",
-		"MiningControllerAgent",
-		"DeviceGuardianAgent",
-		"RobotAssistantAgent",
-		"FinancialMonitoringAgent",
-		"CodeQualityAgent",
-		"GameDeveloperAgent",
-		"WorldKnowledgeAgent",
-		"UniversalTranslatorAgent",
-		"NegotiationAgent",
-		"NewsIntelligenceAgent",
-		"PoliticalStabilityAgent",
-		"SocialMediaAgent",
-	}
-
-	registered := 0
-	for _, key := range desiredOrder {
-		if registerIfAvailable(key, bus, factories) {
-			registered++
-		}
-	}
-	fmt.Printf("[AgentRegistry] Done. Registered=%d Skipped=%d\n", registered, len(desiredOrder)-registered)
+	fmt.Println("[AgentRegistry] All agents initialized and started")
 }
