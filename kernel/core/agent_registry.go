@@ -72,12 +72,29 @@ func GetAllAgents() []AgentInterface {
 	return all
 }
 
-// InitializeAllAgents keeps the full desired agent list, but only registers
-// factories that currently exist/export in the agents package.
+// registerIfAvailable registers by key if constructor exists.
+// This lets you grow agent coverage incrementally without breaking builds.
+func registerIfAvailable(
+	key string,
+	bus *types.EventBus,
+	factories map[string]func(*types.EventBus) agents.Agent,
+) bool {
+	f, ok := factories[key]
+	if !ok {
+		fmt.Printf("[AgentRegistry] Skipped %s (constructor not exported yet)\n", key)
+		return false
+	}
+	RegisterAgent(f(bus))
+	return true
+}
+
+// InitializeAllAgents keeps your long desired list and safely registers
+// only constructors currently exposed from the agents package.
 func InitializeAllAgents() {
 	bus := types.NewEventBus()
 
-	availableFactories := map[string]func(*types.EventBus) agents.Agent{
+	// Add new mappings here as you expose constructors in package agents.
+	factories := map[string]func(*types.EventBus) agents.Agent{
 		"GlobalMeshAgent":   agents.NewGlobalMeshAgent,
 		"ReasoningAgent":    agents.NewReasoningAgent,
 		"TaskAgent":         agents.NewTaskAgent,
@@ -164,18 +181,10 @@ func InitializeAllAgents() {
 	}
 
 	registered := 0
-	skipped := 0
-
-	for _, name := range desiredOrder {
-		factory, ok := availableFactories[name]
-		if !ok {
-			fmt.Printf("[AgentRegistry] Skipped %s (constructor not exported yet)\n", name)
-			skipped++
-			continue
+	for _, key := range desiredOrder {
+		if registerIfAvailable(key, bus, factories) {
+			registered++
 		}
-		RegisterAgent(factory(bus))
-		registered++
 	}
-
-	fmt.Printf("[AgentRegistry] Done. Registered=%d Skipped=%d\n", registered, skipped)
+	fmt.Printf("[AgentRegistry] Done. Registered=%d Skipped=%d\n", registered, len(desiredOrder)-registered)
 }
