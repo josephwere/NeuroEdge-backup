@@ -1,3 +1,4 @@
+// orchestrator/src/services/kernelComm.ts
 import axios, { AxiosInstance } from "axios";
 
 /* -------------------- */
@@ -41,6 +42,13 @@ export interface KernelCapabilities {
   nodes?: KernelNode[];
 }
 
+export interface KernelInfo {
+  version: string;
+  capabilities: string[];
+  status: "ready" | "busy" | "offline";
+  nodes?: KernelNode[];
+}
+
 /* -------------------- */
 /* Kernel Client Class */
 /* -------------------- */
@@ -66,6 +74,21 @@ export class KernelClient {
     } catch (err) {
       console.error("[KernelClient] Health check failed:", err);
       return [];
+    }
+  }
+
+  /* -------------------- Kernel Info -------------------- */
+  async getInfo(): Promise<KernelInfo> {
+    try {
+      await this.client.get("/health");
+      return { version: "v1", capabilities: [], status: "ready" };
+    } catch {
+      try {
+        await this.client.get("/healthz");
+        return { version: "v1", capabilities: [], status: "ready" };
+      } catch {
+        return { version: "unknown", capabilities: [], status: "offline" };
+      }
     }
   }
 
@@ -129,4 +152,4 @@ export class KernelClient {
   async streamCommand(cmd: KernelCommand, onData: (chunk: any) => void): Promise<void> {
     console.warn("[KernelClient] streamCommand not implemented yet. Placeholder for future NeuroEdge streaming.");
   }
-        }
+}
