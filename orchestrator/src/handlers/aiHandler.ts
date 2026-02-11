@@ -1,28 +1,38 @@
+// orchestrator/src/handlers/aiHandler.ts
 import { Request, Response } from "express";
-import { globalKernelManager } from "@services/kernelManager";
-import { KernelCommand } from "@services/kernelComm";
+import axios from "axios";
 
 /**
- * Handles AI inference requests
+ * Handles AI inference requests via ML service.
  */
 export async function handleAIInference(req: Request, res: Response) {
-  const { kernelId, input } = req.body;
+  const input = req.body?.input || req.body?.text || req.body?.message || "";
+  const payload = req.body?.payload || {};
 
-  if (!kernelId || !input) {
-    return res.status(400).json({ error: "Missing kernelId or input" });
+  if (!input && Object.keys(payload).length === 0) {
+    return res.status(400).json({ error: "Missing input" });
   }
 
-  const cmd: KernelCommand = {
-    id: `ai-${Date.now()}`,
-    type: "ai_inference",
-    payload: { input },
-  };
+  const mlUrl = process.env.ML_URL || "http://localhost:8090";
 
   try {
-    const result = await globalKernelManager.sendCommand(kernelId, cmd);
-    res.json(result);
+    const mlResp = await axios.post(`${mlUrl}/infer`, {
+      text: input,
+      payload,
+      context: req.body?.context || {},
+    });
+
+    const mlData = mlResp.data || {};
+    res.json({
+      success: true,
+      reasoning: `ML inferred action '${mlData.action || "unknown"}'`,
+      intent: mlData.action || "unknown",
+      risk: "low",
+      ml: mlData,
+      timestamp: new Date().toISOString(),
+    });
   } catch (err) {
     console.error("[aiHandler] Error during AI inference:", err);
-    res.status(500).json({ error: "Kernel AI inference failed" });
+    res.status(500).json({ error: "ML inference failed" });
   }
 }
