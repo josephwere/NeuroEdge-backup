@@ -1,3 +1,4 @@
+//kernel/engines/task_emission_engine.go
 package engines
 
 import (
@@ -8,20 +9,24 @@ import (
 )
 
 type TaskEmissionEngine struct {
-	Name     string
-	EventBus *types.EventBus
+	engineName string
+	EventBus   *types.EventBus
 }
 
 func NewTaskEmissionEngine(bus *types.EventBus) *TaskEmissionEngine {
 	return &TaskEmissionEngine{
-		Name:     "TaskEmissionEngine",
-		EventBus: bus,
+		engineName: "TaskEmissionEngine",
+		EventBus:   bus,
 	}
+}
+
+func (e *TaskEmissionEngine) Name() string {
+	return e.engineName
 }
 
 // Start begins the task emission loop
 func (e *TaskEmissionEngine) Start() {
-	fmt.Println(e.Name, "initializing...")
+	fmt.Println(e.Name(), "initializing...")
 
 	go func() {
 		for {
@@ -37,5 +42,5 @@ func (e *TaskEmissionEngine) Start() {
 
 // Stop gracefully shuts down the engine
 func (e *TaskEmissionEngine) Stop() {
-	fmt.Println(e.Name, "shutting down.")
+	fmt.Println(e.Name(), "shutting down.")
 }
