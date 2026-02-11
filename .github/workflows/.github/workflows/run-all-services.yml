@@ -1,0 +1,105 @@
+name: Run All Services
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ main, master ]
+  pull_request:
+
+jobs:
+  run-all:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.25'
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: |
+            orchestrator/package-lock.json
+            frontend/package-lock.json
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install deps
+        run: |
+          cd kernel && go mod download && cd ..
+          python -m pip install --upgrade pip
+          pip install -r ml/requirements.txt
+          cd orchestrator && npm ci && cd ..
+          cd frontend && npm ci && cd ..
+
+      - name: Start Kernel API
+        env:
+          NEUROEDGE_API_KEY: change-this-now
+          NEUROEDGE_RATE_LIMIT_PER_MIN: "120"
+          PORT: "8080"
+        run: |
+          cd kernel
+          nohup go run ./cmd/api > ../kernel_api.log 2>&1 &
+          echo $! > ../kernel_api.pid
+
+      - name: Start ML
+        env:
+          ML_HOST: 0.0.0.0
+          ML_PORT: "8090"
+        run: |
+          nohup python ml/server.py > ml.log 2>&1 &
+          echo $! > ml.pid
+
+      - name: Start Orchestrator
+        env:
+          PORT: "7070"
+          ML_URL: "http://localhost:8090"
+          KERNEL_URL: "http://localhost:8080"
+        run: |
+          cd orchestrator
+          nohup npm run dev > ../orchestrator.log 2>&1 &
+          echo $! > ../orchestrator.pid
+
+      - name: Start Frontend
+        run: |
+          cd frontend
+          nohup npm run dev -- --host 0.0.0.0 --port 5173 > ../frontend.log 2>&1 &
+          echo $! > ../frontend.pid
+
+      - name: Wait for startup
+        run: sleep 20
+
+      - name: Smoke tests
+        run: |
+          curl -f http://localhost:8080/healthz
+          curl -f http://localhost:8080/readyz
+          curl -f http://localhost:8090/health
+          curl -f http://localhost:8090/readyz
+          curl -f http://localhost:5173 || true
+          curl -f http://localhost:7070 || true
+
+      - name: Dump logs on failure
+        if: failure()
+        run: |
+          echo "=== kernel_api.log ===" && cat kernel_api.log || true
+          echo "=== ml.log ===" && cat ml.log || true
+          echo "=== orchestrator.log ===" && cat orchestrator.log || true
+          echo "=== frontend.log ===" && cat frontend.log || true
+
+      - name: Stop services
+        if: always()
+        run: |
+          kill $(cat kernel_api.pid) 2>/dev/null || true
+          kill $(cat ml.pid) 2>/dev/null || true
+          kill $(cat orchestrator.pid) 2>/dev/null || true
+          kill $(cat frontend.pid) 2>/dev/null || true
