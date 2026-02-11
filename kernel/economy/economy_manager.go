@@ -1,9 +1,10 @@
+//kernel/economy/economy_manager.go
 package economy
 
 import (
-	"kernel/economy/ledger"
-	"kernel/economy/rewards"
-	"kernel/economy/staking"
+	"neuroedge/kernel/economy/ledger"
+	"neuroedge/kernel/economy/rewards"
+	"neuroedge/kernel/economy/staking"
 )
 
 type EconomyManager struct {
