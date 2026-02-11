@@ -22,6 +22,14 @@ func withRequestLogging(next http.HandlerFunc) http.HandlerFunc {
 		start := time.Now()
 		rec := &statusRecorder{ResponseWriter: w, status: http.StatusOK}
 		next(rec, r)
-		log.Printf("method=%s path=%s status=%d duration=%s", r.Method, r.URL.Path, rec.status, time.Since(start))
+		log.Printf(
+			"method=%s path=%s status=%d duration=%s ip=%s request_id=%s",
+			r.Method,
+			r.URL.Path,
+			rec.status,
+			time.Since(start),
+			clientIP(r),
+			rec.Header().Get("X-Request-ID"),
+		)
 	}
 }
