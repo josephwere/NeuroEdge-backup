@@ -1,6 +1,7 @@
+//kernel/economy/ledger/ledger.go
 package ledger
 
-import "kernel/economy/wallet"
+import "neuroedge/kernel/economy/wallet"
 
 type Ledger struct {
 	Transactions []wallet.Transaction
