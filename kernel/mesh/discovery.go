@@ -1,3 +1,4 @@
+//kernel/mesh/discovery.go
 package mesh
 
 import (
@@ -43,6 +44,20 @@ func (d *DiscoveryService) ListNodes() []*Node {
 		list = append(list, node)
 	}
 	return list
+}
+
+// GetActiveNodes returns nodes currently marked active.
+func (d *DiscoveryService) GetActiveNodes() []*Node {
+	d.mu.Lock()
+	defer d.mu.Unlock()
+
+	active := []*Node{}
+	for _, node := range d.nodes {
+		if node.IsActive {
+			active = append(active, node)
+		}
+	}
+	return active
 }
 
 // HeartbeatChecker checks node health periodically
