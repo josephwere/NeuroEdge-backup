@@ -1,3 +1,4 @@
+//kernel/mesh/mesh_manager.go
 package mesh
 
 import (
@@ -6,20 +7,20 @@ import (
 
 // MeshManager coordinates all mesh subsystems
 type MeshManager struct {
-	Discovery  *Discovery
-	Routing    *Routing
-	Messaging  *Messaging
-	Nodes      map[string]*Node
+	Discovery     *DiscoveryService
+	Routing       *Routing
+	Messaging     *Messaging
+	Nodes         map[string]*Node
 	EncryptionKey []byte
 }
 
 // NewMeshManager creates a mesh manager instance
 func NewMeshManager(encryptionKey []byte) *MeshManager {
 	return &MeshManager{
-		Discovery: NewDiscovery(),
-		Routing:   NewRouting(),
-		Messaging: NewMessaging(),
-		Nodes:     make(map[string]*Node),
+		Discovery:     NewDiscoveryService(),
+		Routing:       NewRouting(),
+		Messaging:     NewMessaging(),
+		Nodes:         make(map[string]*Node),
 		EncryptionKey: encryptionKey,
 	}
 }
