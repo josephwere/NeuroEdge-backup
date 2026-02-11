@@ -2,6 +2,7 @@
 package handlers
 
 import (
+	"fmt"
 	"net"
 	"net/http"
 	"os"
@@ -46,10 +47,23 @@ func withRateLimit(next http.HandlerFunc) http.HandlerFunc {
 		if allowed {
 			v.count++
 		}
+		remaining := maxPerMinute - v.count
+		if remaining < 0 {
+			remaining = 0
+		}
+		resetIn := int(time.Minute.Seconds() - now.Sub(v.windowFrom).Seconds())
+		if resetIn < 0 {
+			resetIn = 0
+		}
 		cleanupVisitors(now)
 		rateLimitMu.Unlock()
 
+		w.Header().Set("X-RateLimit-Limit", strconv.Itoa(maxPerMinute))
+		w.Header().Set("X-RateLimit-Remaining", strconv.Itoa(remaining))
+		w.Header().Set("X-RateLimit-Reset", fmt.Sprintf("%d", resetIn))
+
 		if !allowed {
+			w.Header().Set("Retry-After", strconv.Itoa(resetIn))
 			http.Error(w, "rate limit exceeded", http.StatusTooManyRequests)
 			return
 		}
