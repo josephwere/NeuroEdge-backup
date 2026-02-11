@@ -1,6 +1,7 @@
+//kernel/economy/rewards/reward_engine.go
 package rewards
 
-import "kernel/economy/wallet"
+import "neuroedge/kernel/economy/wallet"
 
 type RewardEngine struct{}
 
