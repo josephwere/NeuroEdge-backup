@@ -1,13 +1,12 @@
+//kernel/core/kernel.go
 package core
 
 import (
 	"time"
 
 	"neuroedge/kernel/config"
-	"neuroedge/kernel/types"
 	"neuroedge/kernel/logging"
-	"neuroedge/kernel/engines"
-	"neuroedge/kernel/agents"
+	"neuroedge/kernel/types"
 )
 
 type Kernel struct {
@@ -29,8 +28,9 @@ func (k *Kernel) Start() {
 
 	logging.InitLogger()
 
-	engines.InitAllEngines(k.EventBus)
-	agents.StartAllAgents(k.EventBus)
+	InitializeAllAgents()
+	engineRegistry := NewEngineRegistry(k.EventBus)
+	engineRegistry.RegisterAllEngines()
 
 	logging.Info("All agents and engines are running.")
 
