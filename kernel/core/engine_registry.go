@@ -1,10 +1,11 @@
+//kernel/core/engine_registry.go
 package core
 
 import (
 	"fmt"
 
 	"neuroedge/kernel/engines"
-	"neuroedge/kernel/types" // <-- import EventBus from types
+	"neuroedge/kernel/types"
 )
 
 // EngineInterface ensures all engines implement these methods
@@ -12,14 +13,12 @@ type EngineInterface interface {
 	Start()
 	Stop()
 	Name() string
-	EvaluatePerformance() bool // For Self-Learning Loop
-	Optimize()                // Adapt / improve
 }
 
 // EngineRegistry keeps track of all engines
 type EngineRegistry struct {
 	Engines  map[string]EngineInterface
-	EventBus *types.EventBus // <-- updated type reference
+	EventBus *types.EventBus
 }
 
 // NewEngineRegistry creates a new registry
