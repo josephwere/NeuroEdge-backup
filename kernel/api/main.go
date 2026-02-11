@@ -1,4 +1,5 @@
-package main
+//kernel/api/main.go
+package handlers
 
 import (
 	"fmt"
@@ -8,14 +9,12 @@ import (
 	"os/signal"
 	"syscall"
 	"time"
-
-	"neuroedge/kernel/api/handlers"
 )
 
 func main() {
 	fmt.Println("🚀 Starting NeuroEdge Kernel API v1.0")
 
-	router := handlers.NewRouter()
+	router := NewRouter()
 
 	server := &http.Server{
 		Addr:         ":8080", // Can be parameterized
